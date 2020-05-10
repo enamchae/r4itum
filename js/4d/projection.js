@@ -6,9 +6,7 @@
  *  - [Three.JS](https://threejs.org/) for doing all the 3D to 2D heavylifting for me. :)
  */
 
-import {world} from "./scene.js";
-import * as Three from "./libraries/three.module.js";
-
+import * as Three from "../_libraries/three.module.js";
 
 export class VectorProjected3 extends Three.Vector3 {
 	distance;
@@ -33,19 +31,20 @@ export class VectorProjected3 extends Three.Vector3 {
  * 
  * @param {Vector4[]} points 
  * @param {Camera4} camera 
+ * @param {object} scene
  * @param {object} [options] 
  * @param {VectorProjected3[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
  * @param {function} [options.callback]
  * @returns {VectorProjected3[]}
  */
-export function projectVector4(points, camera, {destinationPoints=[], callback=() => {}}={}) {
+export function projectVector4(points, camera, scene, {destinationPoints=[], callback}={}) {
 	// The camera is facing from `cameraOrigin` to `cameraForward`
 	const cameraOrigin = camera.pos;
-	const cameraForward = camera.rot.rotateVector(world.basis.forward);
+	const cameraForward = camera.rot.rotateVector(scene.basis.forward);
 
 	// Used to maintain the orientation of the camera
-	const cameraUp = camera.rot.rotateVector(world.basis.up);
-	const cameraOver = camera.rot.rotateVector(world.basis.over);
+	const cameraUp = camera.rot.rotateVector(scene.basis.up);
+	const cameraOver = camera.rot.rotateVector(scene.basis.over);
 
 	// console.log(cameraForward, cameraUp, cameraOver);
 
@@ -66,13 +65,13 @@ export function projectVector4(points, camera, {destinationPoints=[], callback=(
 			? 1 / Math.tan(camera.fovAngle / 2)
 			: 1 / camera.radius;
 
-	
+	// TODO clipping
 	for (let i = 0; i < points.length; i++) {
 		const point = points[i];
 
 		const translated = point.subtract(cameraOrigin);
 
-		const distance = camera.usingPerspective ? translated.dot(transformMatrix[3]) : camera.radius;
+		let distance = camera.usingPerspective ? translated.dot(transformMatrix[3]) : camera.radius;
 
 		// Now accounts for distance as well
 		// Shrink the transformed point depending on its distance from the camera 
@@ -93,7 +92,7 @@ export function projectVector4(points, camera, {destinationPoints=[], callback=(
 			destinationPoints[i] = pointProjected;
 		}
 
-		callback(pointProjected, i);
+		callback?.(pointProjected, i);
 	}
 
 	return destinationPoints;

@@ -10,7 +10,7 @@
  * @class Used to represent general properties of rank-n vectors and sums of them.
  */
 class Polymultivector extends Array {
-	constructor(length, elements) {
+	constructor(elements, length=elements.length) {
 		super(length || 0);
 
 		this.set(...elements);
@@ -106,7 +106,7 @@ export class Rotor4 extends Polymultivector {
 	 * @param {number} xyzw 
 	 */
 	constructor(scalar=1, xy=0, xz=0, xw=0, yz=0, yw=0, zw=0, xyzw=0) {
-		super(8, [scalar, xy, xz, xw, yz, yw, zw, xyzw]);
+		super([scalar, xy, xz, xw, yz, yw, zw, xyzw]);
 	}
 	
 	/**
@@ -143,7 +143,7 @@ export class Rotor4 extends Polymultivector {
 	 * @param {number} angle 
 	 */
 	static planeAngle(axisComponents, angle) {
-		const axis = new Polymultivector(7, axisComponents).normalize().scale(Math.sin(angle / 2));
+		const axis = new Polymultivector(axisComponents).normalize().scale(Math.sin(angle / 2));
 
 		return new this(Math.cos(angle / 2), ...axis);
 	}
@@ -235,6 +235,11 @@ export class Rotor4 extends Polymultivector {
 	get angle() {
 		return 2 * Math.acos(this[0]);
 	}
+
+	get plane() {
+		// `slice` by default will return a `Rotor4`
+		return new Polymultivector([this[1], this[2], this[3], this[4], this[5], this[6], this[7]]).scale(1 / Math.sin(this.angle / 2));
+	}
 }
 
 /**
@@ -259,7 +264,7 @@ export class Bivector4 extends Polymultivector {
 	 */
 
 	constructor(xy, xz, xw, yz, yw, zw) {
-		super(6, [xy, xz, xw, yz, yw, zw]);
+		super([xy, xz, xw, yz, yw, zw]);
 	}
 
 	/**
@@ -291,7 +296,7 @@ export class Vector4 extends Polymultivector {
 	 * @param {number} w 
 	 */
 	constructor(x, y, z, w) {
-		super(4, [x, y, z, w]);
+		super([x, y, z, w]);
 	}
 
 	/**
@@ -350,6 +355,37 @@ export class Vector4 extends Polymultivector {
 			this[1] - vector[1],
 			this[2] - vector[2],
 			this[3] - vector[3],
+		);
+	}
+	
+	multScalar(scalar) {
+		return new Vector4(
+			this[0] * scalar,
+			this[1] * scalar,
+			this[2] * scalar,
+			this[3] * scalar,
+		);
+	}
+
+	/**
+	 * 
+	 * @param {Rotor4} rotor
+	 * @returns {Vector4} 
+	 */
+	multRotor(rotor) {
+		return rotor.rotateVector(this);
+	}
+
+	/**
+	 * @param {Vector4} vector
+	 * @returns {Vector4}
+	 */
+	multComponents(vector) {
+		return new Vector4(
+			this[0] * vector[0],
+			this[1] * vector[1],
+			this[2] * vector[2],
+			this[3] * vector[3],
 		);
 	}
 }

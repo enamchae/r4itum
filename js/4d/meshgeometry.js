@@ -17,46 +17,21 @@ export class Geometry4 {
 	 */
 	facets;
 
-	#facesCache = null;
-	#edgesCache = null;
-
 	constructor(verts=[], facets=[]) {
 		this.verts = verts;
 
 		this.facets = facets;
-	}
-
-	faces() {
-		// TODO clear when geometry updates
-		if (this.#facesCache) {
-			return this.#facesCache;
-		}
-
-		const faceMap = new Map();
-
-		for (const vertIndexes of this.facets) {
-			if (vertIndexes.length === 3) { // Face
-				pushFacets(faceMap, vertIndexes);
-			} else if (vertIndexes.length === 4) { // Cell
-				pushFacets(faceMap,
-					[vertIndexes[0], vertIndexes[1], vertIndexes[2]],
-					[vertIndexes[0], vertIndexes[2], vertIndexes[3]],
-					[vertIndexes[0], vertIndexes[3], vertIndexes[1]],
-					[vertIndexes[1], vertIndexes[2], vertIndexes[3]],
-				);
-			}
-		}
-
-		const faces = [...faceMap.values()];
-
-		this.#facesCache = faces;
-		return faces;
+	
+		priv.set(this, {
+			edgesCache: null,
+			facesCache: null,
+		});
 	}
 
 	edges() {
 		// TODO clear when geometry updates
-		if (this.#edgesCache) {
-			return this.#edgesCache;
+		if (_(this).edgesCache) {
+			return _(this).edgesCache;
 		}
 
 		const edgeMap = new Map();
@@ -86,10 +61,73 @@ export class Geometry4 {
 
 		const edges = [...edgeMap.values()];
 
-		this.#edgesCache = edges;
+		_(this).edgesCache = edges;
 		return edges;
 	}
+
+	faces() {
+		// TODO clear when geometry updates
+		if (_(this).facesCache) {
+			return _(this).facesCache;
+		}
+
+		const faceMap = new Map();
+
+		for (const vertIndexes of this.facets) {
+			if (vertIndexes.length === 3) { // Face
+				pushFacets(faceMap, vertIndexes);
+			} else if (vertIndexes.length === 4) { // Cell
+				pushFacets(faceMap,
+					[vertIndexes[0], vertIndexes[1], vertIndexes[2]],
+					[vertIndexes[0], vertIndexes[2], vertIndexes[3]],
+					[vertIndexes[0], vertIndexes[3], vertIndexes[1]],
+					[vertIndexes[1], vertIndexes[2], vertIndexes[3]],
+				);
+			}
+		}
+
+		const faces = [...faceMap.values()];
+
+		_(this).facesCache = faces;
+		return faces;
+	}
+
+	/**
+	 * @returns {Map<number, Set<number>>}
+	 */
+	vertsToFacets(facets) {
+		const map = new Map();
+
+		for (let i = 0; i < facets.length; i++) {
+			const facet = facets[i];
+
+			for (const vertIndex of facet) {
+				// Get the set of facets that correspond to this vertex
+				let set = map.get(vertIndex);
+				if (!set) {
+					set = new Set();
+					map.set(vertIndex, set);
+				}
+
+				set.add(i);
+			}
+		}
+
+		return map;
+	}
+
+	vertsToEdges() {
+		return this.vertsToFacets(this.edges());
+	}
+
+	vertsToFaces() {
+		return this.vertsToFacets(this.faces());
+	}
 }
+
+// Alternative to private fields
+const priv = new WeakMap();
+const _ = key => priv.get(key);
 
 /**
  * Adds a vertex index array to a map, if another index array equivalent to it is not already present.
@@ -123,7 +161,7 @@ function vertIndexArrayAsPrimitive(vertIndexes) {
 	let primitive = BigInt(vertIndexes[0]);
 	for (let i = 1; i < vertIndexes.length; i++) {
 		primitive <<= bitsPerComponent;
-		primitive += BigInt(vertIndexes[i]) % bitsPerComponent;
+		primitive += (BigInt(vertIndexes[i]) + 1n) % bitsPerComponent; // Add 1 so different-length lists are not considered equal
 	}
 	
 	return primitive;
