@@ -31,34 +31,13 @@ export class VectorProjected3 extends Three.Vector3 {
  * 
  * @param {Vector4[]} points 
  * @param {Camera4} camera 
- * @param {object} scene
  * @param {object} [options] 
  * @param {VectorProjected3[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
  * @param {function} [options.callback]
  * @returns {VectorProjected3[]}
  */
-export function projectVector4(points, camera, scene, {destinationPoints=[], callback}={}) {
-	// The camera is facing from `cameraOrigin` to `cameraForward`
-	const cameraOrigin = camera.pos;
-	const cameraForward = camera.rot.rotateVector(scene.basis.forward);
-
-	// Used to maintain the orientation of the camera
-	const cameraUp = camera.rot.rotateVector(scene.basis.up);
-	const cameraOver = camera.rot.rotateVector(scene.basis.over);
-
-	// console.log(cameraForward, cameraUp, cameraOver);
-
-	// Define the transformation matrix
-	// This matrix rotates the world to the camera view, based on the camera's direction and the basis directions
-	// Multiplying a point by this matrix and getting a single dimension is a matter of taking the dot product of the
-	// original point and the nth column of the matrix ([0] :: X, [1] :: Y, etc)
-	const transformMatrix = [];
-
-	// TODO understand the methodology behind constructing this matrix :D
-	transformMatrix[3] = cameraForward.subtract(cameraOrigin).normalize();
-	transformMatrix[0] = cameraUp.cross(cameraOver, transformMatrix[3]).normalize();
-	transformMatrix[1] = cameraOver.cross(transformMatrix[3], transformMatrix[0]).normalize();
-	transformMatrix[2] = transformMatrix[3].cross(transformMatrix[0], transformMatrix[1]).normalize();
+export function projectVector4(points, camera, {destinationPoints=[], callback}={}) {
+	const projectionMatrix = camera.projectionMatrix();
 
 	// Factor used to determine distortion due to focal length
 	const distortionFac = camera.usingPerspective
@@ -69,9 +48,9 @@ export function projectVector4(points, camera, scene, {destinationPoints=[], cal
 	for (let i = 0; i < points.length; i++) {
 		const point = points[i];
 
-		const translated = point.subtract(cameraOrigin);
+		const translated = point.subtract(camera.pos);
 
-		let distance = camera.usingPerspective ? translated.dot(transformMatrix[3]) : camera.radius;
+		let distance = camera.usingPerspective ? translated.dot(projectionMatrix[3]) : camera.radius;
 
 		// Now accounts for distance as well
 		// Shrink the transformed point depending on its distance from the camera 
@@ -79,9 +58,9 @@ export function projectVector4(points, camera, scene, {destinationPoints=[], cal
 
 		// Why do I need to negate the coordinated in order for them to face the right direction?
 		const pointProjected = new VectorProjected3(
-			-translated.dot(transformMatrix[0]),
-			-translated.dot(transformMatrix[1]),
-			-translated.dot(transformMatrix[2]),
+			-translated.dot(projectionMatrix[0]),
+			-translated.dot(projectionMatrix[1]),
+			-translated.dot(projectionMatrix[2]),
 			distance,
 		).multiplyScalar(distanceDistortionFac);
 

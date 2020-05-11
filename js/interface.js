@@ -3,11 +3,13 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
-import {scene, Object4, Camera4, Mesh4} from "./4d/objects.js";
+import {Scene4, Object4, Camera4, Mesh4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
+
+export const scene = new Scene4();
 
 export const user = {
 	selectedObjects: [],

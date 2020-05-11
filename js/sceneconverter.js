@@ -152,7 +152,7 @@ class Mesh4Rep {
 	updateFacesProjection(camera) {
 		this.vertsToHide = [];
 		
-		projectVector4(this.object.transformedVerts(), camera, this.converter.scene4, {
+		projectVector4(this.object.transformedVerts(), camera, {
 			destinationPoints: this.mesh3.geometry.vertices,
 			
 			callback: (vert, i) => {
