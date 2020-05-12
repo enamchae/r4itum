@@ -6,35 +6,35 @@
  *  - [Three.JS](https://threejs.org/) for doing all the 3D to 2D heavylifting for me. :)
  */
 
-import * as Three from "../_libraries/three.module.js";
+import {Vector4} from "./vector.js";
 
-export class VectorProjected3 extends Three.Vector3 {
-	distance;
+// export class VectorProjected3 extends Three.Vector3 {
+// 	distance;
 
-	constructor(x, y, z, distance) {
-		super(x, y, z);
+// 	constructor(x, y, z, distance) {
+// 		super(x, y, z);
 
-		this.distance = distance;
-	}
+// 		this.distance = distance;
+// 	}
 
-	/**
-	 * 
-	 * @param {VectorProjected3} point 
-	 */
-	copy(point) {
-		super.copy(point);
-		this.distance = point.distance;
-	}
-}
+// 	/**
+// 	 * 
+// 	 * @param {VectorProjected3} point 
+// 	 */
+// 	copy(point) {
+// 		super.copy(point);
+// 		this.distance = point.distance;
+// 	}
+// }
 
 /**
  * 
  * @param {Vector4[]} points 
  * @param {Camera4} camera 
  * @param {object} [options] 
- * @param {VectorProjected3[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
+ * @param {Vector4[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
  * @param {function} [options.callback]
- * @returns {VectorProjected3[]}
+ * @returns {Vector4[]}
  */
 export function projectVector4(points, camera, {destinationPoints=[], callback}={}) {
 	const projectionMatrix = camera.projectionMatrix();
@@ -43,8 +43,7 @@ export function projectVector4(points, camera, {destinationPoints=[], callback}=
 	const distortionFac = camera.usingPerspective
 			? 1 / Math.tan(camera.fovAngle / 2)
 			: 1 / camera.radius;
-
-	// TODO clipping
+	
 	for (let i = 0; i < points.length; i++) {
 		const point = points[i];
 
@@ -57,12 +56,12 @@ export function projectVector4(points, camera, {destinationPoints=[], callback}=
 		const distanceDistortionFac = distortionFac / distance;
 
 		// Why do I need to negate the coordinated in order for them to face the right direction?
-		const pointProjected = new VectorProjected3(
-			-translated.dot(projectionMatrix[0]),
-			-translated.dot(projectionMatrix[1]),
-			-translated.dot(projectionMatrix[2]),
+		const pointProjected = new Vector4(
+			-translated.dot(projectionMatrix[0]) * distanceDistortionFac,
+			-translated.dot(projectionMatrix[1]) * distanceDistortionFac,
+			-translated.dot(projectionMatrix[2]) * distanceDistortionFac,
 			distance,
-		).multiplyScalar(distanceDistortionFac);
+		);
 
 		// Reassign coordinates
 		if (destinationPoints[i]) {

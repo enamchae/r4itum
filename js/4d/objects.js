@@ -107,15 +107,15 @@ export class Object4 {
         priv.set(this, {});
     }
     
-    localForward() {
+    get localForward() {
         return basis.forward.multRotor(this.rot);
     }
     
-    localUp() {
+    get localUp() {
         return basis.up.multRotor(this.rot);
     }
     
-    localOver() {
+    get localOver() {
         return basis.over.multRotor(this.rot);
 	}
 	
@@ -123,13 +123,12 @@ export class Object4 {
 	 * @returns Vector4[]
 	 */
 	projectionMatrix() {
-		// The camera is facing from `cameraOrigin` to `cameraForward`
-		const cameraOrigin = this.pos;
-		const cameraForward = this.localForward();
+		// The camera is facing from `this.pos` to `this.localForward()`
+		const cameraForward = this.localForward;
 	
 		// Used to maintain the orientation of the camera
-		const cameraUp = this.localUp();
-		const cameraOver = this.localOver();
+		const cameraUp = this.localUp;
+		const cameraOver = this.localOver;
 	
 		// console.log(cameraForward, cameraUp, cameraOver);
 	
@@ -139,8 +138,8 @@ export class Object4 {
 		// original point and the nth column of the matrix ([0] :: X, [1] :: Y, etc)
 		const transformMatrix = [];
 	
-		// TODO understand the methodology behind constructing this matrix :D
-		transformMatrix[3] = cameraForward.subtract(cameraOrigin).normalize();
+		// What methodology was used to construct this matrix? :D
+		transformMatrix[3] = cameraForward.normalize();
 		transformMatrix[0] = cameraUp.cross(cameraOver, transformMatrix[3]).normalize();
 		transformMatrix[1] = cameraOver.cross(transformMatrix[3], transformMatrix[0]).normalize();
 		transformMatrix[2] = transformMatrix[3].cross(transformMatrix[0], transformMatrix[1]).normalize();

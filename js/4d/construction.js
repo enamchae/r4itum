@@ -266,7 +266,7 @@ export default {
 
 		for (let i = 0; i < nStrips; i++) {
 			const angle = angleIncrement * i; // Angle around the circle where the points are offset
-			const angleTurn = angle / 2; // Angle by which the pair of points is turned
+			const angleTurn = angle / 2; // Angle by which the pair of points is tilted
 
 			const vertTop = new Vector4(0, width / 2, 0);
 			const vertBottom = new Vector4(0, -width / 2, 0);
@@ -276,6 +276,7 @@ export default {
 
 			verts.push(vertTop.multRotor(rotor).add(offset), vertBottom.multRotor(rotor).add(offset));
 
+			// Make triangle strip
 			if (i === nStrips - 1) {
 				faces.push(
 					[2 * i, 2 * i + 1, 0],

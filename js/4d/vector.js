@@ -13,13 +13,18 @@ class Polymultivector extends Array {
 	constructor(elements, length=elements.length) {
 		super(length || 0);
 
-		this.set(...elements);
+		this.copy(elements);
 
 		// Prevent new elements from being added
 		Object.seal(this);
 	}
 
 	set(...elements) {
+		this.copy(elements);
+		return this;
+	}
+
+	copy(elements) {
 		// Fill array with given elements or 0s if missing/falsy
 		let i = 0;
 		while (i < this.length) {

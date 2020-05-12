@@ -7,8 +7,6 @@
 import "./ce.js";
 import {qs} from "./util.js";
 
-import * as Three from "./_libraries/three.module.js";
-
 const main = qs("main");
 
 import construct from "./4d/construction.js";
@@ -17,6 +15,6 @@ import {Rotor4} from "./4d/vector.js";
 
 import {scene} from "./interface.js";
 
-const mesh = new Mesh4(construct.latlongsphere(25, 50));
-// mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 1], Math.PI / 2);
+const mesh = new Mesh4(construct.pentachoron());
+// mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 0], Math.PI / 2);
 scene.addObject(mesh);

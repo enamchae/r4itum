@@ -3,7 +3,7 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
-import {Scene4, Object4, Camera4, Mesh4} from "./4d/objects.js";
+import {Scene4, Camera4, Mesh4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
@@ -221,9 +221,26 @@ class Viewport extends PanelWrapper {
 		);
 		raycaster.setFromCamera(mouse, this.camera3);
 			
-		const objects = raycaster.intersectObjects([...this.converter.objectClickboxes.keys()]);
-		// Get the 4D object represented by the 3D object containing the closest clicked face
-		const rep = this.converter.objectClickboxes.get(objects[0]?.object);
+		const intersections = raycaster.intersectObjects([...this.converter.objectClickboxes.keys()]);
+
+		let rep = null;
+		objectsLoop:
+		for (const intersection of intersections) {
+			// Get the 4D object's 3D representative from the intersected face
+			const repPotential = this.converter.objectClickboxes.get(intersection?.object);
+
+			const positions = repPotential.mesh3.geometry.getAttribute("position").array;
+			for (const index of ["a", "b", "c"]) {
+				// If any of the vertices is behind the camera, reject this face
+				if (positions[4 * intersection.face[index] + 3] <= 0) {
+					continue objectsLoop;
+				}
+			}
+
+			// If all the vertices are in front, set the rep to be selected as this rep
+			rep = repPotential;
+			break;
+		}
 
 		console.time("select object");
 		if (rep) {

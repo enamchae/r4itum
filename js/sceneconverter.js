@@ -29,6 +29,77 @@ const transparentMat = new Three.MeshBasicMaterial({transparent: true, opacity: 
 const vertGeometry = new Three.SphereBufferGeometry(.03, 4, 2);
 const vertMat = new Three.MeshLambertMaterial({color: 0xFFCC44});
 
+class GeometryProjected {
+	static vertShader = `
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+attribute mediump vec4 position;
+
+varying float faceShouldBeClipped;
+varying vec4 vPosition;
+
+void main() {
+	faceShouldBeClipped = position.w <= 0. ? 1. : 0.;
+	vPosition = position;
+
+	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
+}`;
+
+	static fragShader = `
+varying lowp float faceShouldBeClipped;
+varying mediump vec4 vPosition;
+
+lowp float logistic(lowp float x) {
+	return 2. / (1. + exp(-x * .2)) - 1.;
+}
+
+void main() {
+	// \`faceShouldBeClipped\` is interpolated for the triangle; as long as one vertex is clipped, this will be true
+	if (faceShouldBeClipped > 0.) {
+		// discard might have performance issues (though \`depthWrite: false\` might be doing that anyway)
+		discard;
+	}
+
+	// temp coloring based on distance from camera
+	gl_FragColor = vec4(1. - logistic(vPosition.w), 1, logistic(vPosition.w), .25);
+}`;
+
+	static material() {
+		return new Three.RawShaderMaterial({
+			vertexShader: GeometryProjected.vertShader,
+			fragmentShader: GeometryProjected.fragShader,
+
+			transparent: true,
+			side: Three.DoubleSide,
+			depthWrite: false,
+		});
+	}
+
+	geometry;
+
+	verts = [];
+
+	constructor(geometry) {
+		this.geometry = geometry;
+	}
+
+	asBufferGeometry() {
+		const bufferGeometry = new Three.BufferGeometry();
+
+		// Copy all vertices
+		const positions = [];
+		for (const face of this.geometry.faces()) {
+			positions.push(...face.flatMap(index => this.verts[index]));
+		}
+
+		const attribute = new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
+		bufferGeometry.setAttribute("position", attribute);
+
+		return bufferGeometry;
+	}
+}
+
 export class SceneConverter {
 	static ViewportStates = Object.freeze({
 		DEFAULT: 0,
@@ -80,6 +151,8 @@ class Mesh4Rep {
 	object;
 	converter;
 
+	geometryProjected;
+
 	mesh3;
 	wires = [];
 	verts = [];
@@ -89,6 +162,8 @@ class Mesh4Rep {
 	constructor(object, converter) {
 		this.object = object;
 		this.converter = converter;
+
+		this.geometryProjected = new GeometryProjected(object.geometry);
 	}
 
 	/**
@@ -101,9 +176,7 @@ class Mesh4Rep {
 			this.verts.push(sphere);
 		}
 
-		this.mesh3 = new Three.Mesh(new Three.Geometry(), [meshMats[SceneConverter.ViewportStates.DEFAULT].mesh, transparentMat]);
-		// Setup faces
-		this.mesh3.geometry.faces = this.object.geometry.faces().map(indexList => new Three.Face3(...indexList, 0));
+		this.mesh3 = new Three.Mesh();
 		this.converter.objectClickboxes.set(this.mesh3, this);
 		
 		return this;
@@ -124,7 +197,6 @@ class Mesh4Rep {
 		// console.time(" - wireframe");
 		this.updateWireframe();
 		// console.timeEnd(" - wireframe");
-		this.updateClipping();
 
 		return this;
 	}
@@ -133,7 +205,7 @@ class Mesh4Rep {
 	 * Removes the Three mesh used to show this object's faces if there are none to be shown.
 	 */
 	updateFacesPresence() {
-		if (this.mesh3.geometry.faces.length === 0) {
+		if (this.object.geometry.faces().length === 0) {
 			this.converter.scene3.remove(this.mesh3);
 			// scene.remove(this.wireframe3);
 		} else {
@@ -151,20 +223,21 @@ class Mesh4Rep {
 	 */
 	updateFacesProjection(camera) {
 		this.vertsToHide = [];
-		
-		projectVector4(this.object.transformedVerts(), camera, {
-			destinationPoints: this.mesh3.geometry.vertices,
-			
+
+		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera, {
 			callback: (vert, i) => {
 				// TODO ThreeJS throws when the coordinates have Infinity/NaN values (distance was 0 in a perspective projection); handle this
 		
 				// Move each vertex mesh to the new position
 		
 				const sphere = this.verts[i];
+
+				// temp solution
+				const scale = Math.max(0, 1 / vert[3]);
 		
 				this.converter.scene3.add(sphere);
-				sphere.position.copy(vert);
-				sphere.scale.copy(new Three.Vector3(1, 1, 1).divideScalar(vert.distance)); // resizing gives depthcue
+				sphere.position.set(...vert);
+				sphere.scale.copy(new Three.Vector3(scale, scale, scale)); // resizing gives depthcue
 		
 				// Hide faces that are too close to or behind the camera
 				if (vert.distance < .1) {
@@ -173,7 +246,10 @@ class Mesh4Rep {
 			},
 		});
 
-		this.mesh3.geometry.verticesNeedUpdate = true; // Must be marked for update for positions to change
+		this.mesh3.geometry = this.geometryProjected.asBufferGeometry();
+		this.mesh3.material = GeometryProjected.material();
+
+		// this.mesh3.geometry.verticesNeedUpdate = true; // Must be marked for update for positions to change
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
 		
 		return this;
@@ -194,16 +270,26 @@ class Mesh4Rep {
 
 			const edge = this.object.geometry.edges()[i];
 
+			const vert0 = this.geometryProjected.verts[edge[0]];
+			const vert1 = this.geometryProjected.verts[edge[1]];
+
+			// Wire `visible` property doesn't seem to affect the mesh
+
+			// Conditional determines whether either of the vertices is behind the camera
+			const taperFunc = vert0[3] <= 0 || vert1[3] <= 0
+					// Make the wire invisible
+					? () => 0
+					// Gets the stored distance for the endpoints
+					// Since there are only two endpoints for a wire, `p` will be 0 then 1
+					// arbitrary constant
+					: p => .03 / this.geometryProjected.verts[edge[p]][3];
+			
 			// Set wire to current edge
 			// MeshLine is a buffer geometry, so its vertices must be refreshed
 			wire.geometry.setVertices([
-				this.mesh3.geometry.vertices[edge[0]],
-				this.mesh3.geometry.vertices[edge[1]],
-
-				// Gets the stored distance for the endpoints
-				// Since there are only two endpoints for a wire, `p` will be 0 then 1
-				// arbitrary constant
-			], p => .03 / this.mesh3.geometry.vertices[edge[p]].distance);
+				new Three.Vector3(...vert0),
+				new Three.Vector3(...vert1),
+			], taperFunc);
 
 			if (!this.wires[i]) {
 				// Add wire to scene and save it
@@ -218,40 +304,12 @@ class Mesh4Rep {
 		return this;
 	}
 
-	updateClipping() {
-		for (let i = 0; i < this.object.geometry.verts.length; i++) {
-			this.verts[i].visible = true;
-		}
-		for (let i = 0; i < this.object.geometry.edges().length; i++) {
-			this.wires[i].visible = true;
-		}
-		for (const face of this.mesh3.geometry.faces) {
-			face.materialIndex = 0;
-		}
-
-		for (const vertIndex of this.vertsToHide) {
-			this.verts[vertIndex].visible = false;
-
-			const connectedEdges = this.object.geometry.vertsToEdges().get(vertIndex);
-			for (const edgeIndex of connectedEdges) {
-				this.wires[edgeIndex].visible = false;
-			}
-
-			const connectedFaces = this.object.geometry.vertsToFaces().get(vertIndex);
-			for (const faceIndex of connectedFaces) {
-				this.mesh3.geometry.faces[faceIndex].materialIndex = 1;
-			}
-		}
-		this.mesh3.geometry.groupsNeedUpdate = true; // Must be marked for update for materials to change
-
-	}
-
 	/**
 	 * Alters the material of this mesh depending on the viewport state.
 	 * @param {number} viewportState 
 	 */
 	setViewportState(viewportState) {
-		this.mesh3.material = meshMats[viewportState].mesh;
+		// this.mesh3.material = meshMats[viewportState].mesh;
 		// Iterating through these could be avoided by cloning a wire material for this object only and then updating its color
 		for (const wire of this.wires) {
 			wire.material = meshMats[viewportState].wire;

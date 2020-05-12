@@ -308,8 +308,9 @@ MeshLine.prototype.process = function() {
 
   this.setIndex(this._attributes.index)
 
-  this.computeBoundingSphere()
-  this.computeBoundingBox()
+  // commented out; unnecessary
+  // this.computeBoundingSphere()
+  // this.computeBoundingBox()
 }
 
 function memcpy(src, srcOffset, dst, dstOffset, length) {
