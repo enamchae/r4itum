@@ -2,15 +2,22 @@
 	box-sizing: border-box;
 }
 
-body {
+body,
+h1,
+h2,
+h3 {
 	margin: 0;
+	font-weight: 600;
 }
 
 main {
 	width: 100vw;
 	height: 100vh;
 
-	font-family: Overpass, Arial, sans-serif;
+	min-width: 45em;
+	min-height: 40em;
+
+	font-family: var(--font);
 	font-weight: 600;
 	font-size: 12px;
 	line-height: 1;
@@ -20,74 +27,150 @@ main {
 	display: flex;
 	flex-direction: column;
 
-	/* background: #aad2c2; */
+	--font: Overpass, Arial, sans-serif;
+
+	--col-green-1-af: #2a6a52af;
+	--col-green-1-7f: #2a6a527f;
 }
 
 main > workspace- {
 	flex-grow: 1;
 
 	display: grid;
-	grid-template-columns: 360px 1fr 280px;
-	grid-template-rows: 1fr .5fr 1.5fr;
-	gap: .75em;
-	padding: 1.25em;
 }
 
-main > workspace- > panel- {
+main > workspace- > * {
+	grid-row: 1;
+	grid-column: 1;
+}
+
+main > workspace- > viewport- {
+	/* center contents */
 	display: flex;
-	overflow-y: auto;
+	justify-content: center;
+	align-items: center;
 
-	background: #f6fffa;
-	border: 1px solid #4a9272;
+	overflow: hidden;
 }
 
-main > workspace- > panel- > form {
-	flex-grow: 1;
+main > workspace- > overlays- {
+	pointer-events: none;
 
-	display: block;
-	padding: 1em .5em;
+	margin: 1em;
+	position: relative;
+
+	font-size: .85em;
+
+	color: #fff;
+
+	--overlay-box-shadow: 0 5px 8px var(--col-green-1-7f);
 }
 
-main > workspace- > panel- h2 {
-	font-size: 2em;
-	font-weight: 800;
-	color: #1a4a42;
-
-	margin: 0;
+main > workspace- > overlays- .inactive {
+	opacity: .6;
 }
 
-main > workspace- > panel- h3 {
-	font-size: 1.5em;
-	font-weight: 800;
-	color: #2a6a52;
-
-	margin: 0;
+main > workspace- > overlays- ::selection {
+	background: #ffffff3f;
 }
 
-main > workspace- > panel-[name="object-list"] {
-	grid-column: 1;
-	grid-row: 1 / 3;
+main > workspace- > overlays- > * {
+	position: absolute;
+
+	pointer-events: initial;
 }
 
-main > workspace- > panel-[name="object-properties"] {
-	grid-column: 1;
-	grid-row: 3;
+main > workspace- > overlays- > toolbar- {
+	bottom: 0;
+	right: 0;
+
+	display: flex;
+	flex-direction: row-reverse;
 }
 
-main > workspace- > panel-[name="world-properties"] {
-	grid-column: 3;
-	grid-row: 2 / 4;
+main > workspace- > overlays- > toolbar- > tool-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	width: 2em;
+	height: 4em;
+
+	border-radius: .5em;
+
+	background: var(--col-green-1-af);
+	box-shadow: var(--overlay-box-shadow);
 }
 
-main > workspace- > panel-[name="viewport"] {
+main > workspace- > overlays- > toolbar- > tool-button + * {
+	margin: 1em;
+}
+
+main > workspace- > overlays- > .panel {
+	right: 0;
+
+	display: flex;
+	flex-direction: column;
+	max-width: 260px;
+	overflow: auto;
+
+	border-radius: 1em;
+
+	background: var(--col-green-1-af);
+	box-shadow: var(--overlay-box-shadow);
+}
+
+main > workspace- > overlays- > .panel h2,
+main > workspace- > overlays- > .panel h3 {
+	cursor: default;
+
+	letter-spacing: .1em;
+}
+
+main > workspace- > overlays- > .panel > *:not(:empty) {
+	padding: .5em 1em;
+}
+
+main > workspace- > overlays- > .panel > h2 {
+	background: var(--col-green-1-af);
+}
+
+main > workspace- > overlays- > .panel > .panel-content {
+	max-height: 300px;
+	overflow: auto;
+}
+
+main > workspace- > overlays- > .panel > .panel-content h3 {
 	padding: 0;
-	grid-column: 2;
-	grid-row: 1 / 4;
+
+	margin-top: .5em;
+}
+
+main > workspace- > overlays- > .panel > .panel-content form {
+	display: flex;
+	width: 100%;
+}
+
+main > workspace- > overlays- > .panel > .panel-content form > input {
+	width: inherit; /* Inputs automatically have a fixed size */
+}
+
+main > workspace- > overlays- > .panel > .panel-content form > input:after {
+	content: attr(data-label);
+}
+
+main > workspace- > overlays- > .panel > .panel-content input {
+	border: 0;
+
+	text-align: center;
+	font-family: var(--font);
+	color: inherit;
+
+	background: #176d4caf;
 }
 
 main > menu-bar {
 	height: 3em;
-	margin-top: 1em;
 
 	background: #668b8f;
 }

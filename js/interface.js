@@ -21,8 +21,8 @@ export const user = {
 	replaceSelection(...objects) {
 		// Indicate that all current selections are unselected
 		for (const object of this.selectedObjects) {
-			for (const {wrapper} of Panel.panels.get(Panel.Types.VIEWPORT)) {
-				const rep = wrapper.converter.objectReps.get(object);
+			for (const viewport of Viewport.members) {
+				const rep = viewport.converter.objectReps.get(object);
 				rep.setViewportState(SceneConverter.ViewportStates.DEFAULT);
 			}
 		}
@@ -32,15 +32,15 @@ export const user = {
 
 		// Indicate that all current selections are selected
 		for (let i = 0; i < objects.length; i++) {
-			for (const {wrapper} of Panel.panels.get(Panel.Types.VIEWPORT)) {
-				const rep = wrapper.converter.objectReps.get(objects[i]);
+			for (const viewport of Viewport.members) {
+				const rep = viewport.converter.objectReps.get(objects[i]);
 				rep.setViewportState(i === 0 ? SceneConverter.ViewportStates.SELECTED_PRIMARY : SceneConverter.ViewportStates.SELECTED);
 			}
 		}
 
 		// Update object info panels
-		for (const {wrapper} of Panel.panels.get(Panel.Types.OBJECT_PROPERTIES)) {
-			wrapper.setTargetObject(this.selectedObjectPrimary);
+		for (const panel of ObjectPropertiesControl.members) {
+			panel.setTargetObject(this.selectedObjectPrimary);
 		}
 	},
 };
@@ -48,92 +48,10 @@ export const user = {
 
 // Classes
 
-export class Panel extends HTMLElement {
-	/**
-	 * Set of all active viewport panels, by their type.
-	 * @type Map<string, Set<Panel>>
-	 */
-	static panels = new Map();
-	/**
-	 * The panel types and the `name` attribute values that refer to them.
-	 * @enum
-	 */
-	static Types = Object.freeze({
-		VIEWPORT: "viewport",
-		OBJECT_PROPERTIES: "object-properties",
-	});
-
-	wrapper = null;
-
-	/**
-	 * The panel type this panel had the previous time it was refreshed.
-	 * @type string
-	 */
-	typeLastRefreshed = null;
-	
-	connectedCallback() {
-		this.refreshType();
-	}
-
-	disconnectedCallback() {
-		Panel.viewportPanels.delete(this);
-	}
-
-	get type() {
-		return this.getAttribute("name");
-	}
-
-	get parentSetLastRefreshed() {
-		return Panel.panels.get(this.typeLastRefreshed);
-	}
-
-	refreshType() {
-		// Type did not change
-		if (this.type === this.typeLastRefreshed) return;
-
-		declade(this); // Clear this panel
-		this.wrapper = null; // Remove the wrapper
-
-		// Remove the panel from the set it is currently in
-		this.parentSetLastRefreshed?.delete(this);
-
-		switch (this.type) {
-			case Panel.Types.VIEWPORT: {
-				this.wrapper = new Viewport(this);
-				break;
-			}
-			
-			case Panel.Types.OBJECT_PROPERTIES: {
-				this.wrapper = new ObjectPropertiesControl(this);
-				break;
-			}
-
-		}
-
-		this.typeLastRefreshed = this.type;
-
-		// Add this to the set of panels of its type
-		let set = Panel.panels.get(this.type);
-		if (!set) {
-			set = new Set();
-			Panel.panels.set(this.type, set);
-		}
-		set.add(this);
-
-		return this;
-	}
-}
-
-class PanelWrapper {
-	panelElement;
-	
-	constructor(panelElement) {
-		this.panelElement = panelElement;
-	}
-}
-
 // Multiple viewports currently not supported
-class Viewport extends PanelWrapper {
+export class Viewport extends HTMLElement {
+	static members = new Set();
+
 	static renderQueue = new Set();
 	static allNeedRerender = false;
 
@@ -145,10 +63,10 @@ class Viewport extends PanelWrapper {
 
 	converter = new SceneConverter(scene);
 	
-	renderer = new Three.WebGLRenderer({alpha: true, antialias: true});
+	renderer = new Three.WebGLRenderer({alpha: true/* , antialias: true */});
 
-	constructor(panelElement) {
-		super(panelElement);
+	constructor() {
+		super();
 
 		// Scene setup
 		// this.renderer.setClearColor(0xEEEEFF, 1);
@@ -157,8 +75,6 @@ class Viewport extends PanelWrapper {
 		this.camera3 = new Three.PerspectiveCamera(90, 1, .01, 1000);
 		this.camera3.position.set(2, 3, 2);
 		this.camera3.lookAt(0, 0, 0);
-
-		this.refreshSize();
 
 		const light = new Three.SpotLight(0xAC8C6C, 30);
 		light.position.z = 10;
@@ -172,12 +88,24 @@ class Viewport extends PanelWrapper {
 			new Rotor4(1, 0, 0, 0, 0, 0, 0, 0).normalize(),
 		);
 
+	}
+
+	connectedCallback() {
 		// Connect renderer canvas, then attach events
 
-		panelElement.appendChild(this.renderer.domElement);
+		this.refreshSize();
+
+		this.attachShadow({mode: "open"});
+		this.shadowRoot.appendChild(this.renderer.domElement);
 		Viewport.renderQueue.add(this);
 
 		this.attachControls();
+
+		Viewport.members.add(this);
+	}
+
+	disconnectedCallback() {
+		Viewport.members.delete(this);
 	}
 
 	attachControls() {
@@ -189,9 +117,9 @@ class Viewport extends PanelWrapper {
 	 * Resets the size of the renderer canvas and the camera's aspect ratio.
 	 */
 	refreshSize() {
-		this.renderer.setSize(this.panelElement.clientWidth, this.panelElement.clientHeight);
+		this.renderer.setSize(this.clientWidth, this.clientHeight);
 		
-		this.camera3.aspect = this.panelElement.clientWidth / this.panelElement.clientHeight;
+		this.camera3.aspect = this.clientWidth / this.clientHeight;
 		this.camera3.updateProjectionMatrix(); // Refresh camera transform so it updates in render
 
 		return this;
@@ -256,15 +184,29 @@ class Viewport extends PanelWrapper {
 	}
 }
 
-class ObjectPropertiesControl extends PanelWrapper {
+export class ObjectPropertiesControl extends HTMLElement {
+	static members = new Set();
+
 	textContainer;
 
-	constructor(panelElement) {
-		super(panelElement);
+	constructor() {
+		super();
+
+		this.classList.add("inactive");
+	}
+
+	connectedCallback() {
+		createElement("h2", {
+			textContent: "Object properties",
+			parent: this,
+		});
 
 		this.textContainer = createElement("form", {
-			parent: panelElement,
+			classes: ["panel-content"],
+			parent: this,
 		});
+
+		ObjectPropertiesControl.members.add(this);
 	}
 
 	static vectorLabels = ["X", "Y", "Z", "W"];
@@ -300,70 +242,6 @@ class ObjectPropertiesControl extends PanelWrapper {
 			}
 		}
 
-		// Set refresh/onchange callbacks
- 		/* if (pmvector instanceof Vector4) {
-			refresh = () => {
-				for (const [input, index] of inputIndexes) {
-					input.value = pmvector[index];
-				}
-			};
-
-			onchange = input => {
-				const value = parseFloat(input.value);
-
-				if (!isNaN(value)) {
-					const index = inputIndexes.get(input);
-					pmvector[index] = value;
-					Viewport.allNeedRerender = true;
-				}
-
-				refresh();
-			};
-
-			inputLabels = this.vectorLabels;
-
- 		} else if (pmvector instanceof Rotor4) {
-			refresh = () => {
-				const angle = pmvector.angle;
-				const plane = pmvector.plane;
-
-				for (const [input, index] of inputIndexes) {
-					if (index === 0) {
-						input.value = angle * 180 / Math.PI;
-					} else {
-						input.value = plane[index - 1];
-					}
-				}
-			};
-
-			onchange = input => {
-				const value = parseFloat(input.value);
-
-				if (!isNaN(value)) {
-					const plane = [];
-					let angle;
-
-					for (const input of inputIndexes.keys()) {
-						if (inputIndexes.get(input) === 0) {
-							angle = input.angle * Math.PI / 180;
-						} else {
-							plane.push(input.value);
-						}
-					}
-
-					pmvector.set(Rotor4.planeAngle(plane, angle));
-					Viewport.allNeedRerender = true;
-				}
-
-				refresh();
-			};
-
-			inputLabels = this.rotorLabels;
-
-		} else {
-			throw new TypeError("Polymultivector type not supported");
-		} */
-
 		let inputLabels;
 		if (pmvector instanceof Vector4) {
 			inputLabels = ObjectPropertiesControl.vectorLabels;
@@ -375,17 +253,11 @@ class ObjectPropertiesControl extends PanelWrapper {
 		for (let i = 0; i < pmvector.length; i++) {
 			inputIndexes.set(createElement("input", {
 				properties: {type: "text"},
+				attributes: [
+					["data-label", inputLabels[i]],
+				],
 				parent: form,
 			}), i);
-
-			createElement("label", {
-				textContent: inputLabels[i],
-				parent: form,
-			});
-
-			createElement("br", {
-				parent: form,
-			});
 		}
 
 		refresh();
@@ -395,6 +267,12 @@ class ObjectPropertiesControl extends PanelWrapper {
 
 	setTargetObject(object) {
 		declade(this.textContainer);
+
+		if (!object) {
+			this.classList.add("inactive");
+			return;
+		}
+		this.classList.remove("inactive");
 
 		if (object instanceof Mesh4) {
 			createElement("h3", {
@@ -426,17 +304,18 @@ const raycaster = new Three.Raycaster();
 
 // Refresh the viewport panels whenever the window resizes
 addEventListener("resize", () => {
-	for (const {wrapper} of Panel.panels.get(Panel.Types.VIEWPORT)) {
-		wrapper.refreshSize();
-		Viewport.renderQueue.add(wrapper);
+	for (const viewport of Viewport.members) {
+		viewport.refreshSize();
 	}
+
+	Viewport.allNeedRerender = true;
 });
 
 // Constantly check if any of the viewports need to be updated
 function viewportRerenderLoop() {
 	if (Viewport.allNeedRerender) {
-		for (const {wrapper} of Panel.panels.get(Panel.Types.VIEWPORT)) {
-			wrapper.render();
+		for (const viewport of Viewport.members) {
+			viewport.render();
 		}
 
 		Viewport.renderQueue.clear();
