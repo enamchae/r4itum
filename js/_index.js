@@ -11,12 +11,16 @@ const main = qs("main");
 
 import construct from "./4d/construction.js";
 import {Mesh4} from "./4d/objects.js";
-import {Rotor4} from "./4d/vector.js";
+import {Vector4, Rotor4} from "./4d/vector.js";
 
 import {scene} from "./interface.js";
 
 const meshes = [
 	new Mesh4(construct.octachoron()),
+	new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
+	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, -2, 2, 0)),
+	new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, 2, 2, 0)),
+	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
 	// new Mesh4(construct.mobiusStrip(12)),
 ];
 // mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 0], Math.PI / 2);

@@ -106,6 +106,21 @@ export class Object4 {
         
         priv.set(this, {});
 	}
+
+	setPos(pos) {
+		this.pos.copy(pos);
+		return this;
+	}
+
+	setRot(rot) {
+		this.rot.copy(rot);
+		return this;
+	}
+
+	setScl(scl) {
+		this.scl.copy(scl);
+		return this;
+	}
     
     localForward() {
         return this.localVector(basis.forward);
@@ -152,7 +167,8 @@ export class Object4 {
 	}
 
 	translateForward(distance) {
-		this.pos = this.pos.add(this.localForward().multScalar(distance));
+		this.pos.copy(this.pos.add(this.localForward().multScalar(distance)));
+		return this;
 	}
     
     get scene() {
