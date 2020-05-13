@@ -105,18 +105,22 @@ export class Object4 {
         this.scl = scl;
         
         priv.set(this, {});
+	}
+    
+    localForward() {
+        return this.localVector(basis.forward);
     }
     
-    get localForward() {
-        return basis.forward.multRotor(this.rot);
+    localUp() {
+        return this.localVector(basis.up);
     }
     
-    get localUp() {
-        return basis.up.multRotor(this.rot);
-    }
-    
-    get localOver() {
-        return basis.over.multRotor(this.rot);
+    localOver() {
+        return this.localVector(basis.over);
+	}
+
+	localVector(vector) {
+		return this.rot.rotateVector(vector);
 	}
 	
 	/**
@@ -124,11 +128,11 @@ export class Object4 {
 	 */
 	projectionMatrix() {
 		// The camera is facing from `this.pos` to `this.localForward()`
-		const cameraForward = this.localForward;
+		const cameraForward = this.localForward();
 	
 		// Used to maintain the orientation of the camera
-		const cameraUp = this.localUp;
-		const cameraOver = this.localOver;
+		const cameraUp = this.localUp();
+		const cameraOver = this.localOver();
 	
 		// console.log(cameraForward, cameraUp, cameraOver);
 	
@@ -148,7 +152,7 @@ export class Object4 {
 	}
 
 	translateForward(distance) {
-		this.pos = this.pos.add(basis.forward.multRotor(this.rot).multScalar(distance));
+		this.pos = this.pos.add(this.localForward().multScalar(distance));
 	}
     
     get scene() {

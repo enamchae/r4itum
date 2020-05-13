@@ -63,7 +63,7 @@ export class Viewport extends HTMLElement {
 
 	converter = new SceneConverter(scene);
 	
-	renderer = new Three.WebGLRenderer({alpha: true/* , antialias: true */});
+	renderer = new Three.WebGLRenderer({alpha: true, antialias: true});
 
 	constructor() {
 		super();
@@ -73,7 +73,7 @@ export class Viewport extends HTMLElement {
 		this.renderer.physicallyCorrectLights = true;
 
 		this.camera3 = new Three.PerspectiveCamera(90, 1, .01, 1000);
-		this.camera3.position.set(2, 3, 2);
+		this.camera3.position.set(0, 0, 3);
 		this.camera3.lookAt(0, 0, 0);
 
 		const light = new Three.SpotLight(0xAC8C6C, 30);

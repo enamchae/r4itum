@@ -17,7 +17,7 @@ import {scene} from "./interface.js";
 
 const meshes = [
 	new Mesh4(construct.octachoron()),
-	new Mesh4(construct.mobiusStrip(12)),
+	// new Mesh4(construct.mobiusStrip(12)),
 ];
 // mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 0], Math.PI / 2);
 scene.addObject(...meshes);

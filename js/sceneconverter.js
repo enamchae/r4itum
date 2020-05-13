@@ -113,8 +113,6 @@ export class SceneConverter {
 	objectReps = new WeakMap();
 	objectClickboxes = new Map();
 
-	viewportState = SceneConverter.ViewportStates.DEFAULT;
-
 	constructor(scene4) {
 		this.scene4 = scene4;
 	}
@@ -152,6 +150,8 @@ class Mesh4Rep {
 	mesh3;
 	wires = [];
 	verts = [];
+
+	viewportState = SceneConverter.ViewportStates.DEFAULT;
 
 	constructor(object, converter) {
 		this.object = object;

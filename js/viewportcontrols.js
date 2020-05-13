@@ -30,8 +30,6 @@ export function attachViewportControls(viewport) {
 		});
 	}
 
-	const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
-
 	// Scroll-click to turn
 
 	{
@@ -39,21 +37,30 @@ export function attachViewportControls(viewport) {
 		element.addEventListener("mousedown", event => {
 			if (event.button !== 1 || shiftPressed) return;
 
+			element.requestPointerLock();
+
 			holding = true;
 		});
 
+		const planeXW = [0, 0, 1, 0, 0, 0];
+		const planeZW = [0, 0, 0, 0, 0, 1];
 		element.addEventListener("mousemove", event => {
 			if (!holding) return;
-
-			element.requestPointerLock();
 
 			const angleX = event.movementX / (2 * Math.PI) * movementSensitivity;
 			const angleY = event.movementY / (2 * Math.PI) * movementSensitivity;
 
-			// TODO maintain up vector (screen tilts when rotating)
-			viewport.camera3.quaternion
-					.multiply(new Three.Quaternion(0, -Math.sin(angleX), 0, Math.cos(angleX))) // Rotate along XZ plane (horizontal)
-					.multiply(new Three.Quaternion(-Math.sin(angleY), 0, 0, Math.cos(angleY))); // Rotate along ZY plane (vertical)
+			if (altPressed) {
+				viewport.camera.rot = viewport.camera.rot
+						.mult(Rotor4.planeAngle(ctrlPressed ? planeXW : planeZW, angleX)) // Rotate along XW or ZW plane
+						.mult(Rotor4.planeAngle([0, 0, 0, 0, -1, 0], angleY)); // Rotate along WY plane
+			} else {
+				// TODO maintain up vector (screen tilts when rotating)
+				viewport.camera3.quaternion
+						.multiply(new Three.Quaternion(0, -Math.sin(angleX), 0, Math.cos(angleX))) // Rotate along XZ plane (horizontal)
+						.multiply(new Three.Quaternion(-Math.sin(angleY), 0, 0, Math.cos(angleY))); // Rotate along ZY plane (vertical)
+			}
+
 			viewport.queueRender();
 		});
 
@@ -76,17 +83,28 @@ export function attachViewportControls(viewport) {
 			holding = true;
 		});
 
+		const rightVectorX = new Vector4(-1, 0, 0, 0);
+		const rightVectorZ = new Vector4(0, 0, -1, 0);
 		element.addEventListener("mousemove", event => {
 			if (!holding) return;
 
 			element.requestPointerLock();
 
-			const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
-			const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
+			if (altPressed) {
+				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
+				const up = viewport.camera.localUp(); // local up vector
 
-			viewport.camera3.position
-					.add(right.multiplyScalar(event.movementX * movementSensitivity))
-					.add(up.multiplyScalar(event.movementY * movementSensitivity));
+				viewport.camera.pos = viewport.camera.pos
+						.add(right.scale(event.movementX * movementSensitivity))
+						.add(up.scale(event.movementY * movementSensitivity));
+			} else {
+				const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
+				const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
+
+				viewport.camera3.position
+						.add(right.multiplyScalar(event.movementX * movementSensitivity))
+						.add(up.multiplyScalar(event.movementY * movementSensitivity));
+			}
 			viewport.queueRender();
 		});
 
@@ -103,23 +121,26 @@ export function attachViewportControls(viewport) {
 
 	element.addEventListener("wheel", event => {
 		if (altPressed) {
-			viewport.camera.translateForward(event.deltaY * -.002);
+			viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
 
 			viewport.queueRender();
 		} else {
-			viewport.camera3.translateZ(event.deltaY * .002);
+			viewport.camera3.translateZ(event.deltaY * .5 * movementSensitivity);
 			// viewport.camera3.updateProjectionMatrix();
 			viewport.queueRender();
 		}
+
+		event.preventDefault();
 	});
 }
 
-// Maximum distance (px) the mouse can move for a click to be interpreted as a mouse select
-const maxClickSelectDeviation = 4;
+const maxClickSelectDeviation = 4; // Maximum distance (px) the mouse can move for a click to be interpreted as a mouse select
+const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
 
 // Whether the modifier key is being held
 let altPressed = false;
 let shiftPressed = false;
+let ctrlPressed = false;
 
 addEventListener("keydown", event => {
 	// Do not fire repeatedly when holding key
@@ -132,6 +153,9 @@ addEventListener("keydown", event => {
 	if (event.shiftKey) {
 		shiftPressed = true;
 	}
+	if (event.ctrlKey) {
+		ctrlPressed = true;
+	}
 });
 addEventListener("keyup", event => {
 	if (altPressed && !event.altKey) {
@@ -140,5 +164,8 @@ addEventListener("keyup", event => {
 	}
 	if (shiftPressed && !event.shiftKey) {
 		shiftPressed = false;
+	}
+	if (ctrlPressed && !event.ctrlKey) {
+		ctrlPressed = false;
 	}
 });
