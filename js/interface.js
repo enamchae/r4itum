@@ -3,7 +3,7 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
-import {Scene4, Camera4, Mesh4} from "./4d/objects.js";
+import {Scene4, Object4, Camera4, Mesh4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
@@ -12,12 +12,19 @@ import * as Three from "./_libraries/three.module.js";
 export const scene = new Scene4();
 
 export const user = {
+	/**
+	 * @type Object4[]
+	 */
 	selectedObjects: [],
 
 	get selectedObjectPrimary() {
 		return this.selectedObjects[0];
 	},
 
+	/**
+	 * 
+	 * @param  {...Object4} objects 
+	 */
 	replaceSelection(...objects) {
 		// Indicate that all current selections are unselected
 		for (const object of this.selectedObjects) {
@@ -42,6 +49,8 @@ export const user = {
 		for (const panel of ObjectPropertiesControl.members) {
 			panel.setTargetObject(this.selectedObjectPrimary);
 		}
+
+		return this;
 	},
 };
 
@@ -109,7 +118,7 @@ export class Viewport extends HTMLElement {
 	}
 
 	attachControls() {
-		attachViewportControls(this);
+		attachViewportControls(this, user);
 		return this;
 	}
 

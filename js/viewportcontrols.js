@@ -5,8 +5,15 @@
 import {Vector4, Rotor4} from "./4d/vector.js";
 import * as Three from "./_libraries/three.module.js";
 
-export function attachViewportControls(viewport) {
+export function attachViewportControls(viewport, user) {
 	const element = viewport.renderer.domElement;
+
+	// Click to focus
+
+	element.tabIndex = -1; // element must have tabIndex to be focusable
+	element.addEventListener("click", () => {
+		element.focus();
+	});
 
 	// Click to select an object
 
@@ -67,13 +74,14 @@ export function attachViewportControls(viewport) {
 				// Equivalent to above, but for 3D (and with `Rotor4.planeAngle`'s concept expanded here)
 
 				// `movementX` mapped to XZ plane (horizontal), `movementY` mapped to ZY plane (vertical)
-				const plane = new Vector4(-event.movementY, -event.movementX, 0).normalize().scale(Math.sin(angle));
+				const plane = new Vector4(-event.movementY, -event.movementX, 0).normalize().scale(Math.sin(angle / 2));
 
-				viewport.camera3.quaternion.multiply(new Three.Quaternion(plane[0], plane[1], 0, Math.cos(angle)));
+				viewport.camera3.quaternion.multiply(new Three.Quaternion(plane[0], plane[1], plane[2], Math.cos(angle / 2)));
 				
 				// Reset any residual XY rotation
-				viewport.camera3.quaternion.z = 0;
-				viewport.camera3.quaternion.normalize();
+				// temp disabled because it does not have the intended effect when not looking from the front
+				// viewport.camera3.quaternion.z = 0;
+				// viewport.camera3.quaternion.normalize();
 			}
 
 			viewport.queueRender();
@@ -146,6 +154,22 @@ export function attachViewportControls(viewport) {
 		}
 
 		event.preventDefault();
+	});
+
+	// DEL to delete the selected object
+
+	element.addEventListener("keydown", event => {
+		if (event.repeat || event.key !== "Delete" || user.selectedObjects.length === 0) return;
+		
+		for (const object of user.selectedObjects) {
+			if (!object.scene) continue;
+
+			object.scene.removeObject(object);
+			viewport.converter.clearObject(object);
+		}
+		user.replaceSelection();
+
+		viewport.constructor.allNeedRerender = true;
 	});
 }
 

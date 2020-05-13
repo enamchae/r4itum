@@ -58,6 +58,10 @@ export class Scene4 {
         return this;
 	}
 
+	hasObject(object) {
+		return this.objects.has(object) || this.objectsReference.has(object);
+	}
+
 	*objectsAll() {
 		yield* this.objects;
 		yield* this.objectsReference;
@@ -167,7 +171,7 @@ export class Object4 {
 	}
 
 	translateForward(distance) {
-		this.pos.copy(this.pos.add(this.localForward().multScalar(distance)));
+		this.setPos(this.pos.add(this.localForward().multScalar(distance)));
 		return this;
 	}
     

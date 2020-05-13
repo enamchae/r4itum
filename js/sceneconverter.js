@@ -26,8 +26,63 @@ const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
 const vertGeometry = new Three.SphereBufferGeometry(.03, 4, 2);
 const vertMat = new Three.MeshLambertMaterial({color: 0xFFCC44});
 
-class GeometryProjected {
+export class SceneConverter {
+	static ViewportStates = Object.freeze({
+		DEFAULT: 0,
+		SELECTED: 1,
+		SELECTED_PRIMARY: 2,
+	});
+		
+	scene4;
 
+	/**
+	 * The 3D scene that the 4D space is projected onto. It is unique to this converter since the 4D objects
+	 * may be deformed differently depending on the camera transform.
+	 * @type Three.Scene
+	 */
+	scene3 = new Three.Scene();
+
+	objectReps = new WeakMap();
+	objectClickboxes = new Map();
+
+	constructor(scene4) {
+		this.scene4 = scene4;
+	}
+
+	refresh(camera) {
+		for (const object of this.scene4.objectsAll()) {
+			this.refreshObject(object, camera);
+		}
+	}
+
+	refreshObject(object, camera) {
+		let rep = this.objectReps.get(object);
+
+		if (object instanceof Mesh4) {
+			if (!rep) {
+				rep = new Mesh4Rep(object, this);
+				this.objectReps.set(object, rep);
+			}
+
+			rep.updateInThreeScene(camera);
+		}
+
+		return this;
+	}
+
+	clearObject(object) {
+		const rep = this.objectReps.get(object);
+
+		if (rep) {
+			rep.destructThreeMeshes();
+			this.objectClickboxes.delete(rep.mesh3);
+		}
+
+		return this;
+	}
+}
+
+class GeometryProjected {
 	static material(viewportState=SceneConverter.ViewportStates.DEFAULT) {
 		const faceColor = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
 				? "1, 1, .875"
@@ -94,53 +149,6 @@ void main() {
 	}
 }
 
-export class SceneConverter {
-	static ViewportStates = Object.freeze({
-		DEFAULT: 0,
-		SELECTED: 1,
-		SELECTED_PRIMARY: 2,
-	});
-		
-	scene4;
-
-	/**
-	 * The 3D scene that the 4D space is projected onto. It is unique to this converter since the 4D objects
-	 * may be deformed differently depending on the camera transform.
-	 * @type Three.Scene
-	 */
-	scene3 = new Three.Scene();
-
-	objectReps = new WeakMap();
-	objectClickboxes = new Map();
-
-	constructor(scene4) {
-		this.scene4 = scene4;
-	}
-
-	refresh(camera) {
-		for (const object of this.scene4.objectsAll()) {
-			this.refreshObject(object, camera);
-		}
-	}
-
-	refreshObject(object, camera) {
-		let rep = this.objectReps.get(object);
-
-		if (object instanceof Mesh4) {
-			if (!rep) {
-				rep = new Mesh4Rep(object, this);
-				this.objectReps.set(object, rep);
-			}
-
-			if (!rep.mesh3) {
-				rep.initializeThreeMeshes();
-			}
-
-			rep.updateInThreeScene(camera);
-		}
-	}
-}
-
 class Mesh4Rep {
 	object;
 	converter;
@@ -176,11 +184,27 @@ class Mesh4Rep {
 		return this;
 	}
 
+	destructThreeMeshes() {
+		this.converter.scene3.remove(this.mesh3);
+		for (const vert of this.verts) {
+			this.converter.scene3.remove(vert);
+		}
+		for (const wire of this.wires) {
+			this.converter.scene3.remove(wire);
+		}
+
+		return this;
+	}
+
 	/**
 	 * Updates the data of the Three objects that represent this mesh.
 	 * @param {Camera4} camera 
 	 */
 	updateInThreeScene(camera) {
+		if (!this.mesh3) {
+			this.initializeThreeMeshes();
+		}
+
 		// console.log(new Error());
 		// console.time(" - faces presence");
 		this.updateFacesPresence();

@@ -21,6 +21,7 @@ const meshes = [
 	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, -2, 2, 0)),
 	new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, 2, 2, 0)),
 	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
+	new Mesh4(construct.octachoron()).setPos(new Vector4(0, 0, 10, 0)),
 	// new Mesh4(construct.mobiusStrip(12)),
 ];
 // mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 0], Math.PI / 2);
