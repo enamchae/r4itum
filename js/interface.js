@@ -97,7 +97,7 @@ export class Viewport extends HTMLElement {
 
 		this.attachShadow({mode: "open"});
 		this.shadowRoot.appendChild(this.renderer.domElement);
-		Viewport.renderQueue.add(this);
+		this.queueRender();
 
 		this.attachControls();
 
@@ -131,10 +131,15 @@ export class Viewport extends HTMLElement {
 	render() {
 		this.converter.refresh(this.camera);
 
-		console.time("render");
+		// console.time("render");
 		this.renderer.render(this.converter.scene3, this.camera3);
-		console.timeEnd("render");
+		// console.timeEnd("render");
 
+		return this;
+	}
+
+	queueRender() {
+		Viewport.renderQueue.add(this);
 		return this;
 	}
 
@@ -170,15 +175,15 @@ export class Viewport extends HTMLElement {
 			break;
 		}
 
-		console.time("select object");
+		// console.time("select object");
 		if (rep) {
 			user.replaceSelection(rep.object);
 		} else {
 			user.replaceSelection();
 		}
-		console.timeEnd("select object");
+		// console.timeEnd("select object");
 
-		Viewport.renderQueue.add(this);
+		this.queueRender();
 
 		return this;
 	}
@@ -322,9 +327,9 @@ function viewportRerenderLoop() {
 		Viewport.allNeedRerender = false;
 
 	} else {
-		for (const wrapper of Viewport.renderQueue) {
-			wrapper.render();
-			Viewport.renderQueue.delete(wrapper);
+		for (const viewport of Viewport.renderQueue) {
+			viewport.render();
+			Viewport.renderQueue.delete(viewport);
 		}
 	}
 
