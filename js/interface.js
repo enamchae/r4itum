@@ -227,8 +227,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 	static rotorLabels = ["", "XY", "XZ", "XW", "YZ", "YW", "ZW", "XYZW"];
 
 	static createPolymultivectorInputs(pmvector) {
-		// TODO messy & inefficient
-
 		// Map each input to the index it refers to
 		const inputIndexes = new Map();
 

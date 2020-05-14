@@ -236,6 +236,10 @@ export class Rotor4 extends Polymultivector {
 	}
 	probably not necessary until keyframe animation*/
 
+	clone() {
+		return new Rotor4(...this);
+	}
+
 
 	get angle() {
 		return 2 * Math.acos(this[0]);
@@ -392,5 +396,9 @@ export class Vector4 extends Polymultivector {
 			this[2] * vector[2],
 			this[3] * vector[3],
 		);
+	}
+
+	clone() {
+		return new Vector4(...this);
 	}
 }

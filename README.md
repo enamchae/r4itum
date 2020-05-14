@@ -1,5 +1,5 @@
 # ℝ⁴itum
-Limited 4D mesh viewer tool
+Limited 4D mesh viewer
 
 ## Libraries used
 * [Three.JS](https://threejs.org/) (r115)

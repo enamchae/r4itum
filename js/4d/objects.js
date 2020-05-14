@@ -96,13 +96,6 @@ export class Object4 {
 	 */
 	hidden = false;
 
-	/**
-	 * Whether or not this object's properties has been updated and needs to be updated in the render.
-	 * TODO
-	 * @type boolean
-	 */
-	needsUpdate = false;
-
 	constructor(pos=new Vector4(), rot=new Rotor4(), scl=new Vector4(1, 1, 1, 1)) {
 		this.pos = pos;
 		this.rot = rot;

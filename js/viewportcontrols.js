@@ -8,6 +8,14 @@ import * as Three from "./_libraries/three.module.js";
 export function attachViewportControls(viewport, user) {
 	const element = viewport.renderer.domElement;
 
+	// Coords recorder
+	// let x;
+	// let y;
+	// element.addEventListener("mousemove", event => {
+	// 	x = event.clientX;
+	// 	y = event.clientY;
+	// });
+
 	// Click to focus
 
 	element.tabIndex = -1; // element must have tabIndex to be focusable
@@ -21,7 +29,7 @@ export function attachViewportControls(viewport, user) {
 		let mousedownEvent = null; // Keeps track of the current mousedown event. `null` if there was no mousedown on the canvas
 	
 		element.addEventListener("mousedown", event => {
-			if (event.button !== 0) return;
+			if (event.button !== 0 || transforming) return;
 	
 			mousedownEvent = event;
 		});
@@ -57,10 +65,10 @@ export function attachViewportControls(viewport, user) {
 			const angle = Math.sqrt(event.movementX ** 2 + event.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
 
 			if (altPressed) { // Rotate 4D camera
-				// `movementX` mapped to XW (no CTRL) or ZW (CTRL) plane (horizontal), `movementY` mapped to WY plane (vertical)
+				// `movementX` mapped to ZW (no CTRL) or XW (CTRL) plane (horizontal), `movementY` mapped to WY plane (vertical)
 				const plane = ctrlPressed
-						? [0, 0, event.movementX, 0, -event.movementY, 0]
-						: [0, 0, 0, 0, -event.movementY, event.movementX];
+						? [0, 0, 0, 0, -event.movementY, event.movementX]
+						: [0, 0, event.movementX, 0, -event.movementY, 0];
 
 				viewport.camera.setRot(viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle)));
 
@@ -171,6 +179,140 @@ export function attachViewportControls(viewport, user) {
 
 		viewport.constructor.allNeedRerender = true;
 	});
+
+	let transforming = false;
+	// G to move the selected object
+
+	element.addEventListener("keydown", keydownEvent => {
+		const object = user.selectedObjectPrimary;
+		if (keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
+
+		transforming = true;
+		element.requestPointerLock();
+
+		const initialPos = object.pos.clone();
+
+		const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+		const right = new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+
+		let movementX = 0;
+		let movementY = 0;
+		const mousemove = mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+			movementY += mousemoveEvent.movementY;
+
+			object.setPos(initialPos
+					.add(right.clone().scale(movementX * movementSensitivity))
+					.add(up.clone().scale(-movementY * movementSensitivity)));
+			viewport.constructor.allNeedRerender = true;
+		};
+		element.addEventListener("mousemove", mousemove);
+
+		element.addEventListener("mousedown", event => {
+			if (event.button === 2) { // If right-click, reset
+				object.setPos(initialPos);
+				viewport.constructor.allNeedRerender = true;
+			} else if (event.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			element.removeEventListener("mousemove", mousemove);
+		}, {once: true});
+
+		// Don't show context menu on right-click
+		element.addEventListener("contextmenu", preventDefault, {once: true});
+	});
+
+	// R to rotate the selected object
+
+	element.addEventListener("keydown", keydownEvent => {
+		const object = user.selectedObjectPrimary;
+		if (keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
+
+		transforming = true;
+		element.requestPointerLock();
+
+		const initialRot = object.rot.clone();
+
+		// Bivector represents current viewing plane of 3D camera
+		const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion);
+		const right = new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion);
+		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
+
+		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
+		let movementY = 0;
+		const mousemove = mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+			movementY += mousemoveEvent.movementY;
+
+			const angle = Math.atan2(movementY, movementX);
+
+			// TODO take influence from 4D camera rotation
+			object.setRot(initialRot.mult(Rotor4.planeAngle(bivector, angle)));
+			viewport.constructor.allNeedRerender = true;
+		};
+		element.addEventListener("mousemove", mousemove);
+
+		element.addEventListener("mousedown", event => {
+			if (event.button === 2) { // If right-click, reset
+				object.setRot(initialRot);
+				viewport.constructor.allNeedRerender = true;
+			} else if (event.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			element.removeEventListener("mousemove", mousemove);
+		}, {once: true});
+
+		// Don't show context menu on right-click
+		element.addEventListener("contextmenu", preventDefault, {once: true});
+	});
+
+	// S to scale the selected object
+
+	element.addEventListener("keydown", keydownEvent => {
+		const object = user.selectedObjectPrimary;
+		if (keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
+
+		transforming = true;
+		element.requestPointerLock();
+
+		const initialScale = object.scl.clone();
+
+		let movementX = 0;
+		const mousemove = mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+
+			object.setScl(initialScale.clone().scale(movementX * movementSensitivity + 1));
+			viewport.constructor.allNeedRerender = true;
+		};
+		element.addEventListener("mousemove", mousemove);
+
+		element.addEventListener("mousedown", event => {
+			if (event.button === 2) { // If right-click, reset
+				object.setScl(initialScale);
+				viewport.constructor.allNeedRerender = true;
+			} else if (event.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			element.removeEventListener("mousemove", mousemove);
+		}, {once: true});
+
+		// Don't show context menu on right-click
+		element.addEventListener("contextmenu", preventDefault, {once: true});
+	});
+}
+
+// Aux function for event handlers
+function preventDefault(event) {
+	event.preventDefault();
 }
 
 const maxClickSelectDeviation = 4; // Maximum distance (px) the mouse can move for a click to be interpreted as a mouse select
