@@ -49,10 +49,16 @@ export class SceneConverter {
 		this.scene4 = scene4;
 	}
 
+	/**
+	 * 
+	 * @param {Camera4} camera 
+	 */
 	refresh(camera) {
 		for (const object of this.scene4.objectsAll()) {
 			this.refreshObject(object, camera);
 		}
+
+		return this;
 	}
 
 	refreshObject(object, camera) {
@@ -96,17 +102,17 @@ uniform mat4 projectionMatrix;
 attribute mediump vec4 position;
 
 varying float faceShouldBeClipped;
-varying vec4 vPosition;
+// varying vec4 vPosition;
 
 void main() {
 	faceShouldBeClipped = position.w <= 0. ? 1. : 0.;
-	vPosition = position;
+	// vPosition = position;
 
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 }`,
 			fragmentShader: `
 varying lowp float faceShouldBeClipped;
-varying mediump vec4 vPosition;
+// varying mediump vec4 vPosition;
 
 void main() {
 	// \`faceShouldBeClipped\` is interpolated for the triangle; as long as one vertex is clipped, this will be true

@@ -53,6 +53,21 @@ class Polymultivector extends Array {
 		return this;
 	}
 
+	/**
+	 * Determines whether two polymultivectors have the same values.
+	 * @param {Polymultivector} pmvector 
+	 */
+	eq(pmvector) {
+		if (this.length !== pmvector.length) return false;
+
+		for (let i = 0; i < this.length; i++) {
+			if (this[i] !== pmvector[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	get magSq() {
 		// Sum of all components squared
 		let cumsum = 0;

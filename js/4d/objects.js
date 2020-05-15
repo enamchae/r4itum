@@ -196,6 +196,21 @@ export class Camera4 extends Object4 {
 		Object.assign(this, options);
 	}
 
+	clone() {
+		return new Camera4(this.pos, this.rot, this);
+	}
+
+	/**
+	 * Determines whether two cameras have the same settings.
+	 * @param {Camera4} camera 
+	 */
+	eq(camera) {
+		return this.pos.eq(camera.pos)
+				&& this.rot.eq(camera.rot)
+				&& this.usingPerspective === camera.usingPerspective
+				&& this.fovAngle === camera.fovAngle
+				&& this.radius === camera.radius
+	}
 }
 
 export class Mesh4 extends Object4 {
