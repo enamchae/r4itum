@@ -156,7 +156,7 @@ class Mesh4Rep {
 	geometryProjected;
 
 	mesh3;
-	wires = [];
+	wire;
 	verts = [];
 
 	viewportState = SceneConverter.ViewportStates.DEFAULT;
@@ -189,9 +189,7 @@ class Mesh4Rep {
 		for (const vert of this.verts) {
 			this.converter.scene3.remove(vert);
 		}
-		for (const wire of this.wires) {
-			this.converter.scene3.remove(wire);
-		}
+		this.converter.scene3.remove(this.wire);
 
 		return this;
 	}
@@ -274,45 +272,52 @@ class Mesh4Rep {
 
 		// Ignore if there are no facets to be drawn
 		if (this.object.geometry.facets.length === 0) return this;
-
-		for (let i = 0; i < this.object.geometry.edges().length; i++) {
-			// Create new wire if it does not exist
-			const wire = this.wires[i] || new Three.Mesh(new ThreeMeshLine.MeshLine(), meshMats[SceneConverter.ViewportStates.DEFAULT].wire);
-
-			const edge = this.object.geometry.edges()[i];
-
-			const vert0 = this.geometryProjected.verts[edge[0]];
-			const vert1 = this.geometryProjected.verts[edge[1]];
-
-			// Wire `visible` property doesn't seem to affect the mesh
-
-			// Conditional determines whether either of the vertices is behind the camera
-			if (vert0[3] <= 0 || vert1[3] <= 0) {
-				this.converter.scene3.remove(wire);
-				continue;
-			}
-			
-			// Set wire to current edge
-			// MeshLine is a buffer geometry, so its vertices must be refreshed
-			wire.geometry.setVertices([
-				new Three.Vector3(...vert0),
-				new Three.Vector3(...vert1),
-			// Gets the stored distance for the endpoints
-			// Since there are only two endpoints for a wire, `p` will be 0 then 1
-			// arbitrary constant
-			], p => .03 / this.geometryProjected.verts[edge[p]][3]);
-
-			this.converter.scene3.add(wire);
-			
-			if (!this.wires[i]) {
-				// Add wire to scene and save it
-				this.wires.push(wire);
-			} else {
-				// Must be marked for update
-				wire.geometry.attributes.position.needsUpdate = true;
-			}
+		
+		if (this.wire) {
+			this.converter.scene3.remove(this.wire);
 		}
 
+		const edges = this.object.geometry.edges();
+		const verts = this.geometryProjected.verts;
+
+		const wire = new Three.Mesh(new ThreeMeshLine.MeshLine(), meshMats[this.viewportState].wire);
+		const wireVerts = []; // [4n, 4n + 1] are rendered verts, [4n + 2, 4n + 3] are not
+
+		for (let i = 0; i < edges.length; i++) {
+			const edge = edges[i];
+
+			// Check if the edge goes behind the camera; if so, do not add this edge
+			if (verts[edge[0]][3] <= 0 || verts[edge[1]][3] <= 0) {
+				continue;
+			}
+
+			const prevEdgeLast = wireVerts[wireVerts.length - 1];
+			const currEdgeFirst = new Three.Vector4(...verts[edge[0]]); // `Vector4` to store distance information
+			if (wireVerts.length !== 0) { // Only add an intermediary connecting edge if there is a previous edge
+				wireVerts.push(prevEdgeLast, currEdgeFirst);
+			}
+
+			const currEdgeLast = new Three.Vector4(...verts[edge[1]]);
+			wireVerts.push(currEdgeFirst, currEdgeLast);
+		}
+
+		const taperCallback = p => {
+			const i = Math.round(p * (wireVerts.length - 1)); // Converts the percentage into an index
+
+			if (i % 4 === 2 || i % 4 === 3) { // Intermediary connecting edge. Do not render
+				return 0;
+			}
+
+			// Get a width based on the distance
+			// arbitrary constant
+			return .03 / wireVerts[i].w;
+		};
+
+		wire.geometry.setVertices(wireVerts, taperCallback);
+
+		this.wire = wire;
+		this.converter.scene3.add(wire);
+		
 		return this;
 	}
 
@@ -323,11 +328,7 @@ class Mesh4Rep {
 	setViewportState(viewportState) {
 		this.viewportState = viewportState;
 
-		// this.mesh3.material = meshMats[viewportState].mesh;
-		// Iterating through these could be avoided by cloning a wire material for this object only and then updating its color
-		for (const wire of this.wires) {
-			wire.material = meshMats[viewportState].wire;
-		}
+		this.wire.material = meshMats[viewportState].wire;
 		return this;
 	}
 }
