@@ -8,7 +8,7 @@ import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
 
 const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
-	[0x777777],
+	[0x6A8177],
 	[0xFF7700],
 	[0xFFAA00],
 ].map(colors => ({
@@ -24,7 +24,7 @@ const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
 // ].map(color => new Three.LineBasicMaterial({color}));
 
 const vertGeometry = new Three.SphereBufferGeometry(.03, 4, 2);
-const vertMat = new Three.MeshLambertMaterial({color: 0xFFCC44});
+// const vertMat = new Three.MeshLambertMaterial({color: 0xFFCC44});
 
 export class SceneConverter {
 	static ViewportStates = Object.freeze({
@@ -89,8 +89,40 @@ export class SceneConverter {
 }
 
 class GeometryProjected {
-	static material(viewportState=SceneConverter.ViewportStates.DEFAULT) {
-		const faceColor = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
+	geometry;
+
+	verts = [];
+
+	constructor(geometry) {
+		this.geometry = geometry;
+	}
+
+	asBufferGeometry(fromFaces=true) {
+		const bufferGeometry = new Three.BufferGeometry();
+
+		// Copy all vertices
+		const positions = [];
+
+		if (fromFaces) {
+			for (const face of this.geometry.faces()) {
+				positions.push(...face.flatMap(index => this.verts[index]));
+			}
+		} else {
+			for (const vert of this.verts) {
+				positions.push(...vert);
+			}
+		}
+
+		const attribute = new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
+		bufferGeometry.setAttribute("position", attribute);
+
+		return bufferGeometry;
+	}
+}
+
+class Mesh4Rep {
+	static faceMat(viewportState=SceneConverter.ViewportStates.DEFAULT) {
+		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
 				? "1, 1, .875"
 				: "1, 1, 1";
 		
@@ -122,7 +154,7 @@ void main() {
 	}
 
 	// temp coloring based on distance from camera
-	gl_FragColor = vec4(${faceColor}, .25);
+	gl_FragColor = vec4(${color}, .25);
 }`,
 
 			transparent: true,
@@ -131,31 +163,41 @@ void main() {
 		});
 	}
 
-	geometry;
+	static locusMat(viewportState=SceneConverter.ViewportStates.DEFAULT) {
+		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
+				? "1, .65, 0"
+				: ".4, .5, .45";
 
-	verts = [];
+		return new Three.RawShaderMaterial({
+			vertexShader: `
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
 
-	constructor(geometry) {
-		this.geometry = geometry;
-	}
+attribute mediump vec4 position;
 
-	asBufferGeometry() {
-		const bufferGeometry = new Three.BufferGeometry();
+varying lowp float distance;
 
-		// Copy all vertices
-		const positions = [];
-		for (const face of this.geometry.faces()) {
-			positions.push(...face.flatMap(index => this.verts[index]));
-		}
+void main() {
+	mediump vec4 pos3 = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 
-		const attribute = new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
-		bufferGeometry.setAttribute("position", attribute);
+	gl_PointSize = 75. / pos3.z / position.w; // arbitrary constant
+	gl_Position = pos3;
+}`,
+			fragmentShader: `
+varying lowp float distance;
 
-		return bufferGeometry;
-	}
+lowp float sigmoid(lowp float x) {
+	return 2. / (1. + exp(-x)) - 1.;
 }
 
-class Mesh4Rep {
+void main() {
+	// lowp float addend = 1. - sigmoid(distance);
+
+	gl_FragColor = vec4(${color}, 1);
+}`,
+		});
+	}
+
 	object;
 	converter;
 
@@ -163,7 +205,7 @@ class Mesh4Rep {
 
 	mesh3;
 	wire;
-	verts = [];
+	locus;
 
 	viewportState = SceneConverter.ViewportStates.DEFAULT;
 
@@ -178,24 +220,20 @@ class Mesh4Rep {
 	 * Sets up the meshes used to represent this object's vertices
 	 */
 	initializeThreeMeshes() {
-		// Vertex meshes, placed at the polytope's vertices
-		for (let i = 0; i < this.object.geometry.verts.length; i++) {
-			const sphere = new Three.Mesh(vertGeometry, vertMat);
-			this.verts.push(sphere);
-		}
-
 		this.mesh3 = new Three.Mesh();
+		this.locus = new Three.Points();
+
 		this.converter.objectClickboxes.set(this.mesh3, this);
+
+		this.converter.scene3.add(this.locus);
 		
 		return this;
 	}
 
 	destructThreeMeshes() {
 		this.converter.scene3.remove(this.mesh3);
-		for (const vert of this.verts) {
-			this.converter.scene3.remove(vert);
-		}
 		this.converter.scene3.remove(this.wire);
+		this.converter.scene3.remove(this.locus);
 
 		return this;
 	}
@@ -209,7 +247,6 @@ class Mesh4Rep {
 			this.initializeThreeMeshes();
 		}
 
-		// console.log(new Error());
 		// console.time(" - faces presence");
 		this.updateFacesPresence();
 		// console.timeEnd(" - faces presence");
@@ -244,28 +281,14 @@ class Mesh4Rep {
 	 * @param {Camera4} camera 
 	 */
 	updateFacesProjection(camera) {
-		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera, {
-			callback: (vert, i) => {
-				// TODO ThreeJS throws when the coordinates have Infinity/NaN values (distance was 0 in a perspective projection); handle this
-		
-				// Move each vertex mesh to the new position
-		
-				const sphere = this.verts[i];
+		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 
-				// temp solution
-				const scale = Math.max(0, 1 / vert[3]);
-		
-				this.converter.scene3.add(sphere);
-				sphere.position.set(...vert);
-				sphere.scale.copy(new Three.Vector3(scale, scale, scale)); // resizing gives depthcue
-			},
-		});
-
-		this.mesh3.geometry = this.geometryProjected.asBufferGeometry();
-		this.mesh3.material = GeometryProjected.material(this.viewportState);
-
-		// this.mesh3.geometry.verticesNeedUpdate = true; // Must be marked for update for positions to change
+		this.mesh3.geometry = this.geometryProjected.asBufferGeometry(true);
+		this.mesh3.material = Mesh4Rep.faceMat(this.viewportState);
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
+
+		this.locus.geometry = this.geometryProjected.asBufferGeometry(false);
+		this.locus.material = Mesh4Rep.locusMat(this.viewportState);
 		
 		return this;
 	}

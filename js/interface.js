@@ -137,11 +137,17 @@ export class Viewport extends HTMLElement {
 	 * Updates all the 3D representatives of the objects in the scene and renders.
 	 */
 	render() {
+		console.clear();
+		
+		console.time("refresh");
+		console.groupCollapsed();
 		this.converter.refresh(this.camera);
+		console.groupEnd();
+		console.timeEnd("refresh");
 
-		// console.time("render");
+		console.time("render");
 		this.renderer.render(this.converter.scene3, this.camera3);
-		// console.timeEnd("render");
+		console.timeEnd("render");
 
 		return this;
 	}
