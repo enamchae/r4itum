@@ -2,10 +2,11 @@
  * @file Handles definition and handling of custom elements.
  */
 
-import {Viewport, ObjectPropertiesControl} from "./interface.js";
+import {Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
 
 customElements.define("viewport-", Viewport);
 customElements.define("object-properties", ObjectPropertiesControl);
+customElements.define("object-list", ObjectList);
 
 // Semantic elements
 for (const tagName of [

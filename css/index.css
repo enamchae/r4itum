@@ -14,7 +14,7 @@ main {
 	width: 100vw;
 	height: 100vh;
 
-	min-width: 45em;
+	min-width: 50em;
 	min-height: 40em;
 
 	font-family: var(--font);
@@ -29,6 +29,7 @@ main {
 
 	--font: Overpass, Arial, sans-serif;
 
+	--col-green-0-7f: #0f382e7f;
 	--col-green-1-af: #2a6a52af;
 	--col-green-1-7f: #2a6a527f;
 }
@@ -58,8 +59,6 @@ main > workspace- > overlays- {
 
 	margin: 1em;
 	position: relative;
-
-	font-size: .85em;
 
 	color: #fff;
 
@@ -106,18 +105,26 @@ main > workspace- > overlays- > toolbar- > tool-button + * {
 	margin: 1em;
 }
 
-main > workspace- > overlays- > .panel {
+main > workspace- > overlays- > object-properties {
 	left: 0;
+}
 
+main > workspace- > overlays- > object-list {
+	right: 0;
+}
+
+main > workspace- > overlays- > .panel {
 	display: flex;
 	flex-direction: column;
-	max-width: 260px;
+	width: 260px;
 	overflow: auto;
 
 	border-radius: 1em;
 
 	background: var(--col-green-1-af);
 	box-shadow: var(--overlay-box-shadow);
+
+	letter-spacing: .05em;
 }
 
 main > workspace- > overlays- > .panel h2,
@@ -125,6 +132,50 @@ main > workspace- > overlays- > .panel h3 {
 	cursor: default;
 
 	letter-spacing: .1em;
+}
+
+main > workspace- > overlays- > .panel h2 {
+	font-size: 1.25em;
+}
+
+main > workspace- > overlays- > .panel h3 {
+	font-size: 1.125em;
+}
+
+main > workspace- > overlays- > .panel ul.bars {
+	min-height: 2em;
+	padding: 0;
+	margin: 0;
+
+	list-style: none;
+
+	background: var(--col-green-0-7f);
+}
+
+main > workspace- > overlays- > .panel ul.bars > li {
+	display: flex;
+	align-items: center;
+	height: 2.5em;
+	padding: .5em;
+	position: relative;
+
+	background: var(--col-green-1-7f);
+}
+
+main > workspace- > overlays- > .panel ul.bars > li:nth-child(n + 2):before {
+	content: " ";
+	
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: calc(var(--separator-height) * -1 / 2);
+	margin: auto;
+	width: calc(100% - 20px);
+	height: var(--separator-height);
+
+	background: #ffffff7f;
+
+	--separator-height: 2px;
 }
 
 main > workspace- > overlays- > .panel > *:not(:empty) {

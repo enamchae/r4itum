@@ -54,7 +54,6 @@ export const user = {
 	},
 };
 
-
 // Classes
 
 // Multiple viewports currently not supported
@@ -223,9 +222,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 		ObjectPropertiesControl.members.add(this);
 	}
 
-	static vectorLabels = ["X", "Y", "Z", "W"];
-	static rotorLabels = ["", "XY", "XZ", "XW", "YZ", "YW", "ZW", "XYZW"];
-
 	static createPolymultivectorInputs(pmvector) {
 		// Map each input to the index it refers to
 		const inputIndexes = new Map();
@@ -265,9 +261,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 		for (let i = 0; i < pmvector.length; i++) {
 			inputIndexes.set(createElement("input", {
 				properties: {type: "text"},
-				attributes: [
-					["data-label", inputLabels[i]],
-				],
 				parent: form,
 			}), i);
 		}
@@ -305,6 +298,47 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 			this.textContainer.appendChild(ObjectPropertiesControl.createPolymultivectorInputs(object.scl));
 		}
+	}
+}
+
+export class ObjectList extends HTMLElement {
+	static members = new Set();
+
+	textContainer;
+	list;
+
+	constructor() {
+		super();
+	}
+
+	connectedCallback() {
+		createElement("h2", {
+			textContent: "Object list",
+			parent: this,
+		});
+
+		this.textContainer = createElement("div", {
+			classes: ["panel-content"],
+			parent: this,
+		});
+
+		this.list = createElement("ul", {
+			children: [
+				createElement("li", {
+					textContent: "Bleh",
+				}),
+				createElement("li", {
+					textContent: "Bleh",
+				}),
+				createElement("li", {
+					textContent: "Bleh",
+				}),
+			],
+			classes: ["bars"],
+			parent: this.textContainer,
+		});
+
+		ObjectList.members.add(this);
 	}
 }
 
