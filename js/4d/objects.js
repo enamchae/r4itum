@@ -230,6 +230,8 @@ export class Mesh4 extends Object4 {
 	 */
 	geometry;
 
+	tint = 0xFFFFFF;
+
 	constructor(geometry, pos, rot, scl) {
 		super(pos, rot, scl);
 

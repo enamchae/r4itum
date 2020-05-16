@@ -57,8 +57,6 @@ export class SceneConverter {
 	refresh(camera) {
 		const cameraNotUpdated = _(this).lastCamera?.eq(camera);
 
-		console.log(cameraNotUpdated);
-
 		for (const object of this.scene4.objectsAll()) {
 			if (false/* cameraNotUpdated */ /* && object needs update */) continue;
 
@@ -133,10 +131,33 @@ class GeometryProjected {
 }
 
 class Mesh4Rep {
-	static faceMat(viewportState=SceneConverter.ViewportStates.DEFAULT) {
-		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
-				? "1, 1, .875"
-				: "1, 1, 1";
+	object;
+	converter;
+
+	geometryProjected;
+
+	mesh3;
+	wire;
+	locus;
+
+	viewportState = SceneConverter.ViewportStates.DEFAULT;
+
+	constructor(object, converter) {
+		this.object = object;
+		this.converter = converter;
+
+		this.geometryProjected = new GeometryProjected(object.geometry);
+	}
+
+	faceMat() {
+		let color;
+		if ([SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(this.viewportState)) {
+			color = "1, 1, .875";
+		} else {
+			const tint = this.object.tint;
+			// Convert integer color into vector components
+			color = `${(tint >>> 16 & 0xFF) / 0xFF}, ${(tint >>> 8 & 0xFF) / 0xFF}, ${(tint & 0xFF) / 0xFF}`;
+		}
 		
 		return new Three.RawShaderMaterial({
 			vertexShader: `
@@ -165,7 +186,6 @@ void main() {
 		discard;
 	}
 
-	// temp coloring based on distance from camera
 	gl_FragColor = vec4(${color}, .2);
 }`,
 
@@ -175,8 +195,8 @@ void main() {
 		});
 	}
 
-	static locusMat(viewportState=SceneConverter.ViewportStates.DEFAULT) {
-		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(viewportState)
+	locusMat() {
+		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(this.viewportState)
 				? "1, .65, 0"
 				: ".4, .5, .45";
 
@@ -212,24 +232,6 @@ void main() {
 		});
 	}
 
-	object;
-	converter;
-
-	geometryProjected;
-
-	mesh3;
-	wire;
-	locus;
-
-	viewportState = SceneConverter.ViewportStates.DEFAULT;
-
-	constructor(object, converter) {
-		this.object = object;
-		this.converter = converter;
-
-		this.geometryProjected = new GeometryProjected(object.geometry);
-	}
-
 	/**
 	 * Sets up the meshes used to represent this object's vertices
 	 */
@@ -239,7 +241,6 @@ void main() {
 		this.locus = new Three.Points();
 
 		this.converter.objectClickboxes.set(this.mesh3, this);
-		this.converter.scene3.add(this.locus);
 
 		this.setViewportState();
 		
@@ -264,10 +265,10 @@ void main() {
 		}
 
 		console.time(" - presence");
-		this.updateFacesPresence();
+		this.updatePresence();
 		console.timeEnd(" - presence");
 		console.time(" - projection");
-		this.updateFacesProjection(camera);
+		this.updateProjection(camera);
 		console.timeEnd(" - projection");
 		console.time(" - wireframe");
 		this.updateWireframe();
@@ -279,7 +280,9 @@ void main() {
 	/**
 	 * Removes the Three mesh used to show this object's faces if there are none to be shown.
 	 */
-	updateFacesPresence() {
+	updatePresence() {
+		this.converter.scene3.add(this.locus);
+		
 		if (this.object.geometry.faces().length === 0) {
 			this.converter.scene3.remove(this.mesh3);
 		} else {
@@ -294,7 +297,7 @@ void main() {
 	 * its and the camera's transforms. 
 	 * @param {Camera4} camera 
 	 */
-	updateFacesProjection(camera) {
+	updateProjection(camera) {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 
 		this.mesh3.geometry = this.geometryProjected.asBufferGeometry(true);
@@ -369,9 +372,9 @@ void main() {
 	setViewportState(viewportState=this.viewportState) {
 		this.viewportState = viewportState;
 
-		this.mesh3.material = Mesh4Rep.faceMat(this.viewportState);
+		this.mesh3.material = this.faceMat();
 		this.wire.material = meshMats[viewportState].wire;
-		this.locus.material = Mesh4Rep.locusMat(this.viewportState);
+		this.locus.material = this.locusMat();
 		return this;
 	}
 }

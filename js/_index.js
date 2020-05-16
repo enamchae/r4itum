@@ -16,17 +16,13 @@ import {Vector4, Rotor4} from "./4d/vector.js";
 import tiedActions from "./interfaceties.js";
 
 const meshes = [
-	// new Mesh4(construct.icositetrachoron()),
+	new Mesh4(construct.icositetrachoron()),
 	// new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
 	// new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
 	// new Mesh4(construct.hexahedron()),
 	// new Mesh4(construct.tetrahedron()).setPos(new Vector4(-2, -2, 2, 0)),
 	// new Mesh4(construct.tetrahedron()).setPos(new Vector4(2, 2, 2, 0)),
 ];
-
-
-tiedActions.addObject(new Mesh4(construct.pentachoron()));
-tiedActions.addObject(new Mesh4(construct.dodecahedron()));
 
 for (let i = 0; i < 5; i++) {
 	meshes.push(new Mesh4(construct.pentachoron()).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));

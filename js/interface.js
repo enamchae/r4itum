@@ -254,13 +254,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 			}
 		}
 
-		let inputLabels;
-		if (pmvector instanceof Vector4) {
-			inputLabels = ObjectPropertiesControl.vectorLabels;
-		} else if (pmvector instanceof Rotor4) {
-			inputLabels = ObjectPropertiesControl.rotorLabels;
-		}
-
 		// One input for each dimension
 		for (let i = 0; i < pmvector.length; i++) {
 			inputIndexes.set(createElement("input", {
@@ -284,6 +277,26 @@ export class ObjectPropertiesControl extends HTMLElement {
 		this.classList.remove("inactive");
 
 		if (object instanceof Mesh4) {
+			createElement("h3", {
+				textContent: "Tint",
+				parent: this.textContainer,
+			});
+			createElement("input", {
+				properties: {
+					type: "color",
+					value: `#${object.tint.toString(16)}`,
+				},
+				listeners: {
+					change: [
+						[event => {
+							object.tint = parseInt(event.currentTarget.value.slice(1), 16);
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+				parent: this.textContainer,
+			});
+
 			createElement("h3", {
 				textContent: "Position",
 				parent: this.textContainer,

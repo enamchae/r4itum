@@ -247,6 +247,10 @@ main > workspace- > overlays- > .panel > .panel-content input {
 	background: #176d4caf;
 }
 
+main > workspace- > overlays- > .panel > .panel-content input[type="color"] {
+	background: #ffffff7f;
+}
+
 main > menu-bar {
 	height: 3em;
 
