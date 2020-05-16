@@ -13,15 +13,19 @@ import construct from "./4d/construction.js";
 import {Mesh4} from "./4d/objects.js";
 import {Vector4, Rotor4} from "./4d/vector.js";
 
-import {scene} from "./interface.js";
+import tiedActions from "./interfaceties.js";
 
 const meshes = [
-	new Mesh4(construct.icositetrachoron()),
-	new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
-	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
+	// new Mesh4(construct.icositetrachoron()),
+	// new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
+	// new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
 	// new Mesh4(construct.hexahedron()),
 	// new Mesh4(construct.tetrahedron()).setPos(new Vector4(-2, -2, 2, 0)),
 	// new Mesh4(construct.tetrahedron()).setPos(new Vector4(2, 2, 2, 0)),
 ];
-// mesh.rot = Rotor4.planeAngle([0, 0, 0, 0, 0, 0, 0], Math.PI / 2);
-scene.addObject(...meshes);
+
+for (let i = 0; i < 10; i++) {
+	meshes.push(new Mesh4(construct.icositetrachoron()).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));
+}
+
+tiedActions.addObject(...meshes);

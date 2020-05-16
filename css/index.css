@@ -19,7 +19,7 @@ main {
 
 	font-family: var(--font);
 	font-weight: 600;
-	font-size: 12px;
+	font-size: 14px;
 	line-height: 1;
 
 	color: #333;
@@ -32,6 +32,7 @@ main {
 	--col-green-0-7f: #0f382e7f;
 	--col-green-1-af: #2a6a52af;
 	--col-green-1-7f: #2a6a527f;
+	--col-green-2-7f: #428a707f;
 }
 
 main > workspace- {
@@ -144,22 +145,48 @@ main > workspace- > overlays- > .panel h3 {
 
 main > workspace- > overlays- > .panel ul.bars {
 	min-height: 2em;
+	max-height: 100%;
+	overflow-y: auto;
 	padding: 0;
 	margin: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 
 	list-style: none;
 
 	background: var(--col-green-0-7f);
 }
 
+main > workspace- > overlays- > .panel ul.bars:empty:after {
+	content: attr(data-empty-text);
+
+	text-align: center;
+	font-style: italic;
+	letter-spacing: .2em;
+
+	opacity: .5;
+}
+
 main > workspace- > overlays- > .panel ul.bars > li {
 	display: flex;
 	align-items: center;
 	height: 2.5em;
-	padding: .5em;
+	padding: 0 1em;
 	position: relative;
 
+	user-select: none;
+	cursor: default;
+
 	background: var(--col-green-1-7f);
+}
+
+main > workspace- > overlays- > .panel ul.bars > li:hover {
+	background: var(--col-green-2-7f);
+}
+
+main > workspace- > overlays- > .panel ul.bars > li:active {
+	background: var(--col-green-0-7f);
 }
 
 main > workspace- > overlays- > .panel ul.bars > li:nth-child(n + 2):before {

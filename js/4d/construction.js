@@ -5,6 +5,8 @@
 import {Geometry4} from "./meshgeometry.js";
 import {Vector4, Rotor4} from "./vector.js";
 
+const sqrt1_3 = Math.sqrt(1 / 3);
+
 const phi = (1 + Math.sqrt(5)) / 2;
 const iphi = phi - 1; // === 1 / phi
 
@@ -50,7 +52,7 @@ export default {
 
 	hexahedron() {
 		const verts = [];
-		const values = [1, -1];
+		const values = [sqrt1_3, -sqrt1_3];
 		for (let i = 0; i < 0b1000; i++) {
 			verts.push(new Vector4(
 				values[0b1 & i],
@@ -429,8 +431,6 @@ export default {
 				values[(0b1000 & i) >>> 3]));
 		}
 
-		console.log(verts[9])
-
 		const faces = [];
 
 		// The octahedron's vertices are determined as follows:
@@ -504,22 +504,6 @@ export default {
 	},
 
 	testGeometry: {
-		cube: new Geometry4([
-			new Vector4(0, 0, 0, 0),
-			new Vector4(1, 0, 0, 0),
-			new Vector4(0, 1, 0, 0),
-			new Vector4(1, 1, 0, 0),
-			new Vector4(0, 0, 1, 0),
-			new Vector4(1, 0, 1, 0),
-			new Vector4(0, 1, 1, 0),
-			new Vector4(1, 1, 1, 0),
-		// ], [
-		// 	[0, 1, 2],
-		// 	[3, 1, 2],
-	
-		// 	[0, ],
-		]),
-	
 		axes: new Geometry4([
 			new Vector4(1, 0, 0, 0),
 			new Vector4(0, 1, 0, 0),

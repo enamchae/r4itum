@@ -34,6 +34,10 @@ export class Scene4 {
 
 	addObject(...objects) {
 		for (const object of objects) {
+			if (!(object instanceof Object4)) {
+				throw new TypeError("Not an object");
+			}
+
             this.objects.add(object);
             object.scene = this;
         }
@@ -89,6 +93,11 @@ export class Object4 {
 	 * @type Vector4
 	 */
 	scl;
+
+	/**
+	 * @type string
+	 */
+	name = "Object";
 	
 	/**
 	 * TODO
@@ -185,6 +194,8 @@ const priv = new WeakMap();
 const _ = key => priv.get(key);
 
 export class Camera4 extends Object4 {
+	name = "Camera";
+
 	usingPerspective = true;
 
 	fovAngle = Math.PI / 2;
@@ -214,6 +225,8 @@ export class Camera4 extends Object4 {
 }
 
 export class Mesh4 extends Object4 {
+	name = "Mesh";
+
 	/**
 	 * @type Geometry4
 	 */

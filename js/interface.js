@@ -308,6 +308,8 @@ export class ObjectPropertiesControl extends HTMLElement {
 export class ObjectList extends HTMLElement {
 	static members = new Set();
 
+	bars = new WeakMap();
+
 	textContainer;
 	list;
 
@@ -327,22 +329,51 @@ export class ObjectList extends HTMLElement {
 		});
 
 		this.list = createElement("ul", {
-			children: [
-				createElement("li", {
-					textContent: "Bleh",
-				}),
-				createElement("li", {
-					textContent: "Bleh",
-				}),
-				createElement("li", {
-					textContent: "Bleh",
-				}),
-			],
 			classes: ["bars"],
+			attributes: [
+				["data-empty-text", "nothing"],
+			],
 			parent: this.textContainer,
 		});
 
 		ObjectList.members.add(this);
+	}
+
+	addItem(...objects) {
+		for (const object of objects) {
+			const bar = createElement("li", {
+				textContent: object.name,
+				parent: this.list,
+
+				listeners: {
+					click: [
+						[() => {
+							user.replaceSelection(object);
+							Viewport.allNeedRerender = true;
+						}],
+					],
+
+					mousedown: [
+						[event => {
+							event.preventDefault(); // Prevent losing focus from viewport
+						}],
+					]
+				},
+			});
+
+			this.bars.set(object, bar);
+		}
+
+		return this;
+	}
+
+	removeItem(...objects) {
+		for (const object of objects) {
+			console.log(object);
+			this.bars.get(object).remove();
+		}
+
+		return this;
 	}
 }
 

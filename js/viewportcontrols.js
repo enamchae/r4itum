@@ -3,6 +3,7 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
+import tiedActions from "./interfaceties.js";
 import * as Three from "./_libraries/three.module.js";
 
 export function attachViewportControls(viewport, user) {
@@ -169,12 +170,7 @@ export function attachViewportControls(viewport, user) {
 	element.addEventListener("keydown", event => {
 		if (event.repeat || event.key !== "Delete" || user.selectedObjects.length === 0) return;
 		
-		for (const object of user.selectedObjects) {
-			if (!object.scene) continue;
-
-			object.scene.removeObject(object);
-			viewport.converter.clearObject(object);
-		}
+		tiedActions.removeObject(...user.selectedObjects);
 		user.replaceSelection();
 
 		viewport.constructor.allNeedRerender = true;

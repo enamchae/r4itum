@@ -54,6 +54,7 @@ export class SceneConverter {
 	 * @param {Camera4} camera 
 	 */
 	refresh(camera) {
+		console.log(this.scene4);
 		for (const object of this.scene4.objectsAll()) {
 			this.refreshObject(object, camera);
 		}
@@ -154,7 +155,7 @@ void main() {
 	}
 
 	// temp coloring based on distance from camera
-	gl_FragColor = vec4(${color}, .25);
+	gl_FragColor = vec4(${color}, .2);
 }`,
 
 			transparent: true,
