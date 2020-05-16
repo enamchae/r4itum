@@ -10,6 +10,9 @@ const sqrt1_3 = Math.sqrt(1 / 3);
 const phi = (1 + Math.sqrt(5)) / 2;
 const iphi = phi - 1; // === 1 / phi
 
+const phiSqrt1_3 = phi * sqrt1_3;
+const iphiSqrt1_3 = iphi * sqrt1_3;
+
 // unsure how these will be called yet
 // TODO figure out common properties (e.g. default orientation, edge length)
 export default {
@@ -41,10 +44,10 @@ export default {
 	
 	tetrahedron() {
 		return new Geometry4([
-			new Vector4(2/3, 2/3, 2/3),
-			new Vector4(2/3, -2/3, -2/3),
-			new Vector4(-2/3, 2/3, -2/3),
-			new Vector4(-2/3, -2/3, 2/3),
+			new Vector4(sqrt1_3, sqrt1_3, sqrt1_3),
+			new Vector4(sqrt1_3, -sqrt1_3, -sqrt1_3),
+			new Vector4(-sqrt1_3, sqrt1_3, -sqrt1_3),
+			new Vector4(-sqrt1_3, -sqrt1_3, sqrt1_3),
 		], [
 			[0, 1, 2, 3],
 		]);
@@ -105,26 +108,26 @@ export default {
 	// https://github.com/thinks/platonic-solids/blob/master/thinks/platonic_solids/platonic_solids.h
 	dodecahedron() {
 		return new Geometry4([
-			new Vector4(-1, 1, -1),
-			new Vector4(-phi, 0, iphi),
-			new Vector4(-phi, 0, -iphi),
-			new Vector4(-1, 1, 1),
-			new Vector4(-iphi, phi, 0),
-			new Vector4(1, 1, 1),
-			new Vector4(iphi, phi, 0),
-			new Vector4(0, iphi, phi),
-			new Vector4(-1, -1, 1),
-			new Vector4(0, -iphi, phi),
-			new Vector4(-1, -1, -1),
-			new Vector4(-iphi, -phi, 0),
-			new Vector4(0, -iphi, -phi),
-			new Vector4(0, iphi, -phi),
-			new Vector4(1, 1, -1),
-			new Vector4(phi, 0, -iphi),
-			new Vector4(phi, 0, iphi),
-			new Vector4(1, -1, 1),
-			new Vector4(iphi, -phi, 0),
-			new Vector4(1, -1, -1),
+			new Vector4(-sqrt1_3, sqrt1_3, -sqrt1_3),
+			new Vector4(-phiSqrt1_3, 0, iphiSqrt1_3),
+			new Vector4(-phiSqrt1_3, 0, -iphiSqrt1_3),
+			new Vector4(-sqrt1_3, sqrt1_3, sqrt1_3),
+			new Vector4(-iphiSqrt1_3, phiSqrt1_3, 0),
+			new Vector4(sqrt1_3, sqrt1_3, sqrt1_3),
+			new Vector4(iphiSqrt1_3, phiSqrt1_3, 0),
+			new Vector4(0, iphiSqrt1_3, phiSqrt1_3),
+			new Vector4(-sqrt1_3, -sqrt1_3, sqrt1_3),
+			new Vector4(0, -iphiSqrt1_3, phiSqrt1_3),
+			new Vector4(-sqrt1_3, -sqrt1_3, -sqrt1_3),
+			new Vector4(-iphiSqrt1_3, -phiSqrt1_3, 0),
+			new Vector4(0, -iphiSqrt1_3, -phiSqrt1_3),
+			new Vector4(0, iphiSqrt1_3, -phiSqrt1_3),
+			new Vector4(sqrt1_3, sqrt1_3, -sqrt1_3),
+			new Vector4(phiSqrt1_3, 0, -iphiSqrt1_3),
+			new Vector4(phiSqrt1_3, 0, iphiSqrt1_3),
+			new Vector4(sqrt1_3, -sqrt1_3, sqrt1_3),
+			new Vector4(iphiSqrt1_3, -phiSqrt1_3, 0),
+			new Vector4(sqrt1_3, -sqrt1_3, -sqrt1_3),
 		], [
 			[1, 0, 2],
 			[0, 1, 3],

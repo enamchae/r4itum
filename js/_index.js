@@ -24,8 +24,12 @@ const meshes = [
 	// new Mesh4(construct.tetrahedron()).setPos(new Vector4(2, 2, 2, 0)),
 ];
 
-for (let i = 0; i < 10; i++) {
-	meshes.push(new Mesh4(construct.icositetrachoron()).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));
+
+tiedActions.addObject(new Mesh4(construct.pentachoron()));
+tiedActions.addObject(new Mesh4(construct.dodecahedron()));
+
+for (let i = 0; i < 5; i++) {
+	meshes.push(new Mesh4(construct.pentachoron()).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));
 }
 
 tiedActions.addObject(...meshes);

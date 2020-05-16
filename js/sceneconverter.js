@@ -23,9 +23,6 @@ const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
 // 	0x8000FF, // W
 // ].map(color => new Three.LineBasicMaterial({color}));
 
-const vertGeometry = new Three.SphereBufferGeometry(.03, 4, 2);
-// const vertMat = new Three.MeshLambertMaterial({color: 0xFFCC44});
-
 export class SceneConverter {
 	static ViewportStates = Object.freeze({
 		DEFAULT: 0,
@@ -47,6 +44,10 @@ export class SceneConverter {
 
 	constructor(scene4) {
 		this.scene4 = scene4;
+
+		priv.set(this, {
+			lastCamera: null,
+		});
 	}
 
 	/**
@@ -54,10 +55,17 @@ export class SceneConverter {
 	 * @param {Camera4} camera 
 	 */
 	refresh(camera) {
-		console.log(this.scene4);
+		const cameraNotUpdated = _(this).lastCamera?.eq(camera);
+
+		console.log(cameraNotUpdated);
+
 		for (const object of this.scene4.objectsAll()) {
+			if (false/* cameraNotUpdated */ /* && object needs update */) continue;
+
 			this.refreshObject(object, camera);
 		}
+
+		_(this).lastCamera = camera.clone();
 
 		return this;
 	}
@@ -88,6 +96,9 @@ export class SceneConverter {
 		return this;
 	}
 }
+
+const priv = new WeakMap();
+const _ = key => priv.get(key);
 
 class GeometryProjected {
 	geometry;
@@ -224,11 +235,13 @@ void main() {
 	 */
 	initializeThreeMeshes() {
 		this.mesh3 = new Three.Mesh();
+		this.wire = new Three.Mesh();
 		this.locus = new Three.Points();
 
 		this.converter.objectClickboxes.set(this.mesh3, this);
-
 		this.converter.scene3.add(this.locus);
+
+		this.setViewportState();
 		
 		return this;
 	}
@@ -250,15 +263,15 @@ void main() {
 			this.initializeThreeMeshes();
 		}
 
-		// console.time(" - faces presence");
+		console.time(" - presence");
 		this.updateFacesPresence();
-		// console.timeEnd(" - faces presence");
-		// console.time(" - faces projection");
+		console.timeEnd(" - presence");
+		console.time(" - projection");
 		this.updateFacesProjection(camera);
-		// console.timeEnd(" - faces projection");
-		// console.time(" - wireframe");
+		console.timeEnd(" - projection");
+		console.time(" - wireframe");
 		this.updateWireframe();
-		// console.timeEnd(" - wireframe");
+		console.timeEnd(" - wireframe");
 
 		return this;
 	}
@@ -285,11 +298,9 @@ void main() {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 
 		this.mesh3.geometry = this.geometryProjected.asBufferGeometry(true);
-		this.mesh3.material = Mesh4Rep.faceMat(this.viewportState);
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
 
 		this.locus.geometry = this.geometryProjected.asBufferGeometry(false);
-		this.locus.material = Mesh4Rep.locusMat(this.viewportState);
 		
 		return this;
 	}
@@ -355,10 +366,12 @@ void main() {
 	 * Alters the material of this mesh depending on the viewport state.
 	 * @param {number} viewportState 
 	 */
-	setViewportState(viewportState) {
+	setViewportState(viewportState=this.viewportState) {
 		this.viewportState = viewportState;
 
+		this.mesh3.material = Mesh4Rep.faceMat(this.viewportState);
 		this.wire.material = meshMats[viewportState].wire;
+		this.locus.material = Mesh4Rep.locusMat(this.viewportState);
 		return this;
 	}
 }

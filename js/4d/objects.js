@@ -155,8 +155,6 @@ export class Object4 {
 		const cameraUp = this.localUp();
 		const cameraOver = this.localOver();
 	
-		// console.log(cameraForward, cameraUp, cameraOver);
-	
 		// Define the projection matrix
 		// This matrix rotates the world to the camera view, based on the camera's direction and the basis directions
 		// Multiplying a point by this matrix and getting a single dimension is a matter of taking the dot product of the

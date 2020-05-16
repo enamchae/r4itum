@@ -369,7 +369,6 @@ export class ObjectList extends HTMLElement {
 
 	removeItem(...objects) {
 		for (const object of objects) {
-			console.log(object);
 			this.bars.get(object).remove();
 		}
 
