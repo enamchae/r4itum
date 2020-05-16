@@ -9,7 +9,7 @@ export const qsa = (selector, context=document) => context.querySelectorAll(sele
 
 /**
  * Creates an element and specifies various properties regarding it in a single function call.
- * @param {string|function} tagNameOrConstructor The tag name of the new element or the constructor that creates it.
+ * @param {string|function|HTMLElement} elementSource The tag name of the new element or the constructor that creates it.
  * @param {object} [options] Properties pertaining to the object.
  * @param {Document} [options.context] 
  * @param {string} [options.namespace] 
@@ -22,7 +22,7 @@ export const qsa = (selector, context=document) => context.querySelectorAll(sele
  * @param {object} [options.listeners] 
  * @param {function} [options.callback] 
  */
-export function createElement(tagNameOrConstructor="div", {
+export function createElement(elementSource="div", {
 	context=document,
 	namespace="",
 	textContent="",
@@ -36,15 +36,23 @@ export function createElement(tagNameOrConstructor="div", {
 }={}) {
 	let element;
 
-	if (typeof tagNameOrConstructor === "string") { // tag name
-		const tagName = tagNameOrConstructor;
+	if (typeof elementSource === "string") { // tag name
+		const tagName = elementSource;
 		element = !namespace ? context.createElement(tagName) : context.createElementNS(namespace, tagName);
 
-	} else if (typeof tagNameOrConstructor === "function") { // constructor
-		element = new tagNameOrConstructor();
+	} else if (typeof elementSource === "function") { // constructor
+		element = new elementSource();
+	
+	} else if (elementSource instanceof HTMLElement) {
+		element = elementSource;
+
+	} else {
+		throw new TypeError("Unsupported type");
 	}
 
-	element.textContent = textContent;
+	if (textContent) {
+		element.textContent = textContent;
+	}
 
 	for (const className of classes) {
 		element.classList.add(className);

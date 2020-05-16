@@ -5,6 +5,7 @@
 import {Vector4, Rotor4} from "./4d/vector.js";
 import {Scene4, Object4, Camera4, Mesh4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
+import {VectorEditor, RotorEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
@@ -77,19 +78,9 @@ export class Viewport extends HTMLElement {
 		super();
 
 		// Scene setup
-		// this.renderer.setClearColor(0xEEEEFF, 1);
-		this.renderer.physicallyCorrectLights = true;
-
 		this.camera3 = new Three.PerspectiveCamera(90, 1, .01, 1000);
 		this.camera3.position.set(0, 0, 3);
 		this.camera3.lookAt(0, 0, 0);
-
-		const light = new Three.SpotLight(0xAC8C6C, 30);
-		light.position.z = 10;
-		this.converter.scene3.add(light);
-		
-		const ambientLight = new Three.AmbientLight(0xFFFFFF, 1);
-		this.converter.scene3.add(ambientLight);
 
 		this.camera = new Camera4(
 			new Vector4(0, 0, 0, 3),
@@ -297,11 +288,26 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 			});
 
+			const updatePosHandler = ({detail}) => {
+				object.pos[detail.index] = detail.valueUsed;
+				Viewport.allNeedRerender = true;
+			};
+
 			createElement("h3", {
 				textContent: "Position",
 				parent: this.textContainer,
 			});
-			this.textContainer.appendChild(ObjectPropertiesControl.createPolymultivectorInputs(object.pos));
+			createElement(new VectorEditor(object.pos), {
+				listeners: {
+					update: [
+						[updatePosHandler],
+					],
+					commit: [
+						[updatePosHandler],
+					],
+				},
+				parent: this.textContainer,
+			});
 
 			createElement("h3", {
 				textContent: "Rotation",
@@ -309,11 +315,26 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 			this.textContainer.appendChild(ObjectPropertiesControl.createPolymultivectorInputs(object.rot));
 
+			const updateSclHandler = ({detail}) => {
+				object.scl[detail.index] = detail.valueUsed;
+				Viewport.allNeedRerender = true;
+			};
+
 			createElement("h3", {
 				textContent: "Scale",
 				parent: this.textContainer,
 			});
-			this.textContainer.appendChild(ObjectPropertiesControl.createPolymultivectorInputs(object.scl));
+			createElement(new VectorEditor(object.scl), {
+				listeners: {
+					update: [
+						[updateSclHandler],
+					],
+					commit: [
+						[updateSclHandler],
+					],
+				},
+				parent: this.textContainer,
+			});
 		}
 	}
 }

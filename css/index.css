@@ -29,6 +29,8 @@ main {
 
 	--font: Overpass, Arial, sans-serif;
 
+	--col-red-1-7f: #9b2121af;
+
 	--col-green-0-7f: #0f382e7f;
 	--col-green-1-af: #2a6a52af;
 	--col-green-1-7f: #2a6a527f;
@@ -205,6 +207,22 @@ main > workspace- > overlays- > .panel ul.bars > li:nth-child(n + 2):before {
 	--separator-height: 2px;
 }
 
+main > workspace- > overlays- > .panel vector-editor > form {
+	display: grid;
+	
+	grid-template-columns: auto auto;
+	gap: 4px;
+}
+
+main > workspace- > overlays- > .panel input:not([type="color"]) {
+	width: 100%; /* Inputs automatically have a fixed size */
+}
+
+main > workspace- > overlays- > .panel label {
+	display: flex;
+	justify-content: center;
+}
+
 main > workspace- > overlays- > .panel > *:not(:empty) {
 	padding: .5em 1em;
 }
@@ -224,15 +242,6 @@ main > workspace- > overlays- > .panel > .panel-content h3 {
 	margin-top: .5em;
 }
 
-main > workspace- > overlays- > .panel > .panel-content form {
-	display: flex;
-	width: 100%;
-}
-
-main > workspace- > overlays- > .panel > .panel-content form > input {
-	width: inherit; /* Inputs automatically have a fixed size */
-}
-
 main > workspace- > overlays- > .panel > .panel-content form > input:after {
 	content: attr(data-label);
 }
@@ -247,6 +256,10 @@ main > workspace- > overlays- > .panel > .panel-content input {
 	background: #176d4caf;
 }
 
+main > workspace- > overlays- > .panel > .panel-content input.error-flash {
+	animation: error-flash 1s linear;
+}
+
 main > workspace- > overlays- > .panel > .panel-content input[type="color"] {
 	background: #ffffff7f;
 }
@@ -255,4 +268,13 @@ main > menu-bar {
 	height: 3em;
 
 	background: #668b8f;
+}
+
+@keyframes error-flash {
+	0% {
+		background: var(--col-red-1-7f);
+	}
+	50% {
+		background: var(--col-red-1-7f);
+	}
 }
