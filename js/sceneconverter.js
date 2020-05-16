@@ -175,23 +175,25 @@ uniform mat4 projectionMatrix;
 
 attribute mediump vec4 position;
 
-varying lowp float distance;
+// varying lowp float distance;
 
 void main() {
+	// distance = position.w;
+
 	mediump vec4 pos3 = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 
 	gl_PointSize = 75. / pos3.z / position.w; // arbitrary constant
 	gl_Position = pos3;
 }`,
 			fragmentShader: `
-varying lowp float distance;
+// varying lowp float distance;
 
-lowp float sigmoid(lowp float x) {
-	return 2. / (1. + exp(-x)) - 1.;
-}
+// lowp float sigmoid(lowp float x) {
+// 	return 2. / (1. + exp(-x)) - 1.;
+// }
 
 void main() {
-	// lowp float addend = 1. - sigmoid(distance);
+	// lowp float colorDepthcue = 1. - sigmoid(distance);
 
 	gl_FragColor = vec4(${color}, 1);
 }`,
@@ -266,10 +268,8 @@ void main() {
 	updateFacesPresence() {
 		if (this.object.geometry.faces().length === 0) {
 			this.converter.scene3.remove(this.mesh3);
-			// scene.remove(this.wireframe3);
 		} else {
 			this.converter.scene3.add(this.mesh3);
-			// scene.add(this.wireframe3);
 		}
 
 		return this;

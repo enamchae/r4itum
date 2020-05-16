@@ -314,8 +314,10 @@ export default {
 	},
 
 	octachoron() {
+		// General form of cube
+
 		const verts = [];
-		const values = [1, -1];
+		const values = [.5, -.5];
 		for (let i = 0; i < 0b10000; i++) {
 			verts.push(new Vector4(
 				values[0b1 & i],
@@ -338,6 +340,7 @@ export default {
 		];
 
 		for (const ci of cellIndexes) {
+			// Triangulations of each cube
 			faces.push(
 				[ci[0], ci[1], ci[2], ci[4]],
 				[ci[1], ci[2], ci[3], ci[7]],
@@ -352,6 +355,9 @@ export default {
 	},
 
 	hexadecachoron() {
+		// General form of orthoplex
+		// Vertices are permutations of (±1, 0, 0, 0) (2 for each axis)
+		// All vertices are connected, apart from opposite vertices which lie on the same axis
 		return new Geometry4([
 			new Vector4(-1, 0, 0, 0),
 			new Vector4(1, 0, 0, 0),
@@ -384,21 +390,97 @@ export default {
 	icositetrachoron() {
 		const verts = [];
 
-		const values = [1, -1];
+		// [0, 8)
+		// permutations of (±1, 0, 0, 0)
+		for (let i = 0; i < 4; i++) {
+			const vert0 = new Vector4();
+			const vert1 = new Vector4();
+			vert0[i] = 1;
+			vert1[i] = -1;
 
-		for (let i = 0; i < 3; i++) {
-			for (let j = i + 1; j < 4; j++) {
-				for (let n = 0; n < 0b100; n++) {
-					const vert = new Vector4();
-					vert[i] = values[0b1 & n];
-					vert[j] = values[(0b10 & n) >>> 1];
-
-					verts.push(vert);
-				}
-			}
+			verts.push(vert0, vert1);
 		}
 
-		return new Geometry4(verts);
+		// [8, 24)
+		// (±.5, ±.5, ±.5, ±.5)
+		// 08  + + + +
+		// 09  − + + +
+		// 10  + − + +
+		// 11  − − + +
+		// 12  + + − +
+		// 13  − + − +
+		// 14  + − − +
+		// 15  − − − +
+		// 16  + + + −
+		// 17  − + + −
+		// 18  + − + −
+		// 19  − − + −
+		// 20  + + − −
+		// 21  − + − −
+		// 22  + − − −
+		// 23  − − − −
+		//     ⋮
+		const values = [.5, -.5];
+		for (let i = 0; i < 0b10000; i++) {
+			verts.push(new Vector4(
+				values[0b1 & i],
+				values[(0b10 & i) >>> 1],
+				values[(0b100 & i) >>> 2], 
+				values[(0b1000 & i) >>> 3]));
+		}
+
+		console.log(verts[9])
+
+		const faces = [];
+
+		// The octahedron's vertices are determined as follows:
+		// [0]  1 pole on a (±1, 0, 0, 0)-permutation vertex
+		// [1]  1 pole on a different (±1, 0, 0, 0)-permutation vertex that is not the opposite of [0]
+		// [2:6]  A (±.5, ±.5, ±.5, ±.5) point such that:
+		//    • The point has the same sign as [0] for the axis that [0] covers
+		//    • The point has the same sign as [1] for the axis that [1] covers
+		//    • For the axes not covered, the coordinates may alternate
+		//			(e.g. if [0] is (0, 0, 0, −1)
+		//				 and [1] is (1, 0, 0,  0), then this must be (.5, ±.5, ±.5, −.5))
+		const cellIndexes = [
+			[0, 2, 8, 12, 16, 20], // +X, +Y
+			[0, 3, 10, 14, 18, 22], // +X, −Y
+			[0, 4, 8, 10, 16, 18], // +X, +Z
+			[0, 5, 12, 14, 20, 22], // +X, −Z
+			[0, 6, 8, 10, 12, 14], // +X, +W
+			[0, 7, 16, 18, 20, 22], // +X, −W
+			[1, 2, 9, 13, 17, 21], // −X, +Y
+			[1, 3, 11, 15, 19, 23], // −X, −Y
+			[1, 4, 9, 11, 16, 18], // −X, +Z
+			[1, 5, 13, 15, 21, 23], // −X, −Z
+			[1, 6, 9, 11, 13, 15], // −X, +W
+			[1, 7, 17, 19, 21, 23], // −X, −W
+
+			[2, 4, 8, 9, 16, 17], // +Y, +Z
+			[2, 5, 12, 13, 20, 21], // +Y, −Z
+			[2, 6, 8, 9, 12, 13], // +Y, +W
+			[2, 7, 16, 17, 20, 21], // +Y, −W
+			[3, 4, 10, 11, 18, 19], // −Y, +Z
+			[3, 5, 14, 15, 22, 23], // −Y, −Z
+			[3, 6, 10, 11, 14, 15], // −Y, +W
+			[3, 7, 18, 19, 22, 23], // −Y, −W
+
+			[4, 6, 8, 9, 10, 11], // +Z, +W
+			[4, 7, 16, 17, 18, 19], // +Z, −W
+			[5, 6, 12, 13, 14, 15], // −Z, +W
+			[5, 7, 20, 21, 22, 23], // −Z, −W
+		];
+
+		for (const ci of cellIndexes) {
+			faces.push(
+				[ci[0], ci[2], ci[3], ci[4]],
+				[ci[0], ci[2], ci[3], ci[5]],
+				[ci[1], ci[2], ci[3], ci[4]],
+				[ci[1], ci[2], ci[3], ci[5]],
+			);
+		}
+
+		return new Geometry4(verts, faces);
 	},
 
 	hecatonicosachoron() {
@@ -409,7 +491,7 @@ export default {
 		
 	},
 
-	icospherinder() {
+	spherinder() {
 
 	},
 

@@ -16,7 +16,7 @@ import {Vector4, Rotor4} from "./4d/vector.js";
 import {scene} from "./interface.js";
 
 const meshes = [
-	new Mesh4(construct.octachoron()),
+	new Mesh4(construct.icositetrachoron()),
 	new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
 	new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
 	// new Mesh4(construct.hexahedron()),
