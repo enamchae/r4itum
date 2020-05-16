@@ -248,8 +248,56 @@ export class Mesh4 extends Object4 {
 	}
 }
 
-export class Line4 extends Object4 {
-	constructor(points, material) {
+export class PlaneRef4 extends Object4 {
+	geometry;
+
+	constructor(axis0, axis1, size=2**30) {
 		super();
+
+		const signs = [1, -1];
+
+		this.geometry = new Geometry4([], [
+			[0, 1, 2],
+			[1, 2, 3],
+		]);
+		for (let i = 0; i < 4; i++) {
+			const vert = new Vector4();
+			vert[axis0] = size * signs[0b1 & i];
+			vert[axis1] = size * signs[0b1 & i >>> 1];
+
+			this.geometry.verts.push(vert);
+		}
+	}
+
+	transformedVerts() {
+		return this.geometry.verts.map(vert => {
+			return vert.multComponents(this.scl).multRotor(this.rot).add(this.pos);
+		});
+	}
+}
+
+export class Axis4 extends Object4 {
+	geometry;
+
+	color;
+
+	constructor(axis, size=8, color=0) {
+		super();
+
+		const vert0 = new Vector4();
+		const vert1 = new Vector4();
+
+		vert0[axis] = size;
+		vert1[axis] = -size;
+
+		this.geometry = new Geometry4([vert0, vert1]);
+
+		this.color = color;
+	}
+
+	transformedVerts() {
+		return this.geometry.verts.map(vert => {
+			return vert.multComponents(this.scl).multRotor(this.rot).add(this.pos);
+		});
 	}
 }

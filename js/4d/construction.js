@@ -59,8 +59,8 @@ export default {
 		for (let i = 0; i < 0b1000; i++) {
 			verts.push(new Vector4(
 				values[0b1 & i],
-				values[(0b10 & i) >>> 1],
-				values[(0b100 & i) >>> 2]));
+				values[0b1 & i >>> 1],
+				values[0b1 & i >>> 2]));
 		}
 
 		return new Geometry4(verts, [
@@ -326,9 +326,9 @@ export default {
 		for (let i = 0; i < 0b10000; i++) {
 			verts.push(new Vector4(
 				values[0b1 & i],
-				values[(0b10 & i) >>> 1],
-				values[(0b100 & i) >>> 2], 
-				values[(0b1000 & i) >>> 3]));
+				values[0b1 & i >>> 1],
+				values[0b1 & i >>> 2], 
+				values[0b1 & i >>> 3]));
 		}
 
 		const faces = [];

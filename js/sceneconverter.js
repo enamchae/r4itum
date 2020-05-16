@@ -2,7 +2,8 @@
  * @file Converts 4D objects into objects in a renderable 3D scene.
  */
 
-import {Mesh4, Camera4} from "./4d/objects.js";
+import {Geometry4} from "./4d/meshgeometry.js";
+import {Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
 import {projectVector4} from "./4d/projection.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
@@ -14,14 +15,6 @@ const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
 ].map(colors => ({
 	wire: new ThreeMeshLine.MeshLineMaterial({color: colors[0], /* sizeAttenuation: 0, */ lineWidth: 1}),
 }));
-
-// const axisMats = [
-// 	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
-// 	0xFF0000, // X
-// 	0x80FF00, // Y
-// 	0x00FFFF, // Z
-// 	0x8000FF, // W
-// ].map(color => new Three.LineBasicMaterial({color}));
 
 export class SceneConverter {
 	static ViewportStates = Object.freeze({
@@ -71,14 +64,20 @@ export class SceneConverter {
 	refreshObject(object, camera) {
 		let rep = this.objectReps.get(object);
 
-		if (object instanceof Mesh4) {
-			if (!rep) {
-				rep = new Mesh4Rep(object, this);
-				this.objectReps.set(object, rep);
-			}
+		if (object instanceof Mesh4 && !rep) {
+			rep = new Mesh4Rep(object, this);
+			this.objectReps.set(object, rep);
 
-			rep.updateInThreeScene(camera);
+		} else if (object instanceof PlaneRef4 && !rep) {
+			rep = new PlaneRef4Rep(object, this);
+			this.objectReps.set(object, rep);
+
+		} else if (object instanceof Axis4 && !rep) {
+			rep = new Axis4Rep(object, this);
+			this.objectReps.set(object, rep);
 		}
+
+		rep?.updateInThreeScene(camera);
 
 		return this;
 	}
@@ -99,6 +98,9 @@ const priv = new WeakMap();
 const _ = key => priv.get(key);
 
 class GeometryProjected {
+	/**
+	 * @type Geometry4
+	 */
 	geometry;
 
 	verts = [];
@@ -107,26 +109,24 @@ class GeometryProjected {
 		this.geometry = geometry;
 	}
 
-	asBufferGeometry(fromFaces=true) {
-		const bufferGeometry = new Three.BufferGeometry();
+	positionsAttribute(fromProjection=true, fromFaces=true) {
+		// Determines whether the vertex positions come from the original points or the projected points
+		const verts = fromProjection ? this.verts : this.geometry.verts;
 
 		// Copy all vertices
 		const positions = [];
 
 		if (fromFaces) {
 			for (const face of this.geometry.faces()) {
-				positions.push(...face.flatMap(index => this.verts[index]));
+				positions.push(...face.flatMap(index => verts[index]));
 			}
 		} else {
-			for (const vert of this.verts) {
+			for (const vert of verts) {
 				positions.push(...vert);
 			}
 		}
 
-		const attribute = new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
-		bufferGeometry.setAttribute("position", attribute);
-
-		return bufferGeometry;
+		return new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
 	}
 }
 
@@ -156,7 +156,7 @@ class Mesh4Rep {
 		} else {
 			const tint = this.object.tint;
 			// Convert integer color into vector components
-			color = `${(tint >>> 16 & 0xFF) / 0xFF}, ${(tint >>> 8 & 0xFF) / 0xFF}, ${(tint & 0xFF) / 0xFF}`;
+			color = `${(0xFF & tint >>> 16) / 0xFF}, ${(0xFF & tint >>> 8) / 0xFF}, ${(0xFF & tint) / 0xFF}`;
 		}
 		
 		return new Three.RawShaderMaterial({
@@ -300,10 +300,12 @@ void main() {
 	updateProjection(camera) {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 
-		this.mesh3.geometry = this.geometryProjected.asBufferGeometry(true);
+		this.mesh3.geometry = new Three.BufferGeometry();
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true));
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
 
-		this.locus.geometry = this.geometryProjected.asBufferGeometry(false);
+		this.locus.geometry = new Three.BufferGeometry();
+		this.locus.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false));
 		
 		return this;
 	}
@@ -325,6 +327,7 @@ void main() {
 		const verts = this.geometryProjected.verts;
 
 		const wire = new Three.Mesh(new ThreeMeshLine.MeshLine(), meshMats[this.viewportState].wire);
+		wire.frustumCulled = false;
 		const wireVerts = []; // [4n, 4n + 1] are rendered verts, [4n + 2, 4n + 3] are not
 
 		for (let i = 0; i < edges.length; i++) {
@@ -377,6 +380,214 @@ void main() {
 		this.locus.material = this.locusMat();
 		return this;
 	}
+}
+
+class PlaneRef4Rep {
+	object;
+	converter;
+
+	geometryProjected;
+
+	mesh3;
+
+	constructor(object, converter) {
+		this.object = object;
+		this.converter = converter;
+
+		this.geometryProjected = new GeometryProjected(object.geometry);
+	}
+
+	// Grid shader technique from https://github.com/Fyrestar/THREE.InfiniteGridHelper/blob/master/InfiniteGridHelper.js
+	faceMat() {
+		return new Three.RawShaderMaterial({
+			vertexShader: `
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+attribute mediump vec4 position4;
+attribute mediump vec4 position;
+
+varying mediump vec4 vPosition4;
+varying mediump vec4 vPosition3;
+
+void main() {
+	vPosition4 = position4;
+	vPosition3 = position;
+
+	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
+}`,
+			fragmentShader: `
+varying mediump vec4 vPosition4;
+varying mediump vec4 vPosition3;
+
+mediump float getGrid(mediump float gridStep) {
+	mediump vec2 r = vPosition4.xw / gridStep;
+	
+	mediump vec2 grid = abs(fract(r - .5) - .5) / fwidth(r);
+	mediump float line = min(grid.x, grid.y);
+
+	return 1. - min(line, 1.);
+}
+
+void main() {
+	if (vPosition3.w <= 0.) {
+		discard;
+	}
+
+	mediump float grid = getGrid(1.);
+
+	gl_FragColor = vec4(.3, .3, .3, grid * .5);
+}`,
+
+			transparent: true,
+			side: Three.DoubleSide,
+			depthWrite: false,
+
+			extensions: {
+				derivatives: true,
+			},
+		});
+	}
+
+	initializeThreeMeshes() {
+		this.mesh3 = new Three.Mesh();
+		this.mesh3.material = this.faceMat();
+		this.converter.scene3.add(this.mesh3);
+		return this;
+	}
+
+	destructThreeMeshes() {
+		this.converter.scene3.remove(this.mesh3);
+		return this;
+	}
+
+	/**
+	 * Updates the data of the Three objects that represent this mesh.
+	 * @param {Camera4} camera 
+	 */
+	updateInThreeScene(camera) {
+		if (!this.mesh3) {
+			this.initializeThreeMeshes();
+		}
+
+		console.time(" - projection");
+		this.updateProjection(camera);
+		console.timeEnd(" - projection");
+
+		return this;
+	}
+
+	/**
+	 * Updates the position of the vertices in this object's Three mesh and the position of the vertex meshes, based on
+	 * its and the camera's transforms. 
+	 * @param {Camera4} camera 
+	 */
+	updateProjection(camera) {
+		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
+		this.mesh3.geometry = new Three.BufferGeometry();
+		this.mesh3.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, true));
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true));
+		
+		return this;
+	}
+
+
+}
+
+class Axis4Rep {
+	object;
+	converter;
+
+	geometryProjected;
+
+	line;
+
+	constructor(object, converter) {
+		this.object = object;
+		this.converter = converter;
+
+		this.geometryProjected = new GeometryProjected(object.geometry);
+	}
+
+	// Grid shader technique from https://github.com/Fyrestar/THREE.InfiniteGridHelper/blob/master/InfiniteGridHelper.js
+	lineMat() {
+		return new Three.LineBasicMaterial({
+// 			vertexShader: `
+// uniform mat4 modelViewMatrix;
+// uniform mat4 projectionMatrix;
+
+// attribute mediump vec4 position4;
+// attribute mediump vec4 position;
+
+// varying mediump vec4 vPosition4;
+// varying mediump vec4 vPosition3;
+
+// void main() {
+// 	vPosition4 = position4;
+// 	vPosition3 = position;
+
+// 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
+// }`,
+// 			fragmentShader: `
+// varying mediump vec4 vPosition4;
+// varying mediump vec4 vPosition3;
+
+// void main() {
+// 	if (vPosition3.w <= 0.) {
+// 		discard;
+// 	}
+
+// 	gl_FragColor = vec4(1, 0, 0, 1);
+// }`,
+			color: this.object.color,
+		});
+	}
+
+	initializeThreeMeshes() {
+		this.line = new Three.Line();
+		this.line.material = this.lineMat();
+		this.converter.scene3.add(this.line);
+		return this;
+	}
+
+	destructThreeMeshes() {
+		this.converter.scene3.remove(this.line);
+		return this;
+	}
+
+	/**
+	 * Updates the data of the Three objects that represent this mesh.
+	 * @param {Camera4} camera 
+	 */
+	updateInThreeScene(camera) {
+		if (!this.line) {
+			this.initializeThreeMeshes();
+		}
+
+		console.time(" - projection");
+		this.updateProjection(camera);
+		console.timeEnd(" - projection");
+
+		return this;
+	}
+
+	/**
+	 * Updates the position of the vertices in this object's Three mesh and the position of the vertex meshes, based on
+	 * its and the camera's transforms. 
+	 * @param {Camera4} camera 
+	 */
+	updateProjection(camera) {
+		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
+		this.line.geometry = new Three.BufferGeometry();
+		this.line.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, false));
+		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false));
+
+		this.line.geometry.computeBoundingSphere();
+		
+		return this;
+	}
+
+
 }
 
 // this.mesh3 = new Three.Line(new Three.BufferGeometry().setFromPoints(points), material);
