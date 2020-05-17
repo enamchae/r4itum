@@ -294,9 +294,10 @@ export class RotorEditor extends ValueEditor {
 		// Group the input and label into a block
 		const inputBlock = createElement("input-block", {
 			children: [
-				this.createInput(plane, i, form, 10),
+				this.createInput(plane, i, form, .1),
 				createElement("label", {
-					textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
+					// textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
+					textContent: RotorEditor.basisLabels[i - 1],
 				}),
 			],
 
@@ -312,13 +313,14 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		}
 	}
 
-	parseInputValue(value) {
+	// Linear percentages cannot represent negative coefficients
+	/* parseInputValue(value) {
 		return Math.sqrt(parseFloat(value) / 100);
 	}
 
 	convertForInput(value) {
 		return round(value ** 2 * 100);
-	}
+	} */
 
 	get value() {
 		return Rotor4.planeAngle(this.lastAcceptedValues.slice(1), this.lastAcceptedValues[0] * Math.PI / 180);
