@@ -5,6 +5,9 @@
 import {Polymultivector, Vector4, Rotor4} from "./4d/vector.js";
 import {declade, createElement} from "./util.js";
 
+/**
+ * @abstract
+ */
 class ValueEditor extends HTMLElement {
 	static defaultValue = 0;
 
@@ -365,6 +368,7 @@ export class AngleEditor extends ValueEditor {
 	}
 
 	parseInputValue(value) {
+		// The remainder operation causes unparsable string values to not be considered NaN. The input will not flash red
 		return mod(value, 360);
 	}
 

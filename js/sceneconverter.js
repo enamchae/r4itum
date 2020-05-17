@@ -109,20 +109,53 @@ class GeometryProjected {
 		this.geometry = geometry;
 	}
 
-	positionsAttribute(fromProjection=true, fromFaces=true) {
-		// Determines whether the vertex positions come from the original points or the projected points
+	/**
+	 * 
+	 * @param {boolean} [fromProjection] Determines whether the vertex positions come from the original points or the projected points.
+	 * @param {boolean} [fromFaces] Determines whether vertices should be duplicated for each face that includes them.
+	 * @param {boolean} [allowingBehindCamera] Determines whether to include vertices with a nonpositive W coordinate (distance from the
+	 * camera space for projected vertices). Meant to be used when `fromProjection` is `true`. If `fromFaces` is true, then faces will be
+	 * excluded if any of their vertices contain such vertices.
+	 * @returns {Three.Float32BufferAttribute} 
+	 */
+	positionsAttribute(fromProjection=true, fromFaces=true, allowingBehindCamera=true) {
 		const verts = fromProjection ? this.verts : this.geometry.verts;
 
 		// Copy all vertices
 		const positions = [];
 
 		if (fromFaces) {
-			for (const face of this.geometry.faces()) {
-				positions.push(...face.flatMap(index => verts[index]));
+			if (allowingBehindCamera) {
+				for (const face of this.geometry.faces()) {
+					positions.push(...face.flatMap(index => verts[index]));
+				}
+
+			} else {
+				facesLoop:
+				for (const face of this.geometry.faces()) {
+					const vertsFace = [];
+
+					for (const index of face) {
+						// Discard the array and check the next face if any vertex is behind
+						if (verts[index][3] <= 0) continue facesLoop;
+						vertsFace.push(verts[index]);
+					}
+
+					positions.push(...vertsFace.flat());
+				}
 			}
+
 		} else {
-			for (const vert of verts) {
-				positions.push(...vert);
+			if (allowingBehindCamera) {
+				for (const vert of verts) {
+					positions.push(...vert);
+				}
+
+			} else {
+				for (const vert of verts) {
+					if (vert[3] <= 0) continue;
+					positions.push(...vert);
+				}
 			}
 		}
 
@@ -301,11 +334,11 @@ void main() {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 
 		this.mesh3.geometry = new Three.BufferGeometry();
-		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true));
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
 
 		this.locus.geometry = new Three.BufferGeometry();
-		this.locus.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false));
+		this.locus.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
 		
 		return this;
 	}
@@ -580,14 +613,10 @@ class Axis4Rep {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 		this.line.geometry = new Three.BufferGeometry();
 		this.line.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, false));
-		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false));
-
-		this.line.geometry.computeBoundingSphere();
+		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
 		
 		return this;
 	}
-
-
 }
 
 // this.mesh3 = new Three.Line(new Three.BufferGeometry().setFromPoints(points), material);

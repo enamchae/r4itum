@@ -442,7 +442,7 @@ export default {
 		// [2:6]  A (±.5, ±.5, ±.5, ±.5) point such that:
 		//    • The point has the same sign as [0] for the axis that [0] covers
 		//    • The point has the same sign as [1] for the axis that [1] covers
-		//    • For the axes not covered, the coordinates may alternate
+		//    • For the axes not covered, the signs can vary
 		//			(e.g. if [0] is (0, 0, 0, −1)
 		//				 and [1] is (1, 0, 0,  0), then this must be (.5, ±.5, ±.5, −.5))
 		const cellIndexes = [

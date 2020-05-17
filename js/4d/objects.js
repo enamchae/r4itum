@@ -2,7 +2,7 @@
  * @file Handles 4D objects and their properties, along with the world itself's.
  */
 
-import {Vector4, Rotor4} from "./vector.js";
+import {Vector4, Rotor4, Line4} from "./vector.js";
 import {Geometry4} from "./meshgeometry.js";
 
 // const wireframeMat = new Three.LineBasicMaterial({color: 0x000000, linewidth: 10});
@@ -278,19 +278,22 @@ export class PlaneRef4 extends Object4 {
 
 export class Axis4 extends Object4 {
 	geometry;
+	line;
 
 	color;
 
 	constructor(axis, size=8, color=0) {
 		super();
 
-		const vert0 = new Vector4();
-		const vert1 = new Vector4();
-
-		vert0[axis] = size;
-		vert1[axis] = -size;
-
-		this.geometry = new Geometry4([vert0, vert1]);
+		this.geometry = new Geometry4();
+		for (let i = -1; i <= 1; i += 0.25) { // Line must be split into several parts to counteract culling
+			const vert = new Vector4();
+			vert[axis] = size * i;
+			this.geometry.verts.push(vert);
+		}
+		const direction = new Vector4();
+		direction[axis] = 1;
+		this.line = new Line4(direction);
 
 		this.color = color;
 	}

@@ -31,15 +31,15 @@ for (let i = 0; i < 2; i++) {
 
 tiedActions.addObject(...meshes);
 
-scene.addObjectReference(new PlaneRef4(0, 2, 10));
+scene.addObjectReference(new PlaneRef4(0, 2, 8));
 const axisColors = [
 	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
-	0xFF0000, // X
-	0x80FF00, // Y
-	0x00FFFF, // Z
-	0x8000FF, // W
+	0xFF4D4D, // X
+	0xA6FF4D, // Y
+	0x4DFFFF, // Z
+	0xA64DFF, // W
 ];
 for (let i = 0; i < 4; i++) {
-	scene.addObjectReference(new Axis4(i, 10, axisColors[i]));
+	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
 }
 Viewport.allNeedRerender = true;

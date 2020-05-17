@@ -198,8 +198,8 @@ export function attachViewportControls(viewport, user) {
 			movementY += mousemoveEvent.movementY;
 
 			object.setPos(initialPos
-					.add(right.clone().scale(movementX * movementSensitivity))
-					.add(up.clone().scale(-movementY * movementSensitivity)));
+					.add(right.multScalar(movementX * movementSensitivity))
+					.add(up.multScalar(-movementY * movementSensitivity)));
 			viewport.constructor.allNeedRerender = true;
 		};
 		element.addEventListener("mousemove", mousemove);
@@ -283,7 +283,7 @@ export function attachViewportControls(viewport, user) {
 		const mousemove = mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 
-			object.setScl(initialScale.clone().scale(movementX * movementSensitivity + 1));
+			object.setScl(initialScale.multScalar(movementX * movementSensitivity + 1));
 			viewport.constructor.allNeedRerender = true;
 		};
 		element.addEventListener("mousemove", mousemove);

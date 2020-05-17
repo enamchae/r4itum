@@ -90,8 +90,10 @@ export class Polymultivector extends Array {
 		return true;
 	}
 
+	/**
+	 * Sum of all components squared. Used as a more efficient value for distance comparisons.
+	 */ 
 	get magSq() {
-		// Sum of all components squared
 		let cumsum = 0;
 		for (const component of this) {
 			cumsum += component ** 2;
@@ -443,5 +445,83 @@ export class Vector4 extends Polymultivector {
 
 	clone() {
 		return new Vector4(...this);
+	}
+}
+
+/**
+ * @class Represents a 3-space that exists in 4-space.
+ */
+export class Space3_4 {
+	/**
+	 * A vector that is orthogonal to this 3-space.
+	 * @type Vector4
+	 */
+	normal;
+
+	/**
+	 * A point that lies within this 3-space.
+	 * @type Vector4
+	 */
+	offset;
+
+	constructor(normal, offset=new Vector4()) {
+		this.normal = normal;
+		this.offset = offset;
+	}
+
+	/**
+	 * 
+	 * 
+	 * Formula from https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form
+	 * @param {Line4} line 
+	 * @returns {number} The scalar that the line may be evaluated at to produce the point of intersection, or
+	 * `±Infinity` if there is no intersection, or `NaN` if there are infinitely many points of intersection
+	 * (the line lies within this 3-space).
+	 */
+	intersectWithLine(line) {
+		return this.offset.subtract(line.offset).dot(this.normal) / line.direction.dot(this.normal);
+	}
+
+	/**
+	 * 
+	 * @param {Line4} line 
+	 * @returns {Vector4} The point of intersection between this 3-space and the line, with edge case values
+	 * according to `intersectWithLine`.
+	 */
+	intersectionWithLine(line) {
+		return line.evaluate(this.intersectWithLine(line));
+	}
+}
+
+/**
+ * @class Represents a 1-space, or line, that exists in 4-space.
+ * 
+ * Can be represented as vectors in the form `(this.offset) + (this.direction) * scalar`, where `scalar` is any real number.
+ */
+export class Line4 {
+	/**
+	 * A vector that points in the direction of this line.
+	 * @type Vector4
+	 */
+	direction;
+
+	/**
+	 * A point that lies within this 1-space.
+	 * @type Vector4
+	 */
+	offset;
+
+	constructor(direction, offset=new Vector4()) {
+		this.direction = direction;
+		this.offset = offset;
+	}
+
+	/**
+	 * Evaluates this line using the vector form `(this.offset) + (this.direction) * scalar` to produce a point.
+	 * @param {number} scalar 
+	 * @returns {Vector4} 
+	 */
+	evaluate(scalar) {
+		return this.offset.add(this.direction.multScalar(scalar));
 	}
 }
