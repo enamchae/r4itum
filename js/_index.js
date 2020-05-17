@@ -31,7 +31,7 @@ for (let i = 0; i < 2; i++) {
 
 tiedActions.addObject(...meshes);
 
-// scene.addObjectReference(new PlaneRef4(0, 2, 10));
+scene.addObjectReference(new PlaneRef4(0, 2, 10));
 const axisColors = [
 	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
 	0xFF0000, // X

@@ -5,33 +5,42 @@
 import {Polymultivector, Vector4, Rotor4} from "./4d/vector.js";
 import {declade, createElement} from "./util.js";
 
-/**
- * Allows a user to edit the components of a vector.
- * @fires VectorEditor#update When any value is changed.
- * @fires VectorEditor#commit When an input loses focus or ENTER is pressed.
- */
-export class VectorEditor extends HTMLElement {
-	static basisLabels = ["X", "Y", "Z", "W"];
+class ValueEditor extends HTMLElement {
+	static defaultValue = 0;
 
 	/**
-	 * Maps each element in this vector editor to the axis that it represents, as a number.
-	 * @type Map<HTMLInputElement, number>
+	 * Maps each input in this editor to the value that it represents, as a number.
+	 * @type Map<HTMLElement, number>
 	 */
 	inputs = new Map();
 	/**
 	 * Stores the previous accepted values in this editor's inputs.
 	 * @type number[]
 	 */
-	lastAcceptedValues = [];
+	lastAcceptedValues;
 
-	/**
-	 * 
-	 * @param {Vector4} [vector] The vector used to initiate the inputs' values.
-	 */
-	constructor(vector) {
+	constructor(initiator) {
 		super();
 
-		this.fillElements(vector);
+		this.lastAcceptedValues = new Polymultivector(undefined, initiator.length); // Hold off on filling the array; do some processing first
+		this.fillElements(initiator);
+	}
+
+	isValidValue(value) {
+		return !isNaN(value);
+	}
+
+	/**
+	 * Creates the elements used in this editor.
+	 * @param {number[]} [initiator] The values used to initiate the inputs' values.
+	 */
+	fillElements(initiator=[ValueEditor.defaultValue]) {
+		declade(this);
+
+		const form = this.createForm();
+		this.createInputs(initiator, form);
+
+		return this;
 	}
 	
 	/**
@@ -40,9 +49,9 @@ export class VectorEditor extends HTMLElement {
 	 */
 	getChangeEventDetail(event) {
 		const index = this.inputs.get(event.target);
-		const value = /* event.target.value === "" ? 0 :  */parseFloat(event.target.value);
-		const isValid = !isNaN(value);
-	
+		const value = this.parseInputValue(event.target.value, index);
+		const isValid = this.isValidValue(value);
+
 		return {
 			currentTarget: this,
 			inputTarget: event.target,
@@ -53,371 +62,316 @@ export class VectorEditor extends HTMLElement {
 		};
 	}
 
-	/**
-	 * Creates the elements used in this editor.
-	 * @param {Vector4} [vector] The vector used to initiate the inputs' values.
-	 */
-	fillElements(vector=new Vector4()) {
-		declade(this);
-
+	createForm() {
 		// Create the form that catches and passes on the events
-		const form = createElement("form", {
+		return createElement("form", {
 			listeners: {
 				input: [
-					[event => {
-						const customEvent = new CustomEvent("update", {
-							detail: this.getChangeEventDetail(event),
-						});
-						this.dispatchEvent(customEvent);
-					}],
+					[event => this.oninput(event)],
 				],
 				
 				change: [
-					[event => {
-						const detail = this.getChangeEventDetail(event);
-
-						this.lastAcceptedValues[detail.index] = detail.valueUsed;
-						detail.inputTarget.value = round(detail.valueUsed);
-
-						if (!detail.isValid) {
-							// Briefly flash red
-							detail.inputTarget.classList.add("error-flash");
-							detail.inputTarget.addEventListener("animationend", () => {
-								detail.inputTarget.classList.remove("error-flash");
-							}, {once: true});
-						}
-
-						const customEvent = new CustomEvent("update", {detail});
-						this.dispatchEvent(customEvent);
-					}],
+					[event => this.onchange(event)],
 				],
 			},
 			parent: this,
 		});
+	}
 
+	oninput(event) {
+		const detail = this.getChangeEventDetail(event);
+
+		if (detail.isValid) {
+			detail.inputTarget.classList.remove("erroneous");
+
+			this.lastAcceptedValues[detail.index] = detail.valueUsed;
+
+			const customEvent = new CustomEvent("update", {detail});
+			this.dispatchEvent(customEvent);
+		} else {
+			detail.inputTarget.classList.add("erroneous");
+		}
+
+		event.stopPropagation(); // Prevent this event from being caught by any parent editors
+	}
+
+	onchange(event) {
+		const detail = this.getChangeEventDetail(event);
+
+		this.lastAcceptedValues[detail.index] = detail.valueUsed;
+		detail.inputTarget.value = this.convertForInput(detail.valueUsed, detail.index);
+
+		if (!detail.isValid) {
+			detail.inputTarget.classList.remove("erroneous");
+
+			// Briefly flash red
+			detail.inputTarget.classList.add("error-flash");
+			detail.inputTarget.addEventListener("animationend", () => {
+				detail.inputTarget.classList.remove("error-flash");
+			}, {once: true});
+
+			// Only trigger an update event if there was a change
+			const customEvent = new CustomEvent("update", {detail});
+			this.dispatchEvent(customEvent);
+		}
+
+		event.stopPropagation();
+	}
+
+	createInputs(initiator, form) {
 		// Create the inputs
-		for (let i = 0; i < 4; i++) {
-			const value = isNaN(vector[i]) ? 0 : vector[i];
-			this.lastAcceptedValues[i] = value;
+		for (let i = 0; i < this.lastAcceptedValues.length; i++) {
+			this.createInputBlock(initiator, i, form);
+		}
+	}
 
-			createElement("label", {
-				textContent: VectorEditor.basisLabels[i],
-				parent: form,
-			});
-			
-			this.inputs.set(createElement("input", {
-				properties: {
-					type: "number",
-					value: round(value),
-					step: .1,
-				},
-				parent: form,
-			}), i);
+	/**
+	 * Creates an input and any accompanying labels.
+	 * @param {number[]} initiator 
+	 * @param {number} i 
+	 * @param {HTMLFormElement} form 
+	 */
+	createInputBlock(initiator, i, form) {
+		this.createInput(initiator, i, form);
+	}
+
+	createInput(initiator, i, form) {
+		const value = this.initiateValue(i, initiator);
+
+		const input = createElement("input", {
+			properties: {
+				type: "number",
+				value: this.convertForInput(value, i),
+				step: .1,
+			},
+			parent: form,
+		});
+		this.inputs.set(input, i);
+		return input;
+	}
+
+	refill(initiator=[ValueEditor.defaultValue]) {
+		for (const [input, i] of this.inputs) {
+			const value = this.initiateValue(i, initiator);
+			input.value = this.convertForInput(value, i);
 		}
 
 		return this;
 	}
 
-	refill(vector) {
-		for (const [input, i] of this.inputs) {
-			const value = isNaN(vector[i]) ? 0 : vector[i];
-			this.lastAcceptedValues[i] = value;
-			input.value = round(value);
-		}
+	initiateValue(i, initiator) {
+		const value = !this.isValidValue(initiator[i]) ? ValueEditor.defaultValue : initiator[i];
+		this.lastAcceptedValues[i] = value;
+		return value;
+	}
 
-		return this;
+	/**
+	 * Parses an input value as a usable number.
+	 * 
+	 * Inverse of `convertForInput`.
+	 * @param {number} value 
+	 * @param {number} index 
+	 */
+
+	parseInputValue(value, index) {
+		return /* value === "" ? 0 :  */parseFloat(value);
+	}
+
+	/**
+	 * Determines how a value will be displayed in an input.
+	 * 
+	 * Inverse of `parseInputValue`.
+	 * @param {number} value 
+	 * @param {number} index 
+	 */
+	convertForInput(value, index) {
+		return round(value);
+	}
+
+	get value() {
+		return this.lastAcceptedValues;
+	}
+
+	set value(initiator) {
+		this.refill(initiator);
+	}
+}
+
+/**
+ * Allows a user to edit the components of a vector.
+ * @fires VectorEditor#update When any value is changed.
+ * @fires VectorEditor#commit When an input loses focus or ENTER is pressed.
+ */
+export class VectorEditor extends ValueEditor {
+	static basisLabels = ["X", "Y", "Z", "W"];
+
+	createInputBlock(initiator, i, form) {
+		createElement("label", {
+			textContent: VectorEditor.basisLabels[i],
+			parent: form,
+		});
+
+		this.createInput(initiator, i, form);
 	}
 
 	get value() {
 		return new Vector4(...this.lastAcceptedValues);
 	}
-
-	set value(vector) {
-		this.refill(vector);
-	}
 }
 
 /**
  * Allows a user to edit the angle and plane of a rotor.
+ * 
+ * `inputs` and `lastAcceptedValues` only contain values for the plane coefficients.
  */
-export class RotorEditor extends HTMLElement {
+export class RotorEditor extends ValueEditor {
 	static basisLabels = ["XY", "XZ", "XW", "YZ", "YW", "ZW", "XYZW"];
 	static gridRows = [2, 2, 2, 3, 3, 4];
 	static gridCols = [1, 2, 3, 2, 3, 3];
 
-	angleEditor;
-	/**
-	 * Maps each input in this rotor editor to the axis that it represents, as a number.
-	 * 
-	 * This only contains values for the plane coefficient fields.
-	 * @type Map<HTMLInputElement, number>
-	 */
-	inputs = new Map();
-	/**
-	 * Stores the previous accepted values in this editor's inputs.
-	 * 
-	 * This only contains values for the plane coefficients.
-	 * @type Polymultivector
-	 */
-	lastAcceptedValues = new Polymultivector(undefined, 7); // Creates pmvector with 7 elements
-
-	constructor(rotor) {
-		super();
-
-		this.fillElements(rotor);
-	}
-	
-	/**
-	 * Produces the detail object given to a `CustomEvent` emitted from this editor.
-	 * @param {Event} event 
-	 */
-	getChangeEventDetail(event) {
-		const index = this.inputs.get(event.target);
-		const value = parseFloat(event.target.value);
-		const isValid = !isNaN(value);
-	
-		return {
-			currentTarget: this,
-			inputTarget: event.target,
-			index,
-			valueAttempted: value,
-			valueUsed: isValid ? value : this.lastAcceptedValues[index],
-			isValid,
-		};
-	}
+	// Field causes `angleEditor` to be undefined
+	// angleEditor;
 
 	/**
 	 * Marks the angle editor as ineffective if the plane is all zeros.
 	 */
-	markAngleEditor() {
-		if (this.lastAcceptedValues.isZero()) {
-			this.angleEditor.input.classList.add("ineffective");
-		} else {
-			this.angleEditor.input.classList.remove("ineffective");
-		}
+	// markAngleEditor() {
+	// 	if (this.lastAcceptedValues.isZero()) {
+	// 		this.angleEditor.input.classList.add("ineffective");
+	// 	} else {
+	// 		this.angleEditor.input.classList.remove("ineffective");
+	// 	}
 
-		return this;
+	// 	return this;
+	// }
+
+	onchange(event) {
+		super.onchange(event);
+
+		// this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
 	}
 
-	/**
-	 * Creates the elements used in this editor.
-	 * @param {Rotor4} [rotor] The rotor used to initiate the inputs' values.
-	 */
-	fillElements(rotor=new Rotor4()) {
-		declade(this);
+	onanglechange(event) {
+		const detailOld = event.detail;
+		const detail = { // Repurpose the detail object for this rotor editor
+			currentTarget: this,
+			inputTarget: detailOld.inputTarget,
+			index: 0,
+			valueAttempted: detailOld.valueAttempted,
+			valueUsed: detailOld.valueUsed,
+			isValid: detailOld.isValid,
+		};
 
-		// Create the form that catches and passes on the events
-		const form = createElement("form", {
-			listeners: {
-				input: [
-					[event => {
-						const customEvent = new CustomEvent("update", {
-							detail: this.getChangeEventDetail(event),
-						});
-						this.dispatchEvent(customEvent);
-					}],
-				],
-				
-				change: [
-					[event => {
-						const detail = this.getChangeEventDetail(event);
+		this.lastAcceptedValues[detail.index] = detail.valueUsed;
+		// No need to do anything to the angle editor
 
-						// Check if the input directly belongs to this rotor editor
-						if (this.inputs.has(detail.inputTarget)) {
-							// Only update the data on this rotor editor if so
-							
-							this.lastAcceptedValues[detail.index] = detail.valueUsed;
-							detail.inputTarget.value = round(detail.valueUsed);
-	
-							this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
-	
-							if (!detail.isValid) {
-								// Briefly flash red
-								detail.inputTarget.classList.add("error-flash");
-								detail.inputTarget.addEventListener("animationend", () => {
-									detail.inputTarget.classList.remove("error-flash");
-								}, {once: true});
-							}
-						}
+		const customEvent = new CustomEvent("update", {detail});
+		this.dispatchEvent(customEvent);
+	}
 
-						const customEvent = new CustomEvent("update", {detail});
-						this.dispatchEvent(customEvent);
-					}],
-				],
-			},
-			parent: this,
-		});
-
+	createInputs(rotor, form) {
 		// Create the inputs
 
-		this.angleEditor = new AngleEditor(rotor.angle * 180 / Math.PI);
+		const anglePlane = rotor.asAnglePlane();
+
+		this.angleEditor = new AngleEditor(anglePlane[0] * 180 / Math.PI);
+		this.angleEditor.addEventListener("update", event => {
+			this.onanglechange(event);
+		});
 		form.appendChild(this.angleEditor);
 
-		const plane = rotor.plane;
-		for (let i = 0; i < 7; i++) {
-			const value = isNaN(plane[i]) ? 0 : plane[i]; // Verify the value
-			this.lastAcceptedValues[i] = value;
+		this.inputs.set(this.angleEditor, 0);
+		this.lastAcceptedValues[0] = this.angleEditor.value;
 
-			const input = createElement("input", {
-				properties: {
-					type: "number",
-					value: round(value),
-					step: .1,
-				},
-			});
-			this.inputs.set(input, i); // Connect this input to its index
-
-			// Group the input and label into a block
-			const inputBlock = createElement("input-block", {
-				children: [
-					input,
-					createElement("label", {
-						textContent: RotorEditor.basisLabels[i],
-					}),
-				],
-
-				parent: form,
-			});
-			// XYZW input fills row
-			if (i === 6) {
-				inputBlock.classList.add("fill-row");
-			} else {
-				inputBlock.style.cssText = `
-					grid-row: ${RotorEditor.gridRows[i]};
-					grid-column: ${RotorEditor.gridCols[i]};`;
-			}
+		for (let i = 1; i < this.lastAcceptedValues.length; i++) {
+			this.createInputBlock(anglePlane, i, form);
 		}
 
-		this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
+		// this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
 	}
 
-	refill(rotor) {
-		for (const [input, i] of this.inputs) {
-			const value = isNaN(rotor[i]) ? 0 : rotor[i];
-			this.lastAcceptedValues[i] = value;
-			input.value = round(value);
+	createInputBlock(plane, i, form) {
+		// Group the input and label into a block
+		const inputBlock = createElement("input-block", {
+			children: [
+				this.createInput(plane, i, form),
+				createElement("label", {
+					textContent: RotorEditor.basisLabels[i - 1],
+				}),
+			],
+
+			parent: form,
+		});
+		// XYZW input fills row
+		if (i === 7) {
+			inputBlock.classList.add("fill-row");
+		} else {
+			inputBlock.style.cssText = `
+grid-row: ${RotorEditor.gridRows[i - 1]};
+grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		}
 	}
 
 	get value() {
-		return Rotor4.planeAngle(this.lastAcceptedValues, this.angleEditor.valueRad);
-	}
-
-	set value(rotor) {
-		this.refill(rotor);
+		return Rotor4.planeAngle(this.lastAcceptedValues.slice(1), this.lastAcceptedValues[0] * Math.PI / 180);
 	}
 }
 
 /**
  * Allows a user to edit an angle value.
  */
-export class AngleEditor extends HTMLElement {
-	input;
-	lastAcceptedValue = 0;
+export class AngleEditor extends ValueEditor {
+	// input;
 
 	constructor(angle) {
-		super();
-
-		this.fillElements(angle);
+		super([angle]);
 	}
 	
-	/**
-	 * Produces the detail object given to a `CustomEvent` emitted from this editor.
-	 * @param {Event} event 
-	 */
-	getChangeEventDetail(event) {
-		const value = mod(parseFloat(event.target.value), 360);
-		const isValid = !isNaN(value);
-
-		return {
-			inputTarget: event.target,
-			valueAttempted: value,
-			valueUsed: isValid ? value : this.lastAcceptedValue,
-			isValid,
-		};
-	}
-
-	/**
-	 * Creates the elements used in this editor.
-	 * @param {number} [angle=0] 
-	 */
-	fillElements(angle=0) {
-		declade(this);
-
-		// Create the form that catches and passes on the events
-		const form = createElement("form", {
-			listeners: {
-				input: [
-					[event => {
-						const customEvent = new CustomEvent("update", {
-							detail: this.getChangeEventDetail(event),
-						});
-						this.dispatchEvent(customEvent);
-					}],
-				],
-				
-				change: [
-					[event => {
-						const detail = this.getChangeEventDetail(event);
-
-						this.lastAcceptedValue = detail.valueUsed;
-						this.input.value = round(detail.valueUsed);
-
-						if (!detail.isValid) {
-							// Briefly flash red
-							this.input.classList.add("error-flash");
-							this.input.addEventListener("animationend", () => {
-								this.input.classList.remove("error-flash");
-							}, {once: true});
-						}
-
-						const customEvent = new CustomEvent("update", {detail});
-						this.dispatchEvent(customEvent);
-					}],
-				],
-			},
-			parent: this,
-		});
-
+	createInputs(initiator, form) {
 		// Create the inputs
 
-		const value = isNaN(angle) ? 0 : mod(angle, 360); // Verify the value
-		this.lastAcceptedValue = value;
+		const value = this.initiateValue(0, initiator);
 
 		this.input = createElement("input", {
 			properties: {
 				type: "number",
-				value: round(value),
+				value: this.convertForInput(value),
 				step: 5,
 			},
 			parent: form,
 		});
+
+		this.inputs.set(this.input, 0);
 		createElement("label", {
 			textContent: "°",
 			parent: form,
 		});
 	}
 
-	refill(angle) {
-		const value = isNaN(angle) ? 0 : mod(angle, 360);
-		this.lastAcceptedValue = value;
-		this.input.value = round(value);
+	initiateValue(i, initiator) {
+		const value = !this.isValidValue(initiator[i]) ? ValueEditor.defaultValue : mod(initiator[i], 360);
+		this.lastAcceptedValues[i] = value;
+		return value;
+	}
+
+	parseInputValue(value) {
+		return mod(value, 360);
 	}
 
 	get value() {
-		return this.lastAcceptedValue;
+		return this.lastAcceptedValues[0];
 	}
 
 	set value(angle) {
-		this.refill(angle);
+		this.refill([angle]);
 	}
 
 	get valueRad() {
-		return this.lastAcceptedValue * Math.PI / 180;
+		return this.lastAcceptedValues[0] * Math.PI / 180;
 	}
 
 	set valueRad(angle) {
-		this.refill(angle * 180 / Math.PI);
+		this.refill([angle * 180 / Math.PI]);
 	}
 }
 

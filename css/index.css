@@ -30,7 +30,7 @@ main {
 	--font: Overpass, Arial, sans-serif;
 
 	--col-red-1-af: #9b2121af;
-	--col-yellow-1-af: #946420af;
+	--col-yellow-1-af: #6b4816af;
 
 	--col-green-0-7f: #0f382e7f;
 	--col-green-1-af: #2a6a52af;
@@ -290,7 +290,7 @@ main > workspace- > overlays- > .panel input.error-flash {
 	animation: error-flash 1s linear;
 }
 
-main > workspace- > overlays- > .panel input.ineffective {
+main > workspace- > overlays- > .panel input.erroneous {
 	background: var(--col-yellow-1-af);
 }
 

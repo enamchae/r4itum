@@ -310,14 +310,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 
 			const updateRotHandler = ({detail}) => {
-				const plane = detail.currentTarget.lastAcceptedValues;
-				let angle = detail.currentTarget.angleEditor.lastAcceptedValue;
-				if (detail.currentTarget.inputs.has(detail.inputTarget)) {
-					plane[detail.index] = detail.valueUsed;
-				} else {
-					angle = detail.valueUsed * Math.PI / 180;
-				}
-				object.rot.copy(Rotor4.planeAngle(plane, angle));
+				object.rot.copy(detail.currentTarget.value);
 				Viewport.allNeedRerender = true;
 			};
 

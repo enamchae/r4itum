@@ -35,6 +35,14 @@ export class Polymultivector extends Array {
 		return this;
 	}
 
+	slice(start, end=this.length) {
+		const target = [];
+		for (let i = start; i < end; i++) {
+			target.push(this[i]);
+		}
+		return target;
+	}
+
 	/**
 	 * Multiplies all components by a real number *in place*.
 	 * @param {number} scalar 
@@ -272,6 +280,9 @@ export class Rotor4 extends Polymultivector {
 		return new Rotor4(...this);
 	}
 
+	asAnglePlane() {
+		return [this.angle, ...this.plane];
+	}
 
 	get angle() {
 		return 2 * Math.acos(this[0]);
