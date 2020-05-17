@@ -135,14 +135,14 @@ class ValueEditor extends HTMLElement {
 		this.createInput(initiator, i, form);
 	}
 
-	createInput(initiator, i, form) {
+	createInput(initiator, i, form, inputStep=0.1) {
 		const value = this.initiateValue(i, initiator);
 
 		const input = createElement("input", {
 			properties: {
 				type: "number",
 				value: this.convertForInput(value, i),
-				step: .1,
+				step: inputStep,
 			},
 			parent: form,
 		});
@@ -294,9 +294,9 @@ export class RotorEditor extends ValueEditor {
 		// Group the input and label into a block
 		const inputBlock = createElement("input-block", {
 			children: [
-				this.createInput(plane, i, form),
+				this.createInput(plane, i, form, 10),
 				createElement("label", {
-					textContent: RotorEditor.basisLabels[i - 1],
+					textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
 				}),
 			],
 
@@ -310,6 +310,14 @@ export class RotorEditor extends ValueEditor {
 grid-row: ${RotorEditor.gridRows[i - 1]};
 grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		}
+	}
+
+	parseInputValue(value) {
+		return Math.sqrt(parseFloat(value) / 100);
+	}
+
+	convertForInput(value) {
+		return round(value ** 2 * 100);
 	}
 
 	get value() {
