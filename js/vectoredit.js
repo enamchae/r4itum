@@ -79,9 +79,6 @@ export class VectorEditor extends HTMLElement {
 						this.lastAcceptedValues[detail.index] = detail.valueUsed;
 						detail.inputTarget.value = round(detail.valueUsed);
 
-						const customEvent = new CustomEvent("commit", {detail});
-						this.dispatchEvent(customEvent);
-
 						if (!detail.isValid) {
 							// Briefly flash red
 							detail.inputTarget.classList.add("error-flash");
@@ -89,6 +86,9 @@ export class VectorEditor extends HTMLElement {
 								detail.inputTarget.classList.remove("error-flash");
 							}, {once: true});
 						}
+
+						const customEvent = new CustomEvent("update", {detail});
+						this.dispatchEvent(customEvent);
 					}],
 				],
 			},
@@ -240,7 +240,7 @@ export class RotorEditor extends HTMLElement {
 							}
 						}
 
-						const customEvent = new CustomEvent("commit", {detail});
+						const customEvent = new CustomEvent("update", {detail});
 						this.dispatchEvent(customEvent);
 					}],
 				],
@@ -250,7 +250,7 @@ export class RotorEditor extends HTMLElement {
 
 		// Create the inputs
 
-		this.angleEditor = new AngleEditor(rotor.angle);
+		this.angleEditor = new AngleEditor(rotor.angle * 180 / Math.PI);
 		form.appendChild(this.angleEditor);
 
 		const plane = rotor.plane;
@@ -300,7 +300,7 @@ export class RotorEditor extends HTMLElement {
 	}
 
 	get value() {
-		return Rotor4.planeAngle(this.lastAcceptedValues, this.angleEditor.value).normalize();
+		return Rotor4.planeAngle(this.lastAcceptedValues, this.angleEditor.valueRad);
 	}
 
 	set value(rotor) {
@@ -326,9 +326,9 @@ export class AngleEditor extends HTMLElement {
 	 * @param {Event} event 
 	 */
 	getChangeEventDetail(event) {
-		const value = mod(parseFloat(event.target.value) / 180 * Math.PI, 2 * Math.PI);
+		const value = mod(parseFloat(event.target.value), 360);
 		const isValid = !isNaN(value);
-	
+
 		return {
 			inputTarget: event.target,
 			valueAttempted: value,
@@ -361,10 +361,7 @@ export class AngleEditor extends HTMLElement {
 						const detail = this.getChangeEventDetail(event);
 
 						this.lastAcceptedValue = detail.valueUsed;
-						this.input.value = round(detail.valueUsed * 180 / Math.PI);
-
-						const customEvent = new CustomEvent("commit", {detail});
-						this.dispatchEvent(customEvent);
+						this.input.value = round(detail.valueUsed);
 
 						if (!detail.isValid) {
 							// Briefly flash red
@@ -373,6 +370,9 @@ export class AngleEditor extends HTMLElement {
 								this.input.classList.remove("error-flash");
 							}, {once: true});
 						}
+
+						const customEvent = new CustomEvent("update", {detail});
+						this.dispatchEvent(customEvent);
 					}],
 				],
 			},
@@ -381,14 +381,14 @@ export class AngleEditor extends HTMLElement {
 
 		// Create the inputs
 
-		const value = isNaN(angle) ? 0 : mod(angle, 2 * Math.PI); // Verify the value
+		const value = isNaN(angle) ? 0 : mod(angle, 360); // Verify the value
 		this.lastAcceptedValue = value;
 
 		this.input = createElement("input", {
 			properties: {
 				type: "number",
-				value: round(value * 180 / Math.PI),
-				step: 15,
+				value: round(value),
+				step: 5,
 			},
 			parent: form,
 		});
@@ -399,9 +399,9 @@ export class AngleEditor extends HTMLElement {
 	}
 
 	refill(angle) {
-		const value = isNaN(angle) ? 0 : mod(angle, 2 * Math.PI);
+		const value = isNaN(angle) ? 0 : mod(angle, 360);
 		this.lastAcceptedValue = value;
-		this.input.value = round(value * 180 / Math.PI);
+		this.input.value = round(value);
 	}
 
 	get value() {
@@ -410,6 +410,14 @@ export class AngleEditor extends HTMLElement {
 
 	set value(angle) {
 		this.refill(angle);
+	}
+
+	get valueRad() {
+		return this.lastAcceptedValue * Math.PI / 180;
+	}
+
+	set valueRad(angle) {
+		this.refill(angle * 180 / Math.PI);
 	}
 }
 

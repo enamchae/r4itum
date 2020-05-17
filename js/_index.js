@@ -17,7 +17,7 @@ import {scene, Viewport} from "./interface.js";
 import tiedActions from "./interfaceties.js";
 
 const meshes = [
-	new Mesh4(construct.icositetrachoron()),
+	new Mesh4(construct.octachoron()),
 	// new Mesh4(construct.pentachoron()).setPos(new Vector4(-2, -2, 2, 0)),
 	// new Mesh4(construct.pentachoron()).setPos(new Vector4(2, 2, 2, 0)),
 	// new Mesh4(construct.hexahedron()),

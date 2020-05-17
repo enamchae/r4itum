@@ -179,7 +179,10 @@ export class Rotor4 extends Polymultivector {
 	static planeAngle(axisComponents, angle) {
 		const axis = new Polymultivector(axisComponents).normalize().scale(Math.sin(angle / 2));
 
-		return new this(Math.cos(angle / 2), ...axis);
+		const rotor = new this(Math.cos(angle / 2), ...axis);
+		return rotor.isZero() // Return the identity rotor if the new rotor is all zeros
+				? new Rotor4()
+				: rotor.normalize();
 	}
 
 	inverse() {
