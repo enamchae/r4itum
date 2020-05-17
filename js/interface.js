@@ -313,9 +313,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 
 			const updateRotHandler = ({detail}) => {
-				console.log(detail);
-				console.log(detail.currentTarget.value);
-
 				object.rot.copy(detail.currentTarget.value);
 				Viewport.allNeedRerender = true;
 			};

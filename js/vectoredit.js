@@ -2,7 +2,7 @@
  * @file Provides widgets for users to view and edit vectors.
  */
 
-import {Vector4, Rotor4} from "./4d/vector.js";
+import {Polymultivector, Vector4, Rotor4} from "./4d/vector.js";
 import {declade, createElement} from "./util.js";
 
 /**
@@ -157,9 +157,9 @@ export class RotorEditor extends HTMLElement {
 	 * Stores the previous accepted values in this editor's inputs.
 	 * 
 	 * This only contains values for the plane coefficients.
-	 * @type number[]
+	 * @type Polymultivector
 	 */
-	lastAcceptedValues = [];
+	lastAcceptedValues = new Polymultivector(undefined, 7); // Creates pmvector with 7 elements
 
 	constructor(rotor) {
 		super();
@@ -187,6 +187,19 @@ export class RotorEditor extends HTMLElement {
 	}
 
 	/**
+	 * Marks the angle editor as ineffective if the plane is all zeros.
+	 */
+	markAngleEditor() {
+		if (this.lastAcceptedValues.isZero()) {
+			this.angleEditor.input.classList.add("ineffective");
+		} else {
+			this.angleEditor.input.classList.remove("ineffective");
+		}
+
+		return this;
+	}
+
+	/**
 	 * Creates the elements used in this editor.
 	 * @param {Rotor4} [rotor] The rotor used to initiate the inputs' values.
 	 */
@@ -209,19 +222,26 @@ export class RotorEditor extends HTMLElement {
 					[event => {
 						const detail = this.getChangeEventDetail(event);
 
-						this.lastAcceptedValues[detail.index] = detail.valueUsed;
-						detail.inputTarget.value = round(detail.valueUsed);
+						// Check if the input directly belongs to this rotor editor
+						if (this.inputs.has(detail.inputTarget)) {
+							// Only update the data on this rotor editor if so
+							
+							this.lastAcceptedValues[detail.index] = detail.valueUsed;
+							detail.inputTarget.value = round(detail.valueUsed);
+	
+							this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
+	
+							if (!detail.isValid) {
+								// Briefly flash red
+								detail.inputTarget.classList.add("error-flash");
+								detail.inputTarget.addEventListener("animationend", () => {
+									detail.inputTarget.classList.remove("error-flash");
+								}, {once: true});
+							}
+						}
 
 						const customEvent = new CustomEvent("commit", {detail});
 						this.dispatchEvent(customEvent);
-
-						if (!detail.isValid) {
-							// Briefly flash red
-							detail.inputTarget.classList.add("error-flash");
-							detail.inputTarget.addEventListener("animationend", () => {
-								detail.inputTarget.classList.remove("error-flash");
-							}, {once: true});
-						}
 					}],
 				],
 			},
@@ -267,6 +287,8 @@ export class RotorEditor extends HTMLElement {
 					grid-column: ${RotorEditor.gridCols[i]};`;
 			}
 		}
+
+		this.markAngleEditor(); // If the plane is all zeros, mark the angle editor as ineffective
 	}
 
 	refill(rotor) {

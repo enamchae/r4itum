@@ -9,7 +9,7 @@
 /**
  * @class Used to represent general properties of rank-n vectors and sums of them.
  */
-class Polymultivector extends Array {
+export class Polymultivector extends Array {
 	constructor(elements, length=elements.length) {
 		super(length || 0);
 

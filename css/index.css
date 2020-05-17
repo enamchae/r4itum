@@ -18,7 +18,7 @@ main {
 	min-height: 40em;
 
 	font-family: var(--font);
-	font-weight: 600;
+	font-weight: 400;
 	font-size: 12px;
 	line-height: 1;
 
@@ -29,7 +29,8 @@ main {
 
 	--font: Overpass, Arial, sans-serif;
 
-	--col-red-1-7f: #9b2121af;
+	--col-red-1-af: #9b2121af;
+	--col-yellow-1-af: #8a5f1faf;
 
 	--col-green-0-7f: #0f382e7f;
 	--col-green-1-af: #2a6a52af;
@@ -146,6 +147,8 @@ main > workspace- > overlays- > .panel h3 {
 	font-size: 1.2em;
 }
 
+/* Bar lists */
+
 main > workspace- > overlays- > .panel ul.bars {
 	min-height: 2em;
 	max-height: 100%;
@@ -227,10 +230,33 @@ main > workspace- > overlays- > .panel rotor-editor > form {
 	gap: 4px;
 }
 
+main > workspace- > overlays- > .panel rotor-editor angle-editor {
+	margin: 1em 0;
+}
+
 main > workspace- > overlays- > .panel rotor-editor angle-editor,
 main > workspace- > overlays- > .panel rotor-editor .fill-row {
 	grid-column: 1 / -1;
 }
+
+/* Angle editor */
+
+main > workspace- > overlays- > .panel angle-editor,
+main > workspace- > overlays- > .panel angle-editor input {
+	font-size: 1.2em;
+}
+main > workspace- > overlays- > .panel angle-editor input {
+	width: 4em;
+	margin: 0 .25em;
+
+	text-align: right;
+}
+main > workspace- > overlays- > .panel angle-editor form {
+	display: flex;
+	justify-content: center;
+}
+
+/* Input blocks */
 
 main > workspace- > overlays- > .panel input-block {
 	display: flex;
@@ -241,8 +267,31 @@ main > workspace- > overlays- > .panel input-block > * + label {
 	margin-top: .25em;
 }
 
-main > workspace- > overlays- > .panel input:not([type="color"]) {
+/* Panel inputs and labels */
+
+main > workspace- > overlays- > .panel input {
 	width: 100%; /* Inputs automatically have a fixed size */
+	border: 0;
+
+	text-align: center;
+	font-family: var(--font);
+	color: inherit;
+
+	background: #176d4caf;
+}
+
+main > workspace- > overlays- > .panel input[type="color"] {
+	width: 3em;
+
+	background: #ffffff7f;
+}
+
+main > workspace- > overlays- > .panel input.error-flash {
+	animation: error-flash 1s linear;
+}
+
+main > workspace- > overlays- > .panel input.ineffective {
+	background: var(--col-yellow-1-af);
 }
 
 main > workspace- > overlays- > .panel label {
@@ -251,6 +300,8 @@ main > workspace- > overlays- > .panel label {
 	justify-content: center;
 	align-items: center;
 }
+
+/* Panel layout */
 
 main > workspace- > overlays- > .panel > *:not(:empty) {
 	padding: .5em 1em;
@@ -271,28 +322,6 @@ main > workspace- > overlays- > .panel > .panel-content h3 {
 	margin-top: 1em;
 }
 
-main > workspace- > overlays- > .panel > .panel-content form > input:after {
-	content: attr(data-label);
-}
-
-main > workspace- > overlays- > .panel > .panel-content input {
-	border: 0;
-
-	text-align: center;
-	font-family: var(--font);
-	color: inherit;
-
-	background: #176d4caf;
-}
-
-main > workspace- > overlays- > .panel > .panel-content input.error-flash {
-	animation: error-flash 1s linear;
-}
-
-main > workspace- > overlays- > .panel > .panel-content input[type="color"] {
-	background: #ffffff7f;
-}
-
 main > menu-bar {
 	height: 3em;
 
@@ -301,9 +330,9 @@ main > menu-bar {
 
 @keyframes error-flash {
 	0% {
-		background: var(--col-red-1-7f);
+		background: var(--col-red-1-af);
 	}
 	50% {
-		background: var(--col-red-1-7f);
+		background: var(--col-red-1-af);
 	}
 }
