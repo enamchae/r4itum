@@ -56,12 +56,26 @@ class Polymultivector extends Array {
 	/**
 	 * Determines whether two polymultivectors have the same values.
 	 * @param {Polymultivector} pmvector 
+	 * @returns {boolean}
 	 */
 	eq(pmvector) {
 		if (this.length !== pmvector.length) return false;
 
 		for (let i = 0; i < this.length; i++) {
 			if (this[i] !== pmvector[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Determines whether this vector consists of only zeros.
+	 * @returns {boolean}
+	 */
+	isZero() {
+		for (const component of this) {
+			if (component !== 0) {
 				return false;
 			}
 		}
@@ -261,7 +275,7 @@ export class Rotor4 extends Polymultivector {
 	}
 
 	get plane() {
-		// `slice` by default will return a `Rotor4`
+		// `slice` by default would return a `Rotor4`
 		return new Polymultivector([this[1], this[2], this[3], this[4], this[5], this[6], this[7]]).scale(1 / Math.sin(this.angle / 2));
 	}
 }

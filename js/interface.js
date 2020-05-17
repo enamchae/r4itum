@@ -268,6 +268,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 		this.classList.remove("inactive");
 
 		if (object instanceof Mesh4) {
+			// Tint
 			createElement("h3", {
 				textContent: "Tint",
 				parent: this.textContainer,
@@ -287,6 +288,8 @@ export class ObjectPropertiesControl extends HTMLElement {
 				},
 				parent: this.textContainer,
 			});
+
+			// Transforms
 
 			const updatePosHandler = ({detail}) => {
 				object.pos[detail.index] = detail.valueUsed;
@@ -309,11 +312,29 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 			});
 
+			const updateRotHandler = ({detail}) => {
+				console.log(detail);
+				console.log(detail.currentTarget.value);
+
+				object.rot.copy(detail.currentTarget.value);
+				Viewport.allNeedRerender = true;
+			};
+
 			createElement("h3", {
 				textContent: "Rotation",
 				parent: this.textContainer,
 			});
-			this.textContainer.appendChild(ObjectPropertiesControl.createPolymultivectorInputs(object.rot));
+			createElement(new RotorEditor(object.rot), {
+				listeners: {
+					update: [
+						[updateRotHandler],
+					],
+					commit: [
+						[updateRotHandler],
+					],
+				},
+				parent: this.textContainer,
+			});
 
 			const updateSclHandler = ({detail}) => {
 				object.scl[detail.index] = detail.valueUsed;
