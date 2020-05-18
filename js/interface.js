@@ -41,7 +41,7 @@ export const user = {
 		for (const object of this.selectedObjects) {
 			for (const viewport of Viewport.members) {
 				const rep = viewport.converter.objectReps.get(object);
-				rep.setViewportState(SceneConverter.ViewportStates.DEFAULT);
+				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
 			}
 		}
 
@@ -52,7 +52,7 @@ export const user = {
 		for (let i = 0; i < objects.length; i++) {
 			for (const viewport of Viewport.members) {
 				const rep = viewport.converter.objectReps.get(objects[i]);
-				rep.setViewportState(i === 0 ? SceneConverter.ViewportStates.SELECTED_PRIMARY : SceneConverter.ViewportStates.SELECTED);
+				rep?.setViewportState(i === 0 ? SceneConverter.ViewportStates.SELECTED_PRIMARY : SceneConverter.ViewportStates.SELECTED);
 			}
 		}
 
@@ -275,50 +275,52 @@ export class ObjectPropertiesControl extends HTMLElement {
 				},
 				parent: this.textContainer,
 			});
+		}
 
-			// Transforms
+		// Transforms
 
-			const updatePosHandler = ({detail}) => {
-				object.pos[detail.index] = detail.valueUsed;
-				Viewport.allNeedRerender = true;
-			};
+		const updatePosHandler = ({detail}) => {
+			object.pos[detail.index] = detail.valueUsed;
+			Viewport.allNeedRerender = true;
+		};
 
-			createElement("h3", {
-				textContent: "Position",
-				parent: this.textContainer,
-			});
-			this.posEditor = createElement(new VectorEditor(object.pos), {
-				listeners: {
-					update: [
-						[updatePosHandler],
-					],
-				},
-				parent: this.textContainer,
-			});
+		createElement("h3", {
+			textContent: "Position",
+			parent: this.textContainer,
+		});
+		this.posEditor = createElement(new VectorEditor(object.pos), {
+			listeners: {
+				update: [
+					[updatePosHandler],
+				],
+			},
+			parent: this.textContainer,
+		});
 
-			const updateRotHandler = ({detail}) => {
-				object.rot.copy(detail.currentTarget.value);
-				Viewport.allNeedRerender = true;
-			};
+		const updateRotHandler = ({detail}) => {
+			object.rot.copy(detail.currentTarget.value);
+			Viewport.allNeedRerender = true;
+		};
 
-			createElement("h3", {
-				textContent: "Rotation",
-				parent: this.textContainer,
-			});
-			this.rotEditor = createElement(new RotorEditor(object.rot), {
-				listeners: {
-					update: [
-						[updateRotHandler],
-					],
-				},
-				parent: this.textContainer,
-			});
+		createElement("h3", {
+			textContent: "Rotation",
+			parent: this.textContainer,
+		});
+		this.rotEditor = createElement(new RotorEditor(object.rot), {
+			listeners: {
+				update: [
+					[updateRotHandler],
+				],
+			},
+			parent: this.textContainer,
+		});
 
-			const updateSclHandler = ({detail}) => {
-				object.scl[detail.index] = detail.valueUsed;
-				Viewport.allNeedRerender = true;
-			};
+		const updateSclHandler = ({detail}) => {
+			object.scl[detail.index] = detail.valueUsed;
+			Viewport.allNeedRerender = true;
+		};
 
+		if (object instanceof Mesh4) { // Cameras are not affected by scale
 			createElement("h3", {
 				textContent: "Scale",
 				parent: this.textContainer,
@@ -343,10 +345,6 @@ export class ObjectList extends HTMLElement {
 	textContainer;
 	list;
 
-	constructor() {
-		super();
-	}
-
 	connectedCallback() {
 		createElement("h2", {
 			textContent: "Object list",
@@ -365,7 +363,7 @@ export class ObjectList extends HTMLElement {
 			],
 
 			listeners: {
-				mousedown: [
+				mousedown: [ // Not click event!
 					[event => {
 						event.preventDefault(); // Prevent losing focus from viewport
 					}],
@@ -406,6 +404,50 @@ export class ObjectList extends HTMLElement {
 		}
 
 		return this;
+	}
+}
+
+export class CameraPropertiesControl extends HTMLElement {
+	static members = new Set();
+
+	connectedCallback() {
+		createElement("h2", {
+			textContent: "Camera",
+			parent: this,
+		});
+
+		this.textContainer = createElement("div", {
+			classes: ["panel-content"],
+			parent: this,
+
+			children: [
+				createElement("h3", {
+					textContent: "4-camera",
+				}),
+				createElement("button", {
+					textContent: "Select",
+					listeners: {
+						click: [
+							[() => {
+								// temp solution to get viewport
+								const viewport = Viewport.members.values().next().value;
+
+								user.replaceSelection(viewport.camera);
+								Viewport.allNeedRerender = true;
+							}],
+						],
+
+						mousedown: [ // Not click event!
+							[event => {
+								event.preventDefault(); // Prevent losing focus from viewport
+							}],
+						],
+					},
+				}),
+			],
+		});
+
+		CameraPropertiesControl.members.add(this);
 	}
 }
 

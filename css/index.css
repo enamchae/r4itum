@@ -32,10 +32,11 @@ main {
 	--col-red-1-af: #9b2121af;
 	--col-yellow-1-af: #6b4816af;
 
-	--col-green-0-7f: #0f382e7f;
-	--col-green-1-af: #2a6a52af;
-	--col-green-1-7f: #2a6a527f;
-	--col-green-2-7f: #428a707f;
+	--col-green-0-7f: #0316117f;
+	--col-green-1-7f: #0f382e7f;
+	--col-green-2-af: #2a6a52af;
+	--col-green-2-7f: #2a6a527f;
+	--col-green-3-7f: #428a707f;
 }
 
 main > workspace- {
@@ -66,7 +67,7 @@ main > workspace- > overlays- {
 
 	color: #ffffffdf;
 
-	--overlay-box-shadow: 0 5px 8px var(--col-green-1-7f);
+	--overlay-box-shadow: 0 5px 8px var(--col-green-2-7f);
 }
 
 main > workspace- > overlays- .inactive {
@@ -101,7 +102,7 @@ main > workspace- > overlays- > toolbar- > tool-button {
 
 	border-radius: .5em;
 
-	background: var(--col-green-1-af);
+	background: var(--col-green-2-af);
 	box-shadow: var(--overlay-box-shadow);
 }
 
@@ -131,7 +132,7 @@ main > workspace- > overlays- .panel {
 
 	border-radius: 1em;
 
-	background: var(--col-green-1-af);
+	background: var(--col-green-2-af);
 	box-shadow: var(--overlay-box-shadow);
 
 	letter-spacing: .05em;
@@ -167,7 +168,7 @@ main > workspace- > overlays- .panel ul.bars {
 
 	list-style: none;
 
-	background: var(--col-green-0-7f);
+	background: var(--col-green-1-7f);
 }
 
 main > workspace- > overlays- .panel ul.bars:empty:after {
@@ -190,15 +191,15 @@ main > workspace- > overlays- .panel ul.bars > li {
 	user-select: none;
 	cursor: default;
 
-	background: var(--col-green-1-7f);
-}
-
-main > workspace- > overlays- .panel ul.bars > li:hover {
 	background: var(--col-green-2-7f);
 }
 
+main > workspace- > overlays- .panel ul.bars > li:hover {
+	background: var(--col-green-3-7f);
+}
+
 main > workspace- > overlays- .panel ul.bars > li:active {
-	background: var(--col-green-0-7f);
+	background: var(--col-green-1-7f);
 }
 
 main > workspace- > overlays- .panel ul.bars > li:nth-child(n + 2):before {
@@ -275,21 +276,42 @@ main > workspace- > overlays- .panel input-block > * + label {
 
 /* Panel inputs and labels */
 
-main > workspace- > overlays- .panel input {
-	width: 100%; /* Inputs automatically have a fixed size */
+main > workspace- > overlays- .panel input,
+main > workspace- > overlays- .panel button {
 	border: 0;
 
 	text-align: center;
 	font-family: var(--font);
 	color: inherit;
+}
+
+main > workspace- > overlays- .panel input {
+	width: 100%; /* Inputs automatically have a fixed size */
 
 	background: #176d4caf;
 }
 
 main > workspace- > overlays- .panel input[type="color"] {
 	width: 3em;
+}
 
-	background: #ffffff7f;
+main > workspace- > overlays- .panel button {
+	color: #fff;
+}
+
+main > workspace- > overlays- .panel input[type="color"],
+main > workspace- > overlays- .panel button {
+	background: var(--col-green-1-7f);
+}
+
+main > workspace- > overlays- .panel input[type="color"]:hover,
+main > workspace- > overlays- .panel button:hover {
+	background: #ffffff3f;
+}
+
+main > workspace- > overlays- .panel input[type="color"]:active,
+main > workspace- > overlays- .panel button:active {
+	background: var(--col-green-0-7f);
 }
 
 main > workspace- > overlays- .panel input.error-flash {
@@ -314,7 +336,7 @@ main > workspace- > overlays- .panel > *:not(:empty) {
 }
 
 main > workspace- > overlays- .panel > h2 {
-	background: var(--col-green-1-af);
+	background: var(--col-green-2-af);
 }
 
 main > workspace- > overlays- .panel > .panel-content {
