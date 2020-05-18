@@ -197,17 +197,15 @@ export function attachViewportControls(viewport, user) {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
 
-			object.setPos(initialPos
-					.add(right.multScalar(movementX * movementSensitivity))
-					.add(up.multScalar(-movementY * movementSensitivity)));
-			viewport.constructor.allNeedRerender = true;
+			tiedActions.setObjectPos(object,
+					initialPos.add(right.multScalar(movementX * movementSensitivity))
+							.add(up.multScalar(-movementY * movementSensitivity)));
 		};
 		element.addEventListener("mousemove", mousemove);
 
 		element.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
-				object.setPos(initialPos);
-				viewport.constructor.allNeedRerender = true;
+				tiedActions.setObjectPos(object, initialPos);
 			} else if (event.button !== 0) { // If not left-click, ignore
 				return;
 			}
@@ -246,15 +244,13 @@ export function attachViewportControls(viewport, user) {
 			const angle = Math.atan2(movementY, movementX);
 
 			// TODO take influence from 4D camera rotation
-			object.setRot(initialRot.mult(Rotor4.planeAngle(bivector, angle)));
-			viewport.constructor.allNeedRerender = true;
+			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
 		};
 		element.addEventListener("mousemove", mousemove);
 
 		element.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
-				object.setRot(initialRot);
-				viewport.constructor.allNeedRerender = true;
+				tiedActions.setObjectRot(object, initialRot);
 			} else if (event.button !== 0) { // If not left-click, ignore
 				return;
 			}
@@ -283,15 +279,13 @@ export function attachViewportControls(viewport, user) {
 		const mousemove = mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 
-			object.setScl(initialScale.multScalar(movementX * movementSensitivity + 1));
-			viewport.constructor.allNeedRerender = true;
+			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
 		};
 		element.addEventListener("mousemove", mousemove);
 
 		element.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
-				object.setScl(initialScale);
-				viewport.constructor.allNeedRerender = true;
+				tiedActions.setObjectScl(object, initialScale);
 			} else if (event.button !== 0) { // If not left-click, ignore
 				return;
 			}

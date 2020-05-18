@@ -3,6 +3,7 @@
  */
 
 import {Geometry4} from "./4d/meshgeometry.js";
+import {Space3_4, Line4} from "./4d/vector.js";
 import {Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
 import {projectVector4} from "./4d/projection.js";
 import * as Three from "./_libraries/three.module.js";
@@ -431,8 +432,10 @@ class PlaneRef4Rep {
 	}
 
 	// Grid shader technique from https://github.com/Fyrestar/THREE.InfiniteGridHelper/blob/master/InfiniteGridHelper.js
+	// Trapezoid texturing technique from https://stackoverflow.com/a/56919100
 	faceMat() {
 		return new Three.RawShaderMaterial({
+
 			vertexShader: `
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -443,9 +446,13 @@ attribute mediump vec4 position;
 varying mediump vec4 vPosition4;
 varying mediump vec4 vPosition3;
 
+varying mediump vec3 texCoord; // 3-dimensional texture coordinate, used to account for trapezoid texturing
+
 void main() {
 	vPosition4 = position4;
 	vPosition3 = position;
+	
+	texCoord = vec3(vPosition4.xz, 1.) * abs(position.x);
 
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 }`,
@@ -453,8 +460,12 @@ void main() {
 varying mediump vec4 vPosition4;
 varying mediump vec4 vPosition3;
 
+varying mediump vec3 texCoord;
+
+mediump vec2 texCoord2; // 2-dimensional texture coordinate, which the 3D texcoord is converted to when generating the grid
+
 mediump float getGrid(mediump float gridStep) {
-	mediump vec2 r = vPosition4.xw / gridStep;
+	mediump vec2 r = texCoord2 / gridStep;
 	
 	mediump vec2 grid = abs(fract(r - .5) - .5) / fwidth(r);
 	mediump float line = min(grid.x, grid.y);
@@ -467,9 +478,11 @@ void main() {
 		discard;
 	}
 
-	mediump float grid = getGrid(1.);
+	texCoord2 = texCoord.xy / texCoord.z;
 
-	gl_FragColor = vec4(.3, .3, .3, grid * .5);
+	mediump float grid = getGrid(1.) / 8.;
+
+	gl_FragColor = vec4(.5, .5, .5, grid);
 }`,
 
 			transparent: true,
@@ -519,7 +532,7 @@ void main() {
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 		this.mesh3.geometry = new Three.BufferGeometry();
 		this.mesh3.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, true));
-		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true));
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
 		
 		return this;
 	}
@@ -610,6 +623,8 @@ class Axis4Rep {
 	 * @param {Camera4} camera 
 	 */
 	updateProjection(camera) {
+		// camera.localSpace().intersectionWithLine(this.object.line);
+
 		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
 		this.line.geometry = new Three.BufferGeometry();
 		this.line.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, false));

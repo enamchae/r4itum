@@ -3,7 +3,7 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
-import {Scene4, Object4, Camera4, Mesh4} from "./4d/objects.js";
+import {Scene4, Object4, Camera4, Mesh4, Axis4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
 import {VectorEditor, RotorEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
@@ -11,6 +11,16 @@ import {declade, createElement} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 
 export const scene = new Scene4();
+const axisColors = [
+	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
+	0xFF4D4D, // X
+	0xA6FF4D, // Y
+	0x4DFFFF, // Z
+	0xA64DFF, // W
+];
+for (let i = 0; i < 4; i++) {
+	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
+}
 
 export const user = {
 	/**
@@ -193,9 +203,18 @@ export class Viewport extends HTMLElement {
 }
 
 export class ObjectPropertiesControl extends HTMLElement {
+	/**
+	 * @type Set<ObjectPropertiesControl>
+	 */
 	static members = new Set();
 
 	textContainer;
+
+	posEditor = null;
+	rotEditor = null;
+	sclEditor = null;
+
+	targetObject = null;
 
 	constructor() {
 		super();
@@ -217,54 +236,22 @@ export class ObjectPropertiesControl extends HTMLElement {
 		ObjectPropertiesControl.members.add(this);
 	}
 
-	static createPolymultivectorInputs(pmvector) {
-		// Map each input to the index it refers to
-		const inputIndexes = new Map();
-
-		const form = createElement("form", {
-			listeners: {
-				change: [
-					[event => {
-						const value = parseFloat(event.target.value);
-		
-						if (!isNaN(value)) {
-							const index = inputIndexes.get(event.target);
-							pmvector[index] = value;
-							Viewport.allNeedRerender = true;
-						}
-		
-						refresh();
-					}],
-				],
-			},
-		});
-
-		function refresh() {
-			for (const [input, index] of inputIndexes) {
-				input.value = pmvector[index];
-			}
-		}
-
-		// One input for each dimension
-		for (let i = 0; i < pmvector.length; i++) {
-			inputIndexes.set(createElement("input", {
-				properties: {type: "text"},
-				parent: form,
-			}), i);
-		}
-
-		refresh();
-
-		return form;
+	hasAsTargetObject(object) {
+		return this.targetObject === object;
 	}
 
 	setTargetObject(object) {
 		declade(this.textContainer);
 
 		if (!object) {
+			this.posEditor = null;
+			this.rotEditor = null;
+			this.sclEditor = null;
+			this.targetObject = null;
 			this.classList.add("inactive");
 			return;
 		}
+		this.targetObject = object;
 		this.classList.remove("inactive");
 
 		if (object instanceof Mesh4) {
@@ -300,7 +287,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 				textContent: "Position",
 				parent: this.textContainer,
 			});
-			createElement(new VectorEditor(object.pos), {
+			this.posEditor = createElement(new VectorEditor(object.pos), {
 				listeners: {
 					update: [
 						[updatePosHandler],
@@ -318,7 +305,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 				textContent: "Rotation",
 				parent: this.textContainer,
 			});
-			createElement(new RotorEditor(object.rot), {
+			this.rotEditor = createElement(new RotorEditor(object.rot), {
 				listeners: {
 					update: [
 						[updateRotHandler],
@@ -336,7 +323,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 				textContent: "Scale",
 				parent: this.textContainer,
 			});
-			createElement(new VectorEditor(object.scl), {
+			this.sclEditor = createElement(new VectorEditor(object.scl), {
 				listeners: {
 					update: [
 						[updateSclHandler],
@@ -376,6 +363,15 @@ export class ObjectList extends HTMLElement {
 			attributes: [
 				["data-empty-text", "nothing"],
 			],
+
+			listeners: {
+				mousedown: [
+					[event => {
+						event.preventDefault(); // Prevent losing focus from viewport
+					}],
+				],
+			},
+
 			parent: this.textContainer,
 		});
 
@@ -395,12 +391,6 @@ export class ObjectList extends HTMLElement {
 							Viewport.allNeedRerender = true;
 						}],
 					],
-
-					mousedown: [
-						[event => {
-							event.preventDefault(); // Prevent losing focus from viewport
-						}],
-					]
 				},
 			});
 

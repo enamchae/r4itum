@@ -2,7 +2,7 @@
  * @file Links 4D operations to items in the interface.
  */
 
-import {scene, Viewport, ObjectList} from "./interface.js";
+import {scene, Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
 
 export default {
 	addObject(...objects) {
@@ -26,6 +26,36 @@ export default {
 			}
 		}
 	
+		Viewport.allNeedRerender = true;
+	},
+
+	setObjectPos(object, pos) {
+		object.setPos(pos);
+		for (const panel of ObjectPropertiesControl.members) {
+			if (panel.hasAsTargetObject(object)) {
+				panel.posEditor.refill(pos);
+			}
+		}
+		Viewport.allNeedRerender = true;
+	},
+
+	setObjectRot(object, rot) {
+		object.setRot(rot);
+		for (const panel of ObjectPropertiesControl.members) {
+			if (panel.hasAsTargetObject(object)) {
+				panel.rotEditor.refill(rot);
+			}
+		}
+		Viewport.allNeedRerender = true;
+	},
+
+	setObjectScl(object, scl) {
+		object.setScl(scl);
+		for (const panel of ObjectPropertiesControl.members) {
+			if (panel.hasAsTargetObject(object)) {
+				panel.sclEditor.refill(scl);
+			}
+		}
 		Viewport.allNeedRerender = true;
 	},
 };

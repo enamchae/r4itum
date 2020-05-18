@@ -31,15 +31,5 @@ for (let i = 0; i < 2; i++) {
 
 tiedActions.addObject(...meshes);
 
-scene.addObjectReference(new PlaneRef4(0, 2, 8));
-const axisColors = [
-	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
-	0xFF4D4D, // X
-	0xA6FF4D, // Y
-	0x4DFFFF, // Z
-	0xA64DFF, // W
-];
-for (let i = 0; i < 4; i++) {
-	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
-}
+// scene.addObjectReference(new PlaneRef4(0, 2, 8));
 Viewport.allNeedRerender = true;

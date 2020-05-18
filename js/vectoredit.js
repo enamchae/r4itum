@@ -316,6 +316,21 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		}
 	}
 
+	refill(rotor) {
+		const anglePlane = rotor.asAnglePlane();
+
+		for (const [input, i] of this.inputs) {
+			if (i === 0) { // Angle editor will process the value
+				input.valueRad = anglePlane[0];
+			} else {
+				const value = this.initiateValue(i, anglePlane);
+				input.value = this.convertForInput(value, i);
+			}
+		}
+
+		return this;
+	}
+
 	// Linear percentages cannot represent negative coefficients
 	/* parseInputValue(value) {
 		return Math.sqrt(parseFloat(value) / 100);
