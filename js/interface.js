@@ -5,18 +5,18 @@
 import {Vector4, Rotor4} from "./4d/vector.js";
 import {Scene4, Object4, Camera4, Mesh4, Axis4} from "./4d/objects.js";
 import {SceneConverter} from "./sceneconverter.js";
-import {VectorEditor, RotorEditor} from "./vectoredit.js";
+import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 
 export const scene = new Scene4();
 const axisColors = [
-	// {hsv(n * 360° / 4, 1, 1) | n ∈ ℤ}
+	// {hsv(n * 360° / 4, 0.7, 1) | n ∈ ℤ}, adjusted slightly for luminance
 	0xFF4D4D, // X
-	0xA6FF4D, // Y
-	0x4DFFFF, // Z
-	0xA64DFF, // W
+	0x8DD941, // Y
+	0x2BD9D9, // Z
+	0xA767E6, // W
 ];
 for (let i = 0; i < 4; i++) {
 	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
@@ -95,7 +95,7 @@ export class Viewport extends HTMLElement {
 		this.camera = new Camera4(
 			new Vector4(0, 0, 0, 3),
 			new Rotor4(1, 0, 0, 0, 0, 0, 0, 0).normalize(),
-		);
+		).setName("4D viewport camera");
 
 	}
 
@@ -202,141 +202,6 @@ export class Viewport extends HTMLElement {
 	}
 }
 
-export class ObjectPropertiesControl extends HTMLElement {
-	/**
-	 * @type Set<ObjectPropertiesControl>
-	 */
-	static members = new Set();
-
-	textContainer;
-
-	posEditor = null;
-	rotEditor = null;
-	sclEditor = null;
-
-	targetObject = null;
-
-	constructor() {
-		super();
-
-		this.classList.add("inactive");
-	}
-
-	connectedCallback() {
-		createElement("h2", {
-			textContent: "Object properties",
-			parent: this,
-		});
-
-		this.textContainer = createElement("form", {
-			classes: ["panel-content"],
-			parent: this,
-		});
-
-		ObjectPropertiesControl.members.add(this);
-	}
-
-	hasAsTargetObject(object) {
-		return this.targetObject === object;
-	}
-
-	setTargetObject(object) {
-		declade(this.textContainer);
-
-		if (!object) {
-			this.posEditor = null;
-			this.rotEditor = null;
-			this.sclEditor = null;
-			this.targetObject = null;
-			this.classList.add("inactive");
-			return;
-		}
-		this.targetObject = object;
-		this.classList.remove("inactive");
-
-		if (object instanceof Mesh4) {
-			// Tint
-			createElement("h3", {
-				textContent: "Tint",
-				parent: this.textContainer,
-			});
-			createElement("input", {
-				properties: {
-					type: "color",
-					value: `#${object.tint.toString(16)}`,
-				},
-				listeners: {
-					change: [
-						[event => {
-							object.tint = parseInt(event.currentTarget.value.slice(1), 16);
-							Viewport.allNeedRerender = true;
-						}],
-					],
-				},
-				parent: this.textContainer,
-			});
-		}
-
-		// Transforms
-
-		const updatePosHandler = ({detail}) => {
-			object.pos[detail.index] = detail.valueUsed;
-			Viewport.allNeedRerender = true;
-		};
-
-		createElement("h3", {
-			textContent: "Position",
-			parent: this.textContainer,
-		});
-		this.posEditor = createElement(new VectorEditor(object.pos), {
-			listeners: {
-				update: [
-					[updatePosHandler],
-				],
-			},
-			parent: this.textContainer,
-		});
-
-		const updateRotHandler = ({detail}) => {
-			object.rot.copy(detail.currentTarget.value);
-			Viewport.allNeedRerender = true;
-		};
-
-		createElement("h3", {
-			textContent: "Rotation",
-			parent: this.textContainer,
-		});
-		this.rotEditor = createElement(new RotorEditor(object.rot), {
-			listeners: {
-				update: [
-					[updateRotHandler],
-				],
-			},
-			parent: this.textContainer,
-		});
-
-		const updateSclHandler = ({detail}) => {
-			object.scl[detail.index] = detail.valueUsed;
-			Viewport.allNeedRerender = true;
-		};
-
-		if (object instanceof Mesh4) { // Cameras are not affected by scale
-			createElement("h3", {
-				textContent: "Scale",
-				parent: this.textContainer,
-			});
-			this.sclEditor = createElement(new VectorEditor(object.scl), {
-				listeners: {
-					update: [
-						[updateSclHandler],
-					],
-				},
-				parent: this.textContainer,
-			});
-		}
-	}
-}
-
 export class ObjectList extends HTMLElement {
 	static members = new Set();
 
@@ -404,6 +269,245 @@ export class ObjectList extends HTMLElement {
 		}
 
 		return this;
+	}
+}
+
+export class ObjectPropertiesControl extends HTMLElement {
+	/**
+	 * @type Set<ObjectPropertiesControl>
+	 */
+	static members = new Set();
+
+	textContainer;
+
+	posEditor = null;
+	rotEditor = null;
+	sclEditor = null;
+
+	targetObject = null;
+
+	constructor() {
+		super();
+
+		this.classList.add("inactive");
+	}
+
+	connectedCallback() {
+		createElement("h2", {
+			textContent: "Object properties",
+			parent: this,
+		});
+
+		this.textContainer = createElement("div", {
+			classes: ["panel-content"],
+			parent: this,
+		});
+
+		ObjectPropertiesControl.members.add(this);
+	}
+
+	hasAsTargetObject(object) {
+		return this.targetObject === object;
+	}
+
+	setTargetObject(object) {
+		declade(this.textContainer);
+
+		if (!object) {
+			this.posEditor = null;
+			this.rotEditor = null;
+			this.sclEditor = null;
+			this.targetObject = null;
+			this.classList.add("inactive");
+			return;
+		}
+		this.targetObject = object;
+		this.classList.remove("inactive");
+
+		this.createPropertyInputs(object);
+
+		return this;
+	}
+
+	createPropertyInputs(object) {
+		createElement("h3", {
+			textContent: "Name",
+			parent: this.textContainer,
+		});
+		createElement("input", {
+			properties: {
+				type: "text",
+				value: object.name,
+			},
+			listeners: {
+				change: [
+					[event => {
+						object.setName(event.target.value);
+					}],
+				],
+			},
+			parent: this.textContainer,
+		});
+
+		if (object instanceof Mesh4) {
+			// Tint
+			createElement("h3", {
+				textContent: "Tint",
+				parent: this.textContainer,
+			});
+			createElement("input", {
+				properties: {
+					type: "color",
+					value: `#${object.tint.toString(16)}`,
+				},
+				listeners: {
+					change: [
+						[event => {
+							object.tint = parseInt(event.currentTarget.value.slice(1), 16);
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+				parent: this.textContainer,
+			});
+		}
+
+		if (object instanceof Camera4) {
+			const radioName = "dist-type";
+
+			createElement("h3", {
+				textContent: "Distance handling",
+				parent: this.textContainer,
+			});
+			createElement("form", {
+				listeners: {
+					change: [
+						[event => {
+							object.usingPerspective = Boolean(Number(event.target.value));
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+
+				children: [
+					createElement("input", {
+						properties: {
+							name: radioName,
+							type: "radio", 
+							value: "1",
+							checked: object.usingPerspective,
+						},
+					}),
+					createElement("label", {
+						textContent: "Perspective",
+					}),
+
+					createElement("input", {
+						properties: {
+							name: radioName,
+							type: "radio", 
+							value: "0", 
+							checked: !object.usingPerspective,
+						},
+					}),
+					createElement("label", {
+						textContent: "Parallel",
+					}),
+				],
+
+				parent: this.textContainer,
+			});
+			
+			createElement("h3", {
+				textContent: "FOV angle",
+				parent: this.textContainer,
+			});
+			createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
+				listeners: {
+					update: [
+						[({detail}) => {
+							object.fovAngle = detail.valueUsed * Math.PI / 180;
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+				parent: this.textContainer,
+			});
+			
+			createElement("h3", {
+				textContent: "Uniform distance",
+				parent: this.textContainer,
+			});
+			createElement(new PositiveNumberEditor(object.radius), {
+				listeners: {
+					update: [
+						[({detail}) => {
+							object.radius = detail.valueUsed;
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+				parent: this.textContainer,
+			});
+		}
+
+		// Transforms
+
+		const updatePosHandler = ({detail}) => {
+			object.pos[detail.index] = detail.valueUsed;
+			Viewport.allNeedRerender = true;
+		};
+
+		createElement("h3", {
+			textContent: "Position",
+			parent: this.textContainer,
+		});
+		this.posEditor = createElement(new VectorEditor(object.pos), {
+			listeners: {
+				update: [
+					[updatePosHandler],
+				],
+			},
+			parent: this.textContainer,
+		});
+
+		const updateRotHandler = ({detail}) => {
+			object.rot.copy(detail.currentTarget.value);
+			Viewport.allNeedRerender = true;
+		};
+
+		createElement("h3", {
+			textContent: "Rotation",
+			parent: this.textContainer,
+		});
+		this.rotEditor = createElement(new RotorEditor(object.rot), {
+			listeners: {
+				update: [
+					[updateRotHandler],
+				],
+			},
+			parent: this.textContainer,
+		});
+
+		const updateSclHandler = ({detail}) => {
+			object.scl[detail.index] = detail.valueUsed;
+			Viewport.allNeedRerender = true;
+		};
+
+		if (object instanceof Mesh4) { // Cameras are not affected by scale
+			createElement("h3", {
+				textContent: "Scale",
+				parent: this.textContainer,
+			});
+			this.sclEditor = createElement(new VectorEditor(object.scl), {
+				listeners: {
+					update: [
+						[updateSclHandler],
+					],
+				},
+				parent: this.textContainer,
+			});
+		}
 	}
 }
 

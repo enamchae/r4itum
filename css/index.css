@@ -154,6 +154,10 @@ main > workspace- > overlays- .panel h3 {
 	font-size: 1.2em;
 }
 
+main > workspace- > overlays- .panel input {
+	margin: 0;
+}
+
 /* Bar lists */
 
 main > workspace- > overlays- .panel ul.bars {
@@ -237,8 +241,17 @@ main > workspace- > overlays- .panel rotor-editor > form {
 	gap: 4px;
 }
 
+main > workspace- > overlays- .panel rotor-editor angle-editor,
+main > workspace- > overlays- .panel rotor-editor angle-editor input {
+	font-size: 1.2em;
+}
+
 main > workspace- > overlays- .panel rotor-editor angle-editor {
 	margin: 1em 0;
+}
+
+main > workspace- > overlays- .panel rotor-editor angle-editor input {
+	width: 4em;
 }
 
 main > workspace- > overlays- .panel rotor-editor angle-editor,
@@ -248,12 +261,7 @@ main > workspace- > overlays- .panel rotor-editor .fill-row {
 
 /* Angle editor */
 
-main > workspace- > overlays- .panel angle-editor,
 main > workspace- > overlays- .panel angle-editor input {
-	font-size: 1.2em;
-}
-main > workspace- > overlays- .panel angle-editor input {
-	width: 4em;
 	margin: 0 .25em;
 
 	text-align: right;

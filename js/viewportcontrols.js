@@ -71,13 +71,14 @@ export function attachViewportControls(viewport, user) {
 						? [0, 0, 0, 0, -event.movementY, event.movementX]
 						: [0, 0, event.movementX, 0, -event.movementY, 0];
 
-				viewport.camera.setRot(viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle)));
-
+				const rot = viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle));
 				// Reset any residual XY/XZ/YZ rotation
-				viewport.camera.rot[1] = 0;
-				viewport.camera.rot[2] = 0;
-				viewport.camera.rot[4] = 0;
-				viewport.camera.rot.normalize();
+				rot[1] = 0;
+				rot[2] = 0;
+				rot[4] = 0;
+				rot.normalize();
+
+				tiedActions.setObjectRot(viewport.camera, rot);
 
 			} else { // Rotate 3D camera
 				// Equivalent to above, but for 3D (and with `Rotor4.planeAngle`'s concept expanded here)
@@ -126,9 +127,10 @@ export function attachViewportControls(viewport, user) {
 				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
 				const up = viewport.camera.localUp(); // local up vector
 
-				viewport.camera.setPos(viewport.camera.pos
-						.add(right.scale(event.movementX * movementSensitivity))
-						.add(up.scale(event.movementY * movementSensitivity)));
+				tiedActions.setObjectPos(viewport.camera,
+						viewport.camera.pos
+								.add(right.scale(event.movementX * movementSensitivity))
+								.add(up.scale(event.movementY * movementSensitivity)));
 			} else { // Move 3D camera
 				const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
 				const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector

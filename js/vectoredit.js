@@ -29,7 +29,7 @@ class ValueEditor extends HTMLElement {
 		this.fillElements(initiator);
 	}
 
-	isValidValue(value) {
+	isValidValue(value, index) {
 		return !isNaN(value);
 	}
 
@@ -53,7 +53,7 @@ class ValueEditor extends HTMLElement {
 	getChangeEventDetail(event) {
 		const index = this.inputs.get(event.target);
 		const value = this.parseInputValue(event.target.value, index);
-		const isValid = this.isValidValue(value);
+		const isValid = this.isValidValue(value, index);
 
 		return {
 			currentTarget: this,
@@ -401,6 +401,28 @@ export class AngleEditor extends ValueEditor {
 
 	set valueRad(angle) {
 		this.refill([angle * 180 / Math.PI]);
+	}
+}
+
+export class PositiveNumberEditor extends ValueEditor {
+	constructor(value) {
+		super([value]);
+	}
+
+	isValidValue(value) {
+		return !isNaN(value) && value > 0;
+	}
+
+	refill(value) {
+		super.refill([value]);
+	}
+
+	get value() {
+		return this.lastAcceptedValues[0];
+	}
+
+	set value(value) {
+		this.refill([value]);
 	}
 }
 

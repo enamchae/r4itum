@@ -113,6 +113,11 @@ export class Object4 {
         priv.set(this, {});
 	}
 
+	setName(name) {
+		this.name = name;
+		return this;
+	}
+
 	setPos(pos) {
 		this.pos.copy(pos);
 		return this;

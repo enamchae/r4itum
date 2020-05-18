@@ -3,7 +3,7 @@
  */
 
 import {Viewport, ObjectList, ObjectPropertiesControl, CameraPropertiesControl} from "./interface.js";
-import {VectorEditor, RotorEditor, AngleEditor} from "./vectoredit.js";
+import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 
 customElements.define("viewport-", Viewport);
 customElements.define("object-list", ObjectList);
@@ -13,6 +13,7 @@ customElements.define("camera-properties", CameraPropertiesControl);
 customElements.define("vector-editor", VectorEditor);
 customElements.define("rotor-editor", RotorEditor);
 customElements.define("angle-editor", AngleEditor);
+customElements.define("positive-n-editor", PositiveNumberEditor);
 
 // Semantic elements
 for (const tagName of [
