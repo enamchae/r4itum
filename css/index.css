@@ -71,11 +71,11 @@ main > workspace- > overlays- {
 }
 
 main > workspace- > overlays- .inactive {
-	opacity: .6;
+	opacity: .75;
 }
 
 main > workspace- > overlays- .disabled {
-	opacity: .3;
+	opacity: .5;
 	pointer-events: none;
 }
 

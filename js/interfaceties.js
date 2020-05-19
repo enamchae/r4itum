@@ -29,8 +29,10 @@ export default {
 		Viewport.allNeedRerender = true;
 	},
 
-	setObjectPos(object, pos) {
-		object.setPos(pos);
+	setObjectPos(object, pos, resetting=true) {
+		if (resetting) {
+			object.setPos(pos);
+		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
 				panel.posEditor.refill(pos);
@@ -39,8 +41,8 @@ export default {
 		Viewport.allNeedRerender = true;
 	},
 
-	setObjectRot(object, rot, resettingRotation=true) {
-		if (resettingRotation) {
+	setObjectRot(object, rot, resetting=true) {
+		if (resetting) {
 			object.setRot(rot);
 		}
 		for (const panel of ObjectPropertiesControl.members) {
@@ -51,8 +53,10 @@ export default {
 		Viewport.allNeedRerender = true;
 	},
 
-	setObjectScl(object, scl) {
-		object.setScl(scl);
+	setObjectScl(object, scl, resetting=true) {
+		if (resetting) {
+			object.setScl(scl);
+		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
 				panel.sclEditor.refill(scl);

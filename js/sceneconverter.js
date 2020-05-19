@@ -6,6 +6,7 @@ import {Geometry4} from "./4d/meshgeometry.js";
 import {Vector4, Rotor4, Space3_4, Line4} from "./4d/vector.js";
 import {Object4, Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
 import {projectVector4} from "./4d/projection.js";
+import {privMap} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
 
@@ -94,9 +95,6 @@ export class SceneConverter {
 		return this;
 	}
 }
-
-const priv = new WeakMap();
-const _ = key => priv.get(key);
 
 class GeometryProjected {
 	/**
@@ -643,15 +641,17 @@ export class Camera3Wrapper4 extends Object4 {
 	 */
 	object3;
 
-	constructor(camera) {
+	constructor(camera=new Three.PerspectiveCamera(90, 1, .01, 1000)) {
 		super();
 
 		this.object3 = camera;
+		priv.set(this, {
+			fovAngle: camera?.fov * Math.PI / 180 ?? Math.PI / 2,
+		});
 	}
 
 	get pos() {
-		console.log("wrapper 3");
-		return new Vector4(...this.object3.position.toArray());
+		return this.object3.position.toArray(new Vector4());
 	}
 
 	setPos(pos) {
@@ -670,7 +670,7 @@ export class Camera3Wrapper4 extends Object4 {
 	}
 
 	get scl() {
-		return new Vector4(...this.object3.scale.toArray());
+		return this.object3.scale.toArray(new Vector4());
 	}
 
 	setScl(scl) {
@@ -678,21 +678,59 @@ export class Camera3Wrapper4 extends Object4 {
 		return this;
 	}
 
-	get fov() {
-		return this.object3.fov * Math.PI / 180;
+	get fovAngle() {
+		return _(this).fovAngle;
 	}
 
-	set fov(fov) {
-		this.object3.fov = fov * 180 / Math.PI;
+	set fovAngle(fovAngle) {
+		_(this).fovAngle = fovAngle;
+
+		const fov = fovAngle * 180 / Math.PI;
+
+		this.object3.fov = fov;
+		this.object3.updateProjectionMatrix();
+	}
+
+	get radius() {
+		return this.object3.zoom;
+	}
+
+	set radius(radius) {
+		this.object3.zoom = radius;
 	}
 
 	get usingPerspective() {
 		return this.object3 instanceof Three.PerspectiveCamera;
 	}
 
-	set usingPerspective(value) {
-		return;
+	/**
+	 * 
+	 * @param {boolean} value 
+	 * @param {number} aspectRatio 
+	 */
+	setUsingPerspective(value, aspectRatio) {
+		if (value === true && this.object3 instanceof Three.PerspectiveCamera
+				|| value === false && !(this.object3 instanceof Three.PerspectiveCamera)) {
+			return;
+		}
+
+		let camera;
+		if (value) {
+			camera = new Three.PerspectiveCamera(this.fovAngle * 180 / Math.PI, aspectRatio, .01, 1000);
+		} else {
+			const size = 8;
+			camera = new Three.OrthographicCamera(-size, size, size / aspectRatio, -size / aspectRatio, -100, 1000);
+		}
+
+		camera.position.copy(this.object3.position);
+		camera.quaternion.copy(this.object3.quaternion);
+
+		this.object3 = camera;
+
+		return this;
 	}
 }
+
+const {priv, _} = privMap();
 
 // this.mesh3 = new Three.Line(new Three.BufferGeometry().setFromPoints(points), material);

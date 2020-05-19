@@ -81,11 +81,17 @@ export class Viewport extends HTMLElement {
 	static allNeedRerender = false;
 
 	/**
+	 * @type WeakMap<Camera3Wrapper4, Viewport>
+	 */
+	static camera3Wrappers = new WeakMap();
+
+	/**
 	 * @type Camera4
 	 */
 	camera;
-	camera3;
-
+	/**
+	 * @type Camera3Wrapper4
+	 */
 	camera3Wrapper;
 
 	converter = new SceneConverter(scene);
@@ -95,19 +101,20 @@ export class Viewport extends HTMLElement {
 	constructor() {
 		super();
 
-		// Scene setup
-		this.camera3 = new Three.PerspectiveCamera(90, 1, .01, 1000);
-		this.camera3.position.set(0, 0, 3);
-		this.camera3.lookAt(0, 0, 0);
-
-		this.camera3Wrapper = new Camera3Wrapper4(this.camera3)
-				.setName("3D viewport camera");
-
+		// Camera setup
 		this.camera = new Camera4(
 			new Vector4(0, 0, 0, 3),
 			new Rotor4(1, 0, 0, 0, 0, 0, 0, 0).normalize(),
-		).setName("4D viewport camera");
+		).setName("4D-to-3D camera");
 
+		this.camera3Wrapper = new Camera3Wrapper4().setName("3D-to-screen camera");
+		this.camera3.position.set(0, 0, 3);
+		this.camera3.lookAt(0, 0, 0);
+
+		this.camera.nameEditable = false;
+		this.camera3Wrapper.nameEditable = false;
+
+		Viewport.camera3Wrappers.set(this.camera3Wrapper, this);
 	}
 
 	connectedCallback() {
@@ -139,7 +146,7 @@ export class Viewport extends HTMLElement {
 	refreshSize() {
 		this.renderer.setSize(this.clientWidth, this.clientHeight);
 		
-		this.camera3.aspect = this.clientWidth / this.clientHeight;
+		this.camera3.aspect = this.aspectRatio;
 		this.camera3.updateProjectionMatrix(); // Refresh camera transform so it updates in render
 
 		return this;
@@ -210,6 +217,14 @@ export class Viewport extends HTMLElement {
 		this.queueRender();
 
 		return this;
+	}
+
+	get aspectRatio() {
+		return this.clientWidth / this.clientHeight;
+	}
+
+	get camera3() {
+		return this.camera3Wrapper.object3;
 	}
 }
 
@@ -338,11 +353,12 @@ export class ObjectPropertiesControl extends HTMLElement {
 		return this;
 	}
 
+	/**
+	 * 
+	 * @param {Object4} object 
+	 */
 	createPropertyInputs(object) {
-		createElement("h3", {
-			textContent: "Name",
-			parent: this.textContainer,
-		});
+		this.appendHeader("Name");
 		createElement("input", {
 			properties: {
 				type: "text",
@@ -355,15 +371,13 @@ export class ObjectPropertiesControl extends HTMLElement {
 					}],
 				],
 			},
+			classes: object.nameEditable ? [] : ["disabled"],
 			parent: this.textContainer,
 		});
 
 		if (object instanceof Mesh4) {
 			// Tint
-			createElement("h3", {
-				textContent: "Tint",
-				parent: this.textContainer,
-			});
+			this.appendHeader("Tint");
 			createElement("input", {
 				properties: {
 					type: "color",
@@ -381,18 +395,22 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 		}
 
-		if (object instanceof Camera4) {
+		if (object instanceof Camera4 || object instanceof Camera3Wrapper4) {
 			const radioName = "dist-type";
 
-			createElement("h3", {
-				textContent: "Distance handling",
-				parent: this.textContainer,
-			});
+			this.appendHeader("Distance handling");
 			createElement("form", {
 				listeners: {
 					change: [
 						[event => {
-							object.usingPerspective = Boolean(Number(event.target.value));
+							const value = Boolean(Number(event.target.value));
+
+							if (object instanceof Camera4) {
+								object.usingPerspective = value;
+							} else if (object instanceof Camera3Wrapper4) {
+								const viewport = Viewport.camera3Wrappers.get(object);
+								object.setUsingPerspective(value, viewport.aspectRatio);
+							}
 							Viewport.allNeedRerender = true;
 						}],
 					],
@@ -427,10 +445,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 			});
 			
-			createElement("h3", {
-				textContent: "FOV angle",
-				parent: this.textContainer,
-			});
+			this.appendHeader("FOV angle");
 			createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
 				listeners: {
 					update: [
@@ -443,10 +458,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 			});
 			
-			createElement("h3", {
-				textContent: "Uniform distance",
-				parent: this.textContainer,
-			});
+			this.appendHeader("Uniform distance");
 			createElement(new PositiveNumberEditor(object.radius), {
 				listeners: {
 					update: [
@@ -462,65 +474,57 @@ export class ObjectPropertiesControl extends HTMLElement {
 
 		// Transforms
 
-		const updatePosHandler = ({detail}) => {
-			if (object instanceof Camera3Wrapper4) {
-				object.setPos(detail.currentTarget.value);
-			} else {
-				object.pos[detail.index] = detail.valueUsed;
-			}
-			Viewport.allNeedRerender = true;
-		};
-
-		createElement("h3", {
-			textContent: "Position",
-			parent: this.textContainer,
-		});
-		this.posEditor = createElement(new VectorEditor(object.pos), {
+		this.appendHeader("Position");
+		this.posEditor = createElement(new VectorEditor(object.pos, object instanceof Camera3Wrapper4), {
 			listeners: {
 				update: [
-					[updatePosHandler],
+					[({detail}) => {
+						if (object instanceof Camera3Wrapper4) { // Convert the value into a Three-understandable vector
+							object.setPos(detail.currentTarget.value);
+						} else { // Only set the changed value
+							object.pos[detail.index] = detail.valueUsed;
+						}
+						Viewport.allNeedRerender = true;
+					}],
 				],
 			},
 			parent: this.textContainer,
 		});
 
-		const updateRotHandler = ({detail}) => {
-			object.rot.copy(detail.currentTarget.value);
-			Viewport.allNeedRerender = true;
-		};
-
-		createElement("h3", {
-			textContent: "Rotation",
-			parent: this.textContainer,
-		});
-		this.rotEditor = createElement(new RotorEditor(object.rot), {
+		this.appendHeader("Rotation");
+		this.rotEditor = createElement(new RotorEditor(object.rot, object instanceof Camera3Wrapper4), {
 			listeners: {
 				update: [
-					[updateRotHandler],
+					[({detail}) => {
+						object.setRot(detail.currentTarget.value);
+						Viewport.allNeedRerender = true;
+					}],
 				],
 			},
 			parent: this.textContainer,
 		});
-
-		const updateSclHandler = ({detail}) => {
-			object.scl[detail.index] = detail.valueUsed;
-			Viewport.allNeedRerender = true;
-		};
 
 		if (object instanceof Mesh4) { // Cameras are not affected by scale
-			createElement("h3", {
-				textContent: "Scale",
-				parent: this.textContainer,
-			});
+			this.appendHeader("Scale");
 			this.sclEditor = createElement(new VectorEditor(object.scl), {
 				listeners: {
 					update: [
-						[updateSclHandler],
+						[({detail}) => {
+							object.scl[detail.index] = detail.valueUsed;
+							Viewport.allNeedRerender = true;
+						}],
 					],
 				},
 				parent: this.textContainer,
 			});
 		}
+	}
+
+	appendHeader(label) {
+		return createElement("h3", {
+			textContent: label,
+			parent: this.textContainer,
+		});
 	}
 }
 
@@ -539,7 +543,7 @@ export class CameraPropertiesControl extends HTMLElement {
 
 			children: [
 				createElement("h3", {
-					textContent: "4-camera",
+					textContent: "4D camera",
 				}),
 				createElement("button", {
 					textContent: "Select",
@@ -561,7 +565,7 @@ export class CameraPropertiesControl extends HTMLElement {
 				}),
 
 				createElement("h3", {
-					textContent: "3-camera",
+					textContent: "3D camera",
 				}),
 				createElement("button", {
 					textContent: "Select",

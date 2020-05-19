@@ -92,3 +92,11 @@ export function declade(element) {
 	element.innerHTML = "";
 	return element;
 }
+
+export function privMap() {
+	const priv = new WeakMap();
+	return {
+		priv,
+		_: key => priv.get(key),
+	};
+}

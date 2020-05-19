@@ -82,6 +82,7 @@ export class Object4 {
 	 * @type string
 	 */
 	name = "Object";
+	nameEditable = true;
 	
 	/**
 	 * TODO

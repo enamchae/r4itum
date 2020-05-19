@@ -3,7 +3,7 @@
  */
 
 import {Polymultivector, Vector4, Rotor4} from "./4d/vector.js";
-import {declade, createElement} from "./util.js";
+import {declade, createElement, privMap} from "./util.js";
 
 /**
  * @abstract
@@ -27,11 +27,6 @@ class ValueEditor extends HTMLElement {
 		super();
 
 		this.lastAcceptedValues = new Polymultivector(undefined, initiator.length); // Hold off on filling the array; do some processing first
-		this.fillElements(initiator);
-	}
-
-	isValidValue(value, index) {
-		return !isNaN(value);
 	}
 
 	/**
@@ -46,28 +41,12 @@ class ValueEditor extends HTMLElement {
 
 		return this;
 	}
-	
+
 	/**
-	 * Produces the detail object given to a `CustomEvent` emitted from this editor.
-	 * @param {Event} event 
+	 * Create the form that catches and passes on the events.
+	 * @returns {HTMLFormElement}
 	 */
-	getChangeEventDetail(event) {
-		const index = this.inputs.get(event.target);
-		const value = this.parseInputValue(event.target.value, index);
-		const isValid = this.isValidValue(value, index);
-
-		return {
-			currentTarget: this,
-			inputTarget: event.target,
-			index,
-			valueAttempted: value,
-			valueUsed: isValid ? value : this.lastAcceptedValues[index],
-			isValid,
-		};
-	}
-
 	createForm() {
-		// Create the form that catches and passes on the events
 		return createElement("form", {
 			listeners: {
 				input: [
@@ -80,6 +59,39 @@ class ValueEditor extends HTMLElement {
 			},
 			parent: this,
 		});
+	}
+
+	createInputs(initiator, form) {
+		// Create the inputs
+		for (let i = 0; i < this.lastAcceptedValues.length; i++) {
+			this.createInputBlock(initiator, i, form);
+		}
+	}
+
+	/**
+	 * Creates an input and any accompanying labels.
+	 * @param {number[]} initiator 
+	 * @param {number} i 
+	 * @param {HTMLFormElement} form 
+	 */
+	createInputBlock(initiator, i, form) {
+		this.createInput(initiator, i, form);
+	}
+
+	createInput(initiator, i, form, inputStep=0.1) {
+		const value = this.initiateValue(i, initiator);
+
+		const input = createElement("input", {
+			properties: {
+				type: "number",
+				value: this.convertForInput(value, i),
+				step: inputStep,
+			},
+			classes: this.classListIfDisabled(i),
+			parent: form,
+		});
+		this.inputs.set(input, i);
+		return input;
 	}
 
 	oninput(event) {
@@ -121,42 +133,24 @@ class ValueEditor extends HTMLElement {
 
 		event.stopPropagation();
 	}
-
-	createInputs(initiator, form) {
-		// Create the inputs
-		for (let i = 0; i < this.lastAcceptedValues.length; i++) {
-			this.createInputBlock(initiator, i, form);
-		}
-	}
-
+	
 	/**
-	 * Creates an input and any accompanying labels.
-	 * @param {number[]} initiator 
-	 * @param {number} i 
-	 * @param {HTMLFormElement} form 
+	 * Produces the detail object given to a `CustomEvent` emitted from this editor.
+	 * @param {Event} event 
 	 */
-	createInputBlock(initiator, i, form) {
-		this.createInput(initiator, i, form);
-	}
+	getChangeEventDetail(event) {
+		const index = this.inputs.get(event.target);
+		const value = this.parseInputValue(event.target.value, index);
+		const isValid = this.isValidValue(value, index);
 
-	createInput(initiator, i, form, inputStep=0.1) {
-		const value = this.initiateValue(i, initiator);
-
-		const input = createElement("input", {
-			properties: {
-				type: "number",
-				value: this.convertForInput(value, i),
-				step: inputStep,
-			},
-			classes: this.isDisabled(i) ? ["disabled"] : [],
-			parent: form,
-		});
-		this.inputs.set(input, i);
-		return input;
-	}
-
-	isDisabled(index) {
-		return false;
+		return {
+			currentTarget: this,
+			inputTarget: event.target,
+			index,
+			valueAttempted: value,
+			valueUsed: isValid ? value : this.lastAcceptedValues[index],
+			isValid,
+		};
 	}
 
 	refill(initiator=[ValueEditor.defaultValue]) {
@@ -168,10 +162,39 @@ class ValueEditor extends HTMLElement {
 		return this;
 	}
 
+	/**
+	 * Determines whether a value in an initiator is valid, or else uses a given default value. The final value is
+	 * accepted and recorded.
+	 * @param {number} i 
+	 * @param {number[]} initiator 
+	 * @returns {number} The accepted value.
+	 */
 	initiateValue(i, initiator) {
 		const value = !this.isValidValue(initiator[i]) ? ValueEditor.defaultValue : initiator[i];
 		this.lastAcceptedValues[i] = value;
 		return value;
+	}
+
+	/**
+	 * Determines whether a value at a given index should be accepted.
+	 * @param {number} value 
+	 * @param {number} index 
+	 * @returns {boolean}
+	 */
+	isValidValue(value, index) {
+		return !isNaN(value);
+	}
+
+	/**
+	 * Determines whether a field should be prevented from being edited.
+	 * @param {number} index 
+	 */
+	isDisabled(index) {
+		return false;
+	}
+
+	classListIfDisabled(index) {
+		return this.isDisabled(index) ? ["disabled"] : [];
 	}
 
 	/**
@@ -212,17 +235,27 @@ class ValueEditor extends HTMLElement {
 export class VectorEditor extends ValueEditor {
 	static basisLabels = ["X", "Y", "Z", "W"];
 
-	constructor(initiator) {
+	restrictingW;
+
+	constructor(initiator, restrictingW=false) {
 		super(initiator);
+
+		this.restrictingW = restrictingW;
+		this.fillElements(initiator);
 	}
 
 	createInputBlock(initiator, i, form) {
 		createElement("label", {
 			textContent: VectorEditor.basisLabels[i],
 			parent: form,
+			classes: this.classListIfDisabled(i),
 		});
 
 		this.createInput(initiator, i, form);
+	}
+
+	isDisabled(index) {
+		return this.restrictingW && index === 3;
 	}
 
 	get value() {
@@ -240,6 +273,7 @@ export class RotorEditor extends ValueEditor {
 	static gridRows = [2, 2, 2, 3, 3, 4];
 	static gridCols = [1, 2, 3, 2, 3, 3];
 
+	restrictingW;
 	// Field causes `angleEditor` to be undefined
 	// angleEditor;
 
@@ -255,6 +289,13 @@ export class RotorEditor extends ValueEditor {
 
 	// 	return this;
 	// }
+
+	constructor(initiator, restrictingW=false) {
+		super(initiator);
+
+		this.restrictingW = restrictingW;
+		this.fillElements(initiator);
+	}
 
 	onchange(event) {
 		super.onchange(event);
@@ -309,6 +350,7 @@ export class RotorEditor extends ValueEditor {
 				createElement("label", {
 					// textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
 					textContent: RotorEditor.basisLabels[i - 1],
+					classes: this.classListIfDisabled(i),
 				}),
 			],
 
@@ -339,6 +381,10 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		return this;
 	}
 
+	isDisabled(index) {
+		return this.restrictingW && [3, 5, 6, 7].includes(index);
+	}
+
 	// Linear percentages cannot represent negative coefficients
 	/* parseInputValue(value) {
 		return Math.sqrt(parseFloat(value) / 100);
@@ -360,7 +406,11 @@ export class AngleEditor extends ValueEditor {
 	// input;
 
 	constructor(angle) {
-		super([angle]);
+		const initiator = [angle];
+
+		super(initiator);
+
+		this.fillElements(initiator);
 	}
 	
 	createInputs(initiator, form) {
@@ -414,7 +464,11 @@ export class AngleEditor extends ValueEditor {
 
 export class PositiveNumberEditor extends ValueEditor {
 	constructor(value) {
-		super([value]);
+		const initiator = [value];
+
+		super(initiator);
+
+		this.fillElements(initiator);
 	}
 
 	isValidValue(value) {

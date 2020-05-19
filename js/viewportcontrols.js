@@ -140,10 +140,10 @@ export function attachViewportControls(viewport, user) {
 				const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
 				const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
 
-				const posNew = new Vector4(...viewport.camera3.position
+				const posNew = viewport.camera3.position
 						.add(right.multiplyScalar(event.movementX * movementSensitivity))
 						.add(up.multiplyScalar(event.movementY * movementSensitivity))
-						.toArray());
+						.toArray(new Vector4());
 
 				tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
 			}
@@ -164,11 +164,14 @@ export function attachViewportControls(viewport, user) {
 	element.addEventListener("wheel", event => {
 		if (altPressed) {
 			viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
+			tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, false);
 
 			viewport.queueRender();
 		} else {
 			viewport.camera3.translateZ(event.deltaY * .5 * movementSensitivity);
+			tiedActions.setObjectPos(viewport.camera3Wrapper, viewport.camera3.position.toArray(new Vector4()), false);
 			// viewport.camera3.updateProjectionMatrix();
+
 			viewport.queueRender();
 		}
 
