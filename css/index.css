@@ -29,14 +29,21 @@ main {
 
 	--font: Overpass, Arial, sans-serif;
 
-	--col-red-1-af: #9b2121af;
-	--col-yellow-1-af: #6b4816af;
+	--col-red-1-7f: #9b21217f;
+	--col-yellow-1-7f: #6b48167f;
 
 	--col-green-0-7f: #0316117f;
 	--col-green-1-7f: #0f382e7f;
+	--col-green-1_5-3f: #123f343f;
+	--col-green-2-cf: #2a6a52cf;
 	--col-green-2-af: #2a6a52af;
 	--col-green-2-7f: #2a6a527f;
-	--col-green-3-7f: #428a707f;
+	--col-green-3-7f: #54ad8c7f;
+
+	--panel-section-padding-horizontal: 1em;
+	--panel-section-padding: .5em var(--panel-section-padding-horizontal);
+
+	--input-border-radius: 8px;
 }
 
 main > workspace- {
@@ -137,7 +144,7 @@ main > workspace- > overlays- .panel {
 
 	border-radius: 1em;
 
-	background: var(--col-green-2-af);
+	background: var(--col-green-2-cf);
 	box-shadow: var(--overlay-box-shadow);
 
 	letter-spacing: .05em;
@@ -159,8 +166,77 @@ main > workspace- > overlays- .panel h3 {
 	font-size: 1.2em;
 }
 
+main > workspace- > overlays- .panel form.horizontal {
+	display: flex;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+}
+
+/* Panel inputs and labels */
+
+main > workspace- > overlays- .panel input,
+main > workspace- > overlays- .panel button {
+	border: 0;
+
+	text-align: center;
+	font-family: var(--font);
+	color: inherit;
+}
+
 main > workspace- > overlays- .panel input {
 	margin: 0;
+	width: 100%; /* Inputs automatically have a fixed size */
+
+	border-radius: var(--input-border-radius);
+
+	background: var(--col-green-1-7f);
+}
+
+main > workspace- > overlays- .panel button,
+main > workspace- > overlays- .panel ul.bars > li {
+	color: #fff;
+}
+
+main > workspace- > overlays- .panel input[type="color"] {
+	width: 3em;
+}
+
+main > workspace- > overlays- .panel button,
+main > workspace- > overlays- .panel input[type="color"] {
+	border-radius: var(--input-border-radius);
+}
+
+main > workspace- > overlays- .panel button,
+main > workspace- > overlays- .panel input[type="color"],
+main > workspace- > overlays- .panel ul.bars > li {
+	background: var(--col-green-1-7f);
+}
+
+main > workspace- > overlays- .panel button:hover,
+main > workspace- > overlays- .panel input[type="color"]:hover,
+main > workspace- > overlays- .panel ul.bars > li:hover {
+	background: var(--col-green-2-7f);
+}
+
+main > workspace- > overlays- .panel button:active,
+main > workspace- > overlays- .panel input[type="color"]:active,
+main > workspace- > overlays- .panel ul.bars > li:active {
+	background: var(--col-green-0-7f);
+}
+
+main > workspace- > overlays- .panel input.error-flash {
+	animation: error-flash 1s linear;
+}
+
+main > workspace- > overlays- .panel input.erroneous {
+	background: var(--col-yellow-1-7f);
+}
+
+main > workspace- > overlays- .panel label {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 /* Bar lists */
@@ -176,7 +252,10 @@ main > workspace- > overlays- .panel ul.bars {
 	justify-content: center;
 
 	list-style: none;
+	border-radius: var(--input-border-radius);
+}
 
+main > workspace- > overlays- .panel ul.bars:empty {
 	background: var(--col-green-1-7f);
 }
 
@@ -199,16 +278,6 @@ main > workspace- > overlays- .panel ul.bars > li {
 
 	user-select: none;
 	cursor: default;
-
-	background: var(--col-green-2-7f);
-}
-
-main > workspace- > overlays- .panel ul.bars > li:hover {
-	background: var(--col-green-3-7f);
-}
-
-main > workspace- > overlays- .panel ul.bars > li:active {
-	background: var(--col-green-1-7f);
 }
 
 main > workspace- > overlays- .panel ul.bars > li:nth-child(n + 2):before {
@@ -287,69 +356,14 @@ main > workspace- > overlays- .panel input-block > * + label {
 	margin-top: .25em;
 }
 
-/* Panel inputs and labels */
-
-main > workspace- > overlays- .panel input,
-main > workspace- > overlays- .panel button {
-	border: 0;
-
-	text-align: center;
-	font-family: var(--font);
-	color: inherit;
-}
-
-main > workspace- > overlays- .panel input {
-	width: 100%; /* Inputs automatically have a fixed size */
-
-	background: #176d4caf;
-}
-
-main > workspace- > overlays- .panel input[type="color"] {
-	width: 3em;
-}
-
-main > workspace- > overlays- .panel button {
-	color: #fff;
-}
-
-main > workspace- > overlays- .panel input[type="color"],
-main > workspace- > overlays- .panel button {
-	background: var(--col-green-1-7f);
-}
-
-main > workspace- > overlays- .panel input[type="color"]:hover,
-main > workspace- > overlays- .panel button:hover {
-	background: #ffffff3f;
-}
-
-main > workspace- > overlays- .panel input[type="color"]:active,
-main > workspace- > overlays- .panel button:active {
-	background: var(--col-green-0-7f);
-}
-
-main > workspace- > overlays- .panel input.error-flash {
-	animation: error-flash 1s linear;
-}
-
-main > workspace- > overlays- .panel input.erroneous {
-	background: var(--col-yellow-1-af);
-}
-
-main > workspace- > overlays- .panel label {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-}
-
 /* Panel layout */
 
 main > workspace- > overlays- .panel > *:not(:empty) {
-	padding: .5em 1em;
+	padding: var(--panel-section-padding);
 }
 
 main > workspace- > overlays- .panel > h2 {
-	background: var(--col-green-2-af);
+	background: var(--col-green-0-7f);
 }
 
 main > workspace- > overlays- .panel > .panel-content {
@@ -357,10 +371,20 @@ main > workspace- > overlays- .panel > .panel-content {
 	overflow: auto;
 }
 
-main > workspace- > overlays- .panel > .panel-content h3 {
+main > workspace- > overlays- .panel > .panel-content * + h3 {
 	padding: 0;
 
 	margin-top: 1em;
+}
+
+main > workspace- > overlays- .panel > .panel-content .panel-content {
+	padding: var(--panel-section-padding);
+	/* Align to edges of outer panel */
+	position: relative;
+	left: calc(-1 * var(--panel-section-padding-horizontal));
+	width: calc(100% + 2 * var(--panel-section-padding-horizontal));
+
+	background: var(--col-green-1_5-3f);
 }
 
 main > menu-bar {
@@ -371,9 +395,9 @@ main > menu-bar {
 
 @keyframes error-flash {
 	0% {
-		background: var(--col-red-1-af);
+		background: var(--col-red-1-7f);
 	}
 	50% {
-		background: var(--col-red-1-af);
+		background: var(--col-red-1-7f);
 	}
 }

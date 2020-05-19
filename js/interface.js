@@ -417,30 +417,40 @@ export class ObjectPropertiesControl extends HTMLElement {
 				},
 
 				children: [
-					createElement("input", {
-						properties: {
-							name: radioName,
-							type: "radio", 
-							value: "1",
-							checked: object.usingPerspective,
-						},
+					createElement("input-block", {
+						children: [
+							createElement("input", {
+								properties: {
+									name: radioName,
+									type: "radio", 
+									value: "1",
+									checked: object.usingPerspective,
+								},
+							}),
+							createElement("label", {
+								textContent: "Perspective",
+							}),
+						],
 					}),
-					createElement("label", {
-						textContent: "Perspective",
-					}),
-
-					createElement("input", {
-						properties: {
-							name: radioName,
-							type: "radio", 
-							value: "0", 
-							checked: !object.usingPerspective,
-						},
-					}),
-					createElement("label", {
-						textContent: "Parallel",
+					
+					createElement("input-block", {
+						children: [
+							createElement("input", {
+								properties: {
+									name: radioName,
+									type: "radio", 
+									value: "0", 
+									checked: !object.usingPerspective,
+								},
+							}),
+							createElement("label", {
+								textContent: "Parallel",
+							}),
+						],
 					}),
 				],
+
+				classes: ["horizontal"],
 
 				parent: this.textContainer,
 			});
@@ -474,7 +484,6 @@ export class ObjectPropertiesControl extends HTMLElement {
 
 		// Transforms
 
-		this.appendHeader("Position");
 		this.posEditor = createElement(new VectorEditor(object.pos, object instanceof Camera3Wrapper4), {
 			listeners: {
 				update: [
@@ -488,10 +497,8 @@ export class ObjectPropertiesControl extends HTMLElement {
 					}],
 				],
 			},
-			parent: this.textContainer,
 		});
 
-		this.appendHeader("Rotation");
 		this.rotEditor = createElement(new RotorEditor(object.rot, object instanceof Camera3Wrapper4), {
 			listeners: {
 				update: [
@@ -504,8 +511,14 @@ export class ObjectPropertiesControl extends HTMLElement {
 			parent: this.textContainer,
 		});
 
+		const transformsChildren = [
+			this.appendHeader("Position", null),
+			this.posEditor,
+			this.appendHeader("Rotation", null),
+			this.rotEditor,
+		];
+
 		if (object instanceof Mesh4) { // Cameras are not affected by scale
-			this.appendHeader("Scale");
 			this.sclEditor = createElement(new VectorEditor(object.scl), {
 				listeners: {
 					update: [
@@ -515,15 +528,28 @@ export class ObjectPropertiesControl extends HTMLElement {
 						}],
 					],
 				},
-				parent: this.textContainer,
 			});
+
+			transformsChildren.push(
+				this.appendHeader("Scale", null),
+				this.sclEditor,
+			);
 		}
+
+
+		this.appendHeader("Transformation");
+		createElement("div", {
+			classes: ["panel-content"],
+			parent: this.textContainer,
+
+			children: transformsChildren,
+		});
 	}
 
-	appendHeader(label) {
+	appendHeader(label, parent=this.textContainer) {
 		return createElement("h3", {
 			textContent: label,
-			parent: this.textContainer,
+			parent,
 		});
 	}
 }

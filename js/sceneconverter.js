@@ -692,11 +692,12 @@ export class Camera3Wrapper4 extends Object4 {
 	}
 
 	get radius() {
-		return this.object3.zoom;
+		return 1 / this.object3.zoom;
 	}
 
 	set radius(radius) {
-		this.object3.zoom = radius;
+		this.object3.zoom = 1 / radius;
+		this.object3.updateProjectionMatrix();
 	}
 
 	get usingPerspective() {
