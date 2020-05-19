@@ -7,6 +7,7 @@ import {declade, createElement} from "./util.js";
 
 /**
  * @abstract
+ * @fires ValueEditor#update When any value is changed.
  */
 class ValueEditor extends HTMLElement {
 	static defaultValue = 0;
@@ -147,10 +148,15 @@ class ValueEditor extends HTMLElement {
 				value: this.convertForInput(value, i),
 				step: inputStep,
 			},
+			classes: this.isDisabled(i) ? ["disabled"] : [],
 			parent: form,
 		});
 		this.inputs.set(input, i);
 		return input;
+	}
+
+	isDisabled(index) {
+		return false;
 	}
 
 	refill(initiator=[ValueEditor.defaultValue]) {
@@ -202,11 +208,13 @@ class ValueEditor extends HTMLElement {
 
 /**
  * Allows a user to edit the components of a vector.
- * @fires VectorEditor#update When any value is changed.
- * @fires VectorEditor#commit When an input loses focus or ENTER is pressed.
  */
 export class VectorEditor extends ValueEditor {
 	static basisLabels = ["X", "Y", "Z", "W"];
+
+	constructor(initiator) {
+		super(initiator);
+	}
 
 	createInputBlock(initiator, i, form) {
 		createElement("label", {

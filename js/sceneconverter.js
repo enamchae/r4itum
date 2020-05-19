@@ -3,8 +3,8 @@
  */
 
 import {Geometry4} from "./4d/meshgeometry.js";
-import {Space3_4, Line4} from "./4d/vector.js";
-import {Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
+import {Vector4, Rotor4, Space3_4, Line4} from "./4d/vector.js";
+import {Object4, Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
 import {projectVector4} from "./4d/projection.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
@@ -631,6 +631,67 @@ class Axis4Rep {
 		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
 		
 		return this;
+	}
+}
+
+/**
+ * @class Provides `Object4` properties for a Three camera.
+ */
+export class Camera3Wrapper4 extends Object4 {
+	/**
+	 * @type Three.Camera
+	 */
+	object3;
+
+	constructor(camera) {
+		super();
+
+		this.object3 = camera;
+	}
+
+	get pos() {
+		console.log("wrapper 3");
+		return new Vector4(...this.object3.position.toArray());
+	}
+
+	setPos(pos) {
+		this.object3.position.set(...pos);
+		return this;
+	}
+
+	get rot() {
+		const quat = this.object3.quaternion;
+		return new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
+	}
+
+	setRot(rot) {
+		this.object3.quaternion.set(rot[4], -rot[2], rot[1], rot[0]);
+		return this;
+	}
+
+	get scl() {
+		return new Vector4(...this.object3.scale.toArray());
+	}
+
+	setScl(scl) {
+		this.object3.scale.set(...scl);
+		return this;
+	}
+
+	get fov() {
+		return this.object3.fov * Math.PI / 180;
+	}
+
+	set fov(fov) {
+		this.object3.fov = fov * 180 / Math.PI;
+	}
+
+	get usingPerspective() {
+		return this.object3 instanceof Three.PerspectiveCamera;
+	}
+
+	set usingPerspective(value) {
+		return;
 	}
 }
 

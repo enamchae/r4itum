@@ -76,23 +76,7 @@ export class Object4 {
     /**
      * @type Scene4
      */
-    scene = null;
-
-	/**
-	 * Position of this object.
-	 * @type Vector4
-	 */
-	pos;
-	/**
-	 * Rotation of this object.
-	 * @type Rotor4
-	 */
-	rot;
-	/**
-	 * Scale of this object.
-	 * @type Vector4
-	 */
-	scl;
+	scene = null;
 
 	/**
 	 * @type string
@@ -106,11 +90,11 @@ export class Object4 {
 	hidden = false;
 
 	constructor(pos=new Vector4(), rot=new Rotor4(), scl=new Vector4(1, 1, 1, 1)) {
-		this.pos = pos;
-		this.rot = rot;
-        this.scl = scl;
-        
-        priv.set(this, {});
+		priv.set(this, {
+			pos,
+			rot,
+			scl,
+		});
 	}
 
 	setName(name) {
@@ -118,14 +102,39 @@ export class Object4 {
 		return this;
 	}
 
+	/**
+	 * Position of this object.
+	 * @type Vector4
+	 */
+	// This property must be a getter or it can't be overriden by a getter
+	get pos() {
+		return _(this).pos;
+	}
+
 	setPos(pos) {
 		this.pos.copy(pos);
 		return this;
 	}
 
+	/**
+	 * Rotation of this object.
+	 * @type Rotor4
+	 */
+	get rot() {
+		return _(this).rot;
+	}
+
 	setRot(rot) {
 		this.rot.copy(rot);
 		return this;
+	}
+
+	/**
+	 * Scale of this object.
+	 * @type Vector4
+	 */
+	get scl() {
+		return _(this).scl;
 	}
 
 	setScl(scl) {

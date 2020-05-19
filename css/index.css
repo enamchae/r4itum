@@ -74,6 +74,11 @@ main > workspace- > overlays- .inactive {
 	opacity: .6;
 }
 
+main > workspace- > overlays- .disabled {
+	opacity: .3;
+	pointer-events: none;
+}
+
 main > workspace- > overlays- ::selection {
 	background: #ffffff3f;
 }

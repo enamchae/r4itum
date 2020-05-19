@@ -4,7 +4,7 @@
 
 import {Vector4, Rotor4} from "./4d/vector.js";
 import {Scene4, Object4, Camera4, Mesh4, Axis4} from "./4d/objects.js";
-import {SceneConverter} from "./sceneconverter.js";
+import {SceneConverter, Camera3Wrapper4} from "./sceneconverter.js";
 import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
 import {declade, createElement} from "./util.js";
@@ -69,8 +69,14 @@ export const user = {
 
 // Multiple viewports currently not supported
 export class Viewport extends HTMLElement {
+	/**
+	 * @type Set<Viewport>
+	 */
 	static members = new Set();
 
+	/**
+	 * @type Set<Viewport>
+	 */
 	static renderQueue = new Set();
 	static allNeedRerender = false;
 
@@ -79,6 +85,8 @@ export class Viewport extends HTMLElement {
 	 */
 	camera;
 	camera3;
+
+	camera3Wrapper;
 
 	converter = new SceneConverter(scene);
 	
@@ -91,6 +99,9 @@ export class Viewport extends HTMLElement {
 		this.camera3 = new Three.PerspectiveCamera(90, 1, .01, 1000);
 		this.camera3.position.set(0, 0, 3);
 		this.camera3.lookAt(0, 0, 0);
+
+		this.camera3Wrapper = new Camera3Wrapper4(this.camera3)
+				.setName("3D viewport camera");
 
 		this.camera = new Camera4(
 			new Vector4(0, 0, 0, 3),
@@ -229,9 +240,7 @@ export class ObjectList extends HTMLElement {
 
 			listeners: {
 				mousedown: [ // Not click event!
-					[event => {
-						event.preventDefault(); // Prevent losing focus from viewport
-					}],
+					[preventDefault],
 				],
 			},
 
@@ -454,7 +463,11 @@ export class ObjectPropertiesControl extends HTMLElement {
 		// Transforms
 
 		const updatePosHandler = ({detail}) => {
-			object.pos[detail.index] = detail.valueUsed;
+			if (object instanceof Camera3Wrapper4) {
+				object.setPos(detail.currentTarget.value);
+			} else {
+				object.pos[detail.index] = detail.valueUsed;
+			}
 			Viewport.allNeedRerender = true;
 		};
 
@@ -542,9 +555,29 @@ export class CameraPropertiesControl extends HTMLElement {
 						],
 
 						mousedown: [ // Not click event!
-							[event => {
-								event.preventDefault(); // Prevent losing focus from viewport
+							[preventDefault],
+						],
+					},
+				}),
+
+				createElement("h3", {
+					textContent: "3-camera",
+				}),
+				createElement("button", {
+					textContent: "Select",
+					listeners: {
+						click: [
+							[() => {
+								// temp solution to get viewport
+								const viewport = Viewport.members.values().next().value;
+
+								user.replaceSelection(viewport.camera3Wrapper);
+								Viewport.allNeedRerender = true;
 							}],
+						],
+
+						mousedown: [
+							[preventDefault], // Prevent losing focus from viewport
 						],
 					},
 				}),
@@ -554,6 +587,10 @@ export class CameraPropertiesControl extends HTMLElement {
 		CameraPropertiesControl.members.add(this);
 	}
 }
+
+function preventDefault(event) {
+	event.preventDefault(); 
+};
 
 
 // Other

@@ -39,8 +39,10 @@ export default {
 		Viewport.allNeedRerender = true;
 	},
 
-	setObjectRot(object, rot) {
-		object.setRot(rot);
+	setObjectRot(object, rot, resettingRotation=true) {
+		if (resettingRotation) {
+			object.setRot(rot);
+		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
 				panel.rotEditor.refill(rot);

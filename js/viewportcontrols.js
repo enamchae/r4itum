@@ -92,6 +92,10 @@ export function attachViewportControls(viewport, user) {
 				// temp disabled because it does not have the intended effect when not looking from the front
 				// viewport.camera3.quaternion.z = 0;
 				// viewport.camera3.quaternion.normalize();
+
+				const quat = viewport.camera3.quaternion;
+				const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
+				tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, false);
 			}
 
 			viewport.queueRender();
@@ -127,17 +131,21 @@ export function attachViewportControls(viewport, user) {
 				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
 				const up = viewport.camera.localUp(); // local up vector
 
-				tiedActions.setObjectPos(viewport.camera,
-						viewport.camera.pos
-								.add(right.scale(event.movementX * movementSensitivity))
-								.add(up.scale(event.movementY * movementSensitivity)));
+				const posNew = viewport.camera.pos
+						.add(right.scale(event.movementX * movementSensitivity))
+						.add(up.scale(event.movementY * movementSensitivity));
+
+				tiedActions.setObjectPos(viewport.camera, posNew);
 			} else { // Move 3D camera
 				const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
 				const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
 
-				viewport.camera3.position
+				const posNew = new Vector4(...viewport.camera3.position
 						.add(right.multiplyScalar(event.movementX * movementSensitivity))
-						.add(up.multiplyScalar(event.movementY * movementSensitivity));
+						.add(up.multiplyScalar(event.movementY * movementSensitivity))
+						.toArray());
+
+				tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
 			}
 			viewport.queueRender();
 		});
