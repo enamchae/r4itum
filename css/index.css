@@ -86,6 +86,10 @@ main > workspace- > overlays- .disabled {
 	pointer-events: none;
 }
 
+main > workspace- > overlays- .hidden {
+	display: none;
+}
+
 main > workspace- > overlays- ::selection {
 	background: #ffffff3f;
 }
@@ -186,8 +190,16 @@ main > workspace- > overlays- .panel button {
 main > workspace- > overlays- .panel input {
 	margin: 0;
 	width: 100%; /* Inputs automatically have a fixed size */
+}
 
+/* Text inputs */
+main > workspace- > overlays- .panel input:not([type]),
+main > workspace- > overlays- .panel input[type=""],
+main > workspace- > overlays- .panel input[type="text"],
+main > workspace- > overlays- .panel input[type="number"] {
 	border-radius: var(--input-border-radius);
+	outline: 0;
+	box-shadow: 0 2px 12px -4px var(--col-green-0-7f) inset;
 
 	background: var(--col-green-1-7f);
 }
@@ -209,6 +221,7 @@ main > workspace- > overlays- .panel input[type="color"] {
 main > workspace- > overlays- .panel button,
 main > workspace- > overlays- .panel input[type="color"],
 main > workspace- > overlays- .panel ul.bars > li {
+	box-shadow: 0 -4px 12px -8px var(--col-green-0-7f) inset;
 	background: var(--col-green-1-7f);
 }
 
@@ -237,6 +250,14 @@ main > workspace- > overlays- .panel label {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+}
+
+/* Tooltips */
+
+main > workspace- > overlays- .panel [title]:not([title=""]) {
+	cursor: help;
+	
+	text-decoration: underline dotted;
 }
 
 /* Bar lists */

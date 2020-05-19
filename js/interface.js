@@ -107,7 +107,7 @@ export class Viewport extends HTMLElement {
 			new Rotor4(1, 0, 0, 0, 0, 0, 0, 0).normalize(),
 		).setName("4D-to-3D camera");
 
-		this.camera3Wrapper = new Camera3Wrapper4().setName("3D-to-screen camera");
+		this.camera3Wrapper = new Camera3Wrapper4().setName("3D-to-viewport camera");
 		this.camera3.position.set(0, 0, 3);
 		this.camera3.lookAt(0, 0, 0);
 
@@ -229,8 +229,14 @@ export class Viewport extends HTMLElement {
 }
 
 export class ObjectList extends HTMLElement {
+	/**
+	 * @type Set<ObjectList>
+	 */
 	static members = new Set();
 
+	/**
+	 * @type WeakMap<Object4, HTMLLIElement>
+	 */
 	bars = new WeakMap();
 
 	textContainer;
@@ -358,7 +364,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 	 * @param {Object4} object 
 	 */
 	createPropertyInputs(object) {
-		this.appendHeader("Name");
+		this.appendHeading("Name");
 		createElement("input", {
 			properties: {
 				type: "text",
@@ -368,6 +374,12 @@ export class ObjectPropertiesControl extends HTMLElement {
 				change: [
 					[event => {
 						object.setName(event.target.value);
+						for (const objectList of ObjectList.members) {
+							const bar = objectList.bars.get(object);
+							if (bar) {
+								bar.textContent = event.target.value;
+							}
+						}
 					}],
 				],
 			},
@@ -377,7 +389,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 
 		if (object instanceof Mesh4) {
 			// Tint
-			this.appendHeader("Tint");
+			this.appendHeading("Tint");
 			createElement("input", {
 				properties: {
 					type: "color",
@@ -398,7 +410,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 		if (object instanceof Camera4 || object instanceof Camera3Wrapper4) {
 			const radioName = "dist-type";
 
-			this.appendHeader("Distance handling");
+			this.appendHeading("Distance handling");
 			createElement("form", {
 				listeners: {
 					change: [
@@ -412,6 +424,9 @@ export class ObjectPropertiesControl extends HTMLElement {
 								object.setUsingPerspective(value, viewport.aspectRatio);
 							}
 							Viewport.allNeedRerender = true;
+
+							perspectiveSettings.classList.toggle("hidden", !value);
+							parallelSettings.classList.toggle("hidden", value);
 						}],
 					],
 				},
@@ -429,6 +444,9 @@ export class ObjectPropertiesControl extends HTMLElement {
 							}),
 							createElement("label", {
 								textContent: "Perspective",
+								properties: {
+									title: "Objects are distorted depending on their distance from the camera's viewing frame",
+								},
 							}),
 						],
 					}),
@@ -445,6 +463,9 @@ export class ObjectPropertiesControl extends HTMLElement {
 							}),
 							createElement("label", {
 								textContent: "Parallel",
+								properties: {
+									title: "Objects are treated as if they have the same distance from the camera's viewing frame",
+								},
 							}),
 						],
 					}),
@@ -455,31 +476,46 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 			});
 			
-			this.appendHeader("FOV angle");
-			createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
-				listeners: {
-					update: [
-						[({detail}) => {
-							object.fovAngle = detail.valueUsed * Math.PI / 180;
-							Viewport.allNeedRerender = true;
-						}],
-					],
-				},
+			const perspectiveSettings = createElement("div", {
+				classes: ["panel-content"],
 				parent: this.textContainer,
+
+				children: [
+					this.appendHeading("FOV angle", null),
+					createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
+						listeners: {
+							update: [
+								[({detail}) => {
+									object.fovAngle = detail.valueUsed * Math.PI / 180;
+									Viewport.allNeedRerender = true;
+								}],
+							],
+						},
+					}),
+				],
 			});
 			
-			this.appendHeader("Uniform distance");
-			createElement(new PositiveNumberEditor(object.radius), {
-				listeners: {
-					update: [
-						[({detail}) => {
-							object.radius = detail.valueUsed;
-							Viewport.allNeedRerender = true;
-						}],
-					],
-				},
+			const parallelSettings = createElement("div", {
+				classes: ["panel-content"],
 				parent: this.textContainer,
+
+				children: [
+					this.appendHeading("Distance", null),
+					createElement(new PositiveNumberEditor(object.radius), {
+						listeners: {
+							update: [
+								[({detail}) => {
+									object.radius = detail.valueUsed;
+									Viewport.allNeedRerender = true;
+								}],
+							],
+						},
+					}),
+				],
 			});
+
+			perspectiveSettings.classList.toggle("hidden", !object.usingPerspective);
+			parallelSettings.classList.toggle("hidden", object.usingPerspective);
 		}
 
 		// Transforms
@@ -512,9 +548,11 @@ export class ObjectPropertiesControl extends HTMLElement {
 		});
 
 		const transformsChildren = [
-			this.appendHeader("Position", null),
+			this.appendHeading("Position", null),
 			this.posEditor,
-			this.appendHeader("Rotation", null),
+			this.appendHeading("Rotation", null, `Orientations of an object may be represented as a plane of rotation paired with an angle
+A plane can be represented as a collection of coefficients which determine how much influence each basis plane has on the plane of rotation
+The plane must not be all zeros in order for the angle to have an effect`),
 			this.rotEditor,
 		];
 
@@ -531,13 +569,13 @@ export class ObjectPropertiesControl extends HTMLElement {
 			});
 
 			transformsChildren.push(
-				this.appendHeader("Scale", null),
+				this.appendHeading("Scale", null),
 				this.sclEditor,
 			);
 		}
 
 
-		this.appendHeader("Transformation");
+		this.appendHeading("Transformation");
 		createElement("div", {
 			classes: ["panel-content"],
 			parent: this.textContainer,
@@ -546,10 +584,11 @@ export class ObjectPropertiesControl extends HTMLElement {
 		});
 	}
 
-	appendHeader(label, parent=this.textContainer) {
+	appendHeading(label, parent=this.textContainer, title="") {
 		return createElement("h3", {
 			textContent: label,
 			parent,
+			properties: !title ? null : {title},
 		});
 	}
 }

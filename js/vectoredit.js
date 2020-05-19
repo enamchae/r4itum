@@ -86,6 +86,7 @@ class ValueEditor extends HTMLElement {
 				type: "number",
 				value: this.convertForInput(value, i),
 				step: inputStep,
+				title: "",
 			},
 			classes: this.classListIfDisabled(i),
 			parent: form,
@@ -343,15 +344,17 @@ export class RotorEditor extends ValueEditor {
 	}
 
 	createInputBlock(plane, i, form) {
+		const label = createElement("label", {
+			// textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
+			textContent: RotorEditor.basisLabels[i - 1],
+			classes: this.classListIfDisabled(i),
+		});
+
 		// Group the input and label into a block
 		const inputBlock = createElement("input-block", {
 			children: [
 				this.createInput(plane, i, form, .1),
-				createElement("label", {
-					// textContent: `% ${RotorEditor.basisLabels[i - 1]}`,
-					textContent: RotorEditor.basisLabels[i - 1],
-					classes: this.classListIfDisabled(i),
-				}),
+				label,
 			],
 
 			parent: form,
@@ -359,6 +362,7 @@ export class RotorEditor extends ValueEditor {
 		// XYZW input fills row
 		if (i === 7) {
 			inputBlock.classList.add("fill-row");
+			label.title = `Not a basis plane, but rather a side effect of rotating more than once`;
 		} else {
 			inputBlock.style.cssText = `
 grid-row: ${RotorEditor.gridRows[i - 1]};
@@ -423,7 +427,9 @@ export class AngleEditor extends ValueEditor {
 				type: "number",
 				value: this.convertForInput(value),
 				step: 5,
+				title: "",
 			},
+			classes: this.classListIfDisabled(0),
 			parent: form,
 		});
 
