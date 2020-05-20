@@ -66,6 +66,10 @@ main > workspace- > viewport- {
 	overflow: hidden;
 }
 
+main > workspace- > viewport- > * {
+	position: absolute;
+}
+
 main > workspace- > overlays- {
 	pointer-events: none;
 
@@ -138,48 +142,61 @@ main > workspace- > overlays- > panels- > * + .panel {
 	margin-left: 12px;
 }
 
-main > workspace- > overlays- .panel {
+main > workspace- > overlays- > context-menus {
+	position: relative;
+}
+
+main > workspace- > overlays- .panel,
+main > workspace- > overlays- context-menu {
 	display: flex;
 	flex-direction: column;
-	width: 240px;
 	overflow: auto;
-	
+
 	pointer-events: initial;
 
 	border-radius: 1em;
 
-	background: var(--col-green-2-cf);
 	box-shadow: var(--overlay-box-shadow);
+	background: var(--col-green-2-cf);
 
 	letter-spacing: .05em;
 }
 
-main > workspace- > overlays- .panel h2,
-main > workspace- > overlays- .panel h3 {
+main > workspace- > overlays- context-menu {
+	position: absolute;
+	width: 200px;
+}
+
+main > workspace- > overlays- .panel {
+	width: 240px;
+}
+
+main > workspace- > overlays- h2,
+main > workspace- > overlays- h3 {
 	cursor: default;
 
 	color: #fff;
 	letter-spacing: .1em;
 }
 
-main > workspace- > overlays- .panel h2 {
+main > workspace- > overlays- h2 {
 	font-size: 1.25em;
 }
 
-main > workspace- > overlays- .panel h3 {
+main > workspace- > overlays- h3 {
 	font-size: 1.2em;
 }
 
-main > workspace- > overlays- .panel form.horizontal {
+main > workspace- > overlays- form.horizontal {
 	display: flex;
 	justify-content: space-evenly;
 	flex-wrap: wrap;
 }
 
-/* Panel inputs and labels */
+/* Inputs and labels */
 
-main > workspace- > overlays- .panel input,
-main > workspace- > overlays- .panel button {
+main > workspace- > overlays- input,
+main > workspace- > overlays- button {
 	border: 0;
 
 	text-align: center;
@@ -187,16 +204,16 @@ main > workspace- > overlays- .panel button {
 	color: inherit;
 }
 
-main > workspace- > overlays- .panel input {
+main > workspace- > overlays- input {
 	margin: 0;
 	width: 100%; /* Inputs automatically have a fixed size */
 }
 
 /* Text inputs */
-main > workspace- > overlays- .panel input:not([type]),
-main > workspace- > overlays- .panel input[type=""],
-main > workspace- > overlays- .panel input[type="text"],
-main > workspace- > overlays- .panel input[type="number"] {
+main > workspace- > overlays- input:not([type]),
+main > workspace- > overlays- input[type=""],
+main > workspace- > overlays- input[type="text"],
+main > workspace- > overlays- input[type="number"] {
 	border-radius: var(--input-border-radius);
 	outline: 0;
 	box-shadow: 0 2px 12px -4px var(--col-green-0-7f) inset;
@@ -204,48 +221,57 @@ main > workspace- > overlays- .panel input[type="number"] {
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- .panel button,
-main > workspace- > overlays- .panel ul.bars > li {
+main > workspace- > overlays- button,
+main > workspace- > overlays- ul.bars > li {
 	color: #fff;
 }
 
-main > workspace- > overlays- .panel input[type="color"] {
+main > workspace- > overlays- input[type="color"] {
 	width: 3em;
 }
 
-main > workspace- > overlays- .panel button,
-main > workspace- > overlays- .panel input[type="color"] {
+main > workspace- > overlays- button,
+main > workspace- > overlays- input[type="color"] {
 	border-radius: var(--input-border-radius);
 }
 
-main > workspace- > overlays- .panel button,
-main > workspace- > overlays- .panel input[type="color"],
-main > workspace- > overlays- .panel ul.bars > li {
+main > workspace- > overlays- button,
+main > workspace- > overlays- input[type="color"],
+main > workspace- > overlays- ul.bars > li {
 	box-shadow: 0 -4px 12px -8px var(--col-green-0-7f) inset;
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- .panel button:hover,
-main > workspace- > overlays- .panel input[type="color"]:hover,
-main > workspace- > overlays- .panel ul.bars > li:hover {
+main > workspace- > overlays- button:hover,
+main > workspace- > overlays- input[type="color"]:hover,
+main > workspace- > overlays- ul.bars > li.button:hover {
 	background: var(--col-green-2-7f);
 }
 
-main > workspace- > overlays- .panel button:active,
-main > workspace- > overlays- .panel input[type="color"]:active,
-main > workspace- > overlays- .panel ul.bars > li:active {
+main > workspace- > overlays- button:active,
+main > workspace- > overlays- input[type="color"]:active,
+main > workspace- > overlays- ul.bars > li.button:active {
 	background: var(--col-green-0-7f);
 }
 
-main > workspace- > overlays- .panel input.error-flash {
+main > workspace- > overlays- input.error-flash {
 	animation: error-flash 1s linear;
 }
 
-main > workspace- > overlays- .panel input.erroneous {
+@keyframes error-flash {
+	0% {
+		background: var(--col-red-1-7f);
+	}
+	50% {
+		background: var(--col-red-1-7f);
+	}
+}
+
+main > workspace- > overlays- input.erroneous {
 	background: var(--col-yellow-1-7f);
 }
 
-main > workspace- > overlays- .panel label {
+main > workspace- > overlays- label {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -254,7 +280,7 @@ main > workspace- > overlays- .panel label {
 
 /* Tooltips */
 
-main > workspace- > overlays- .panel [title]:not([title=""]) {
+main > workspace- > overlays- [title]:not([title=""]) {
 	cursor: help;
 
 	text-decoration: underline dotted;
@@ -262,25 +288,25 @@ main > workspace- > overlays- .panel [title]:not([title=""]) {
 
 /* Bar lists */
 
-main > workspace- > overlays- .panel ul.bars {
+main > workspace- > overlays- ul.bars {
 	min-height: 2em;
 	max-height: 200px;
 	overflow-y: auto;
 	padding: 0;
-	margin: 8px 0;
+	margin: 0;
 
 	list-style: none;
 	border-radius: var(--input-border-radius);
 }
 
-main > workspace- > overlays- .panel ul.bars:empty {
+main > workspace- > overlays- ul.bars:empty {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- .panel ul.bars:empty:after {
+main > workspace- > overlays- ul.bars:empty:after {
 	content: attr(data-empty-text);
 
 	text-align: center;
@@ -290,7 +316,7 @@ main > workspace- > overlays- .panel ul.bars:empty:after {
 	opacity: .5;
 }
 
-main > workspace- > overlays- .panel ul.bars > li {
+main > workspace- > overlays- ul.bars > li {
 	display: flex;
 	align-items: center;
 	height: 2.5em;
@@ -303,7 +329,11 @@ main > workspace- > overlays- .panel ul.bars > li {
 	cursor: default;
 }
 
-main > workspace- > overlays- .panel ul.bars > li:nth-child(n + 2):before {
+main > workspace- > overlays- ul.bars > li > :first-child {
+	flex-grow: 1;
+}
+
+main > workspace- > overlays- ul.bars > li:nth-child(n + 2):before {
 	content: " ";
 	
 	position: absolute;
@@ -321,7 +351,7 @@ main > workspace- > overlays- .panel ul.bars > li:nth-child(n + 2):before {
 
 /* Vector editor */
 
-main > workspace- > overlays- .panel vector-editor > form {
+main > workspace- > overlays- vector-editor > form {
 	display: grid;
 	
 	grid-template-columns: auto auto;
@@ -330,7 +360,7 @@ main > workspace- > overlays- .panel vector-editor > form {
 
 /* Rotor editor */
 
-main > workspace- > overlays- .panel rotor-editor > form {
+main > workspace- > overlays- rotor-editor > form {
 	display: grid;
 	
 	grid-template-columns: repeat(3, auto);
@@ -338,44 +368,44 @@ main > workspace- > overlays- .panel rotor-editor > form {
 	gap: 4px;
 }
 
-main > workspace- > overlays- .panel rotor-editor angle-editor,
-main > workspace- > overlays- .panel rotor-editor angle-editor input {
+main > workspace- > overlays- rotor-editor angle-editor,
+main > workspace- > overlays- rotor-editor angle-editor input {
 	font-size: 1.2em;
 }
 
-main > workspace- > overlays- .panel rotor-editor angle-editor {
+main > workspace- > overlays- rotor-editor angle-editor {
 	margin: 1em 0;
 }
 
-main > workspace- > overlays- .panel rotor-editor angle-editor input {
+main > workspace- > overlays- rotor-editor angle-editor input {
 	width: 4em;
 }
 
-main > workspace- > overlays- .panel rotor-editor angle-editor,
-main > workspace- > overlays- .panel rotor-editor .fill-row {
+main > workspace- > overlays- rotor-editor angle-editor,
+main > workspace- > overlays- rotor-editor .fill-row {
 	grid-column: 1 / -1;
 }
 
 /* Angle editor */
 
-main > workspace- > overlays- .panel angle-editor input {
+main > workspace- > overlays- angle-editor input {
 	margin: 0 .25em;
 
 	text-align: right;
 }
-main > workspace- > overlays- .panel angle-editor form {
+main > workspace- > overlays- angle-editor form {
 	display: flex;
 	justify-content: center;
 }
 
 /* Input blocks */
 
-main > workspace- > overlays- .panel input-block {
+main > workspace- > overlays- input-block {
 	display: flex;
 	flex-direction: column;
 }
 
-main > workspace- > overlays- .panel input-block > * + label {
+main > workspace- > overlays- input-block > * + label {
 	margin-top: .25em;
 }
 
@@ -412,17 +442,22 @@ main > workspace- > overlays- .panel > .panel-content .panel-content {
 	background: var(--col-green-1_5-3f);
 }
 
+main > workspace- > overlays- .panel ul.bars {
+	margin: 8px 0;
+}
+
+
+main > workspace- > overlays- context-menu .submenu-switch:after {
+	content: "⋯";
+
+	font-size: 2em;
+	line-height: 1;
+
+	opacity: .6;
+}
+
 main > menu-bar {
 	height: 3em;
 
 	background: #668b8f;
-}
-
-@keyframes error-flash {
-	0% {
-		background: var(--col-red-1-7f);
-	}
-	50% {
-		background: var(--col-red-1-7f);
-	}
 }

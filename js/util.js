@@ -69,10 +69,10 @@ export function createElement(elementSource="div", {
 	}
 
 	for (const child of children) {
-		element.appendChild(child);
+		element.append(child);
 	}
 
-	parent?.appendChild(element);
+	parent?.append(element);
 
 	for (const [eventType, handlers] of Object.entries(listeners)) {
 		for (const [handler, options] of handlers) {

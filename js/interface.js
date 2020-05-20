@@ -4,10 +4,12 @@
 
 import {Vector4, Rotor4} from "./4d/vector.js";
 import {Scene4, Object4, Camera4, Mesh4, Axis4} from "./4d/objects.js";
+import construct from "./4d/construction.js";
 import {SceneConverter, Camera3Wrapper4} from "./sceneconverter.js";
 import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
-import {declade, createElement} from "./util.js";
+import {qs, declade, createElement} from "./util.js";
+import tiedActions from "./interfaceties.js";
 import * as Three from "./_libraries/three.module.js";
 
 export const scene = new Scene4();
@@ -21,6 +23,8 @@ const axisColors = [
 for (let i = 0; i < 4; i++) {
 	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
 }
+
+const contextMenus = qs("context-menus");
 
 export const user = {
 	/**
@@ -122,8 +126,7 @@ export class Viewport extends HTMLElement {
 
 		this.refreshSize();
 
-		this.attachShadow({mode: "open"});
-		this.shadowRoot.appendChild(this.renderer.domElement);
+		this.prepend(this.renderer.domElement);
 		this.queueRender();
 
 		this.attachControls();
@@ -276,14 +279,42 @@ export class ObjectList extends HTMLElement {
 		createElement("button", {
 			textContent: "Add mesh",
 			parent: this.textContainer,
+
+			listeners: {
+				click: [
+					[event => {
+						const menu = contextMenus.addMenu();
+						menu.positionFromEvent(event);
+						menu.buttonSubmenu("Construct",
+								menu => {
+									menu.button("Vertex", () => {
+										const object = new Mesh4(construct.vert()).setName("Vertex");
+										tiedActions.addObject(object);
+										user.replaceSelection(object);
+										contextMenus.clear();
+									});
+									menu.buttonSubmenu("2D");
+									menu.buttonSubmenu("3D");
+									menu.buttonSubmenu("4D");
+								});
+						menu.buttonSubmenu("Import");
+					}],
+				],
+			},
 		});
 	}
 
 	addItem(...objects) {
 		for (const object of objects) {
 			const bar = createElement("li", {
-				textContent: object.name,
+				children: [
+					createElement("div", {
+						textContent: object.name,
+					}),
+				],
 				parent: this.list,
+
+				classes: ["button"],
 
 				listeners: {
 					click: [
