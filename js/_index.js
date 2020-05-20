@@ -26,7 +26,7 @@ const meshes = [
 ];
 
 for (let i = 0; i < 2; i++) {
-	meshes.push(new Mesh4(construct.pentachoron()).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));
+	meshes.push(new Mesh4(construct.mobiusStrip(8)).setPos(new Vector4(...new Array(4).fill(0).map(() => 10 * Math.random() - 5))));
 }
 
 tiedActions.addObject(...meshes);

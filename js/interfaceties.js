@@ -64,4 +64,14 @@ export default {
 		}
 		Viewport.allNeedRerender = true;
 	},
+
+	setCameraRadius(camera, radius) {
+		camera.radius = radius;
+		for (const panel of ObjectPropertiesControl.members) {
+			if (panel.hasAsTargetObject(camera)) {
+				panel.radiusEditor?.refill(radius);
+			}
+		}
+		Viewport.allNeedRerender = true;
+	}
 };

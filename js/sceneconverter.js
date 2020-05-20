@@ -647,6 +647,7 @@ export class Camera3Wrapper4 extends Object4 {
 		this.object3 = camera;
 		priv.set(this, {
 			fovAngle: camera?.fov * Math.PI / 180 ?? Math.PI / 2,
+			radius: 1,
 		});
 	}
 
@@ -678,6 +679,8 @@ export class Camera3Wrapper4 extends Object4 {
 		return this;
 	}
 
+	// `radius` and `fovAngle` are stored privately since they cannot be saved on the camera when switching
+
 	get fovAngle() {
 		return _(this).fovAngle;
 	}
@@ -692,10 +695,12 @@ export class Camera3Wrapper4 extends Object4 {
 	}
 
 	get radius() {
-		return 1 / this.object3.zoom;
+		return _(this).radius;
 	}
 
 	set radius(radius) {
+		_(this).radius = radius;
+
 		this.object3.zoom = 1 / radius;
 		this.object3.updateProjectionMatrix();
 	}
@@ -721,6 +726,8 @@ export class Camera3Wrapper4 extends Object4 {
 		} else {
 			const size = 8;
 			camera = new Three.OrthographicCamera(-size, size, size / aspectRatio, -size / aspectRatio, -100, 1000);
+			camera.zoom = 1 / this.radius;
+			camera.updateProjectionMatrix();
 		}
 
 		camera.position.copy(this.object3.position);

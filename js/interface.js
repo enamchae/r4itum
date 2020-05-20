@@ -252,7 +252,12 @@ export class ObjectList extends HTMLElement {
 			classes: ["panel-content"],
 			parent: this,
 		});
+		this.createInputs();
 
+		ObjectList.members.add(this);
+	}
+
+	createInputs() {
 		this.list = createElement("ul", {
 			classes: ["bars"],
 			attributes: [
@@ -268,7 +273,10 @@ export class ObjectList extends HTMLElement {
 			parent: this.textContainer,
 		});
 
-		ObjectList.members.add(this);
+		createElement("button", {
+			textContent: "Add mesh",
+			parent: this.textContainer,
+		});
 	}
 
 	addItem(...objects) {
@@ -313,6 +321,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 	posEditor = null;
 	rotEditor = null;
 	sclEditor = null;
+	radiusEditor = null;
 
 	targetObject = null;
 
@@ -347,6 +356,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 			this.posEditor = null;
 			this.rotEditor = null;
 			this.sclEditor = null;
+			this.radiusEditor = null;
 			this.targetObject = null;
 			this.classList.add("inactive");
 			return;
@@ -464,7 +474,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 							createElement("label", {
 								textContent: "Parallel",
 								properties: {
-									title: "Objects are treated as if they have the same distance from the camera's viewing frame",
+									title: "Objects are treated as if they all have the same distance from the camera's viewing frame",
 								},
 							}),
 						],
@@ -481,7 +491,8 @@ export class ObjectPropertiesControl extends HTMLElement {
 				parent: this.textContainer,
 
 				children: [
-					this.appendHeading("FOV angle", null),
+					this.appendHeading("FOV angle", null, `Angle representing the wideness of the camera's viewbox
+Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 180° is smaller]`),
 					createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
 						listeners: {
 							update: [
@@ -494,23 +505,26 @@ export class ObjectPropertiesControl extends HTMLElement {
 					}),
 				],
 			});
+
+			this.radiusEditor = createElement(new PositiveNumberEditor(object.radius), {
+				listeners: {
+					update: [
+						[({detail}) => {
+							object.radius = detail.valueUsed;
+							Viewport.allNeedRerender = true;
+						}],
+					],
+				},
+			});
 			
 			const parallelSettings = createElement("div", {
 				classes: ["panel-content"],
 				parent: this.textContainer,
 
 				children: [
-					this.appendHeading("Distance", null),
-					createElement(new PositiveNumberEditor(object.radius), {
-						listeners: {
-							update: [
-								[({detail}) => {
-									object.radius = detail.valueUsed;
-									Viewport.allNeedRerender = true;
-								}],
-							],
-						},
-					}),
+					this.appendHeading("Distance", null , `Apparent distance of all points
+Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
+					this.radiusEditor,
 				],
 			});
 

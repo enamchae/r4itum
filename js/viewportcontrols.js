@@ -73,10 +73,10 @@ export function attachViewportControls(viewport, user) {
 
 				const rot = viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle));
 				// Reset any residual XY/XZ/YZ rotation
-				rot[1] = 0;
-				rot[2] = 0;
-				rot[4] = 0;
-				rot.normalize();
+				// rot[1] = 0;
+				// rot[2] = 0;
+				// rot[4] = 0;
+				// rot.normalize();
 
 				tiedActions.setObjectRot(viewport.camera, rot);
 
@@ -163,18 +163,24 @@ export function attachViewportControls(viewport, user) {
 
 	element.addEventListener("wheel", event => {
 		if (altPressed) {
-			viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
-			tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, false);
-
-			viewport.queueRender();
+			if (viewport.camera.usingPerspective) {
+				viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
+				tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, false);
+			} else {
+				tiedActions.setCameraRadius(viewport.camera, viewport.camera.radius * 1.25 ** (event.deltaY / 100));
+			}
 		} else {
-			viewport.camera3.translateZ(event.deltaY * .5 * movementSensitivity);
-			tiedActions.setObjectPos(viewport.camera3Wrapper, viewport.camera3.position.toArray(new Vector4()), false);
-			// viewport.camera3.updateProjectionMatrix();
+			if (viewport.camera3Wrapper.usingPerspective) {
+				viewport.camera3.translateZ(event.deltaY * .5 * movementSensitivity);
+				tiedActions.setObjectPos(viewport.camera3Wrapper, viewport.camera3.position.toArray(new Vector4()), false);
 
-			viewport.queueRender();
+				// viewport.camera3.updateProjectionMatrix();
+			} else {
+				tiedActions.setCameraRadius(viewport.camera3Wrapper, viewport.camera3Wrapper.radius * 1.25 ** (event.deltaY / 100));
+			}
 		}
 
+		viewport.queueRender();
 		event.preventDefault();
 	});
 
