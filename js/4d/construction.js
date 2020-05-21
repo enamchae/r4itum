@@ -5,9 +5,12 @@
 import {Geometry4} from "./meshgeometry.js";
 import {Vector4, Rotor4} from "./vector.js";
 
-const sqrt1_3 = Math.sqrt(1 / 3);
+const {sqrt, cos, sin, PI} = Math;
+const REV = 2 * PI;
 
-const phi = (1 + Math.sqrt(5)) / 2;
+const sqrt1_3 = sqrt(1 / 3);
+
+const phi = (1 + sqrt(5)) / 2;
 const iphi = phi - 1; // === 1 / phi
 
 const phiSqrt1_3 = phi * sqrt1_3;
@@ -52,7 +55,7 @@ export default {
 		const angleIncrement = 2 * Math.PI / nSides;
 		for (let i = 0; i < nSides; i++) {
 			const angle = angleIncrement * i;
-			verts.push(new Vector4(Math.cos(angle), Math.sin(angle)));
+			verts.push(new Vector4(cos(angle), sin(angle)));
 
 			// Create a triangle fan
 			if (i >= 2) {
@@ -252,14 +255,15 @@ export default {
 			const offset = verts.length;
 
 			// const y = 2 * latCut / (nLatCuts - 1) - 1; // evenly spaced cuts
-			const y = Math.sin(Math.PI * latCut / (nLatCuts - 1) - Math.PI / 2); // equal arc lengths
-			const radius = Math.sqrt(1 - y ** 2);
+			const y = sin(Math.PI * latCut / (nLatCuts - 1) - Math.PI / 2); // equal arc lengths
+			const radius = sqrt(1 - y ** 2);
 
 			for (let longCut = 0; longCut < nLongCuts; longCut++) {
 				const angle = longIncrement * longCut;
 
-				verts.push(new Vector4(radius * Math.cos(angle), y, radius * Math.sin(angle)));
+				verts.push(new Vector4(radius * cos(angle), y, radius * sin(angle)));
 
+				// Index of the vertex adjacent to the current one on this longitude cut
 				const adjacentVert = (longCut + 1) % nLongCuts;
 
 				if (latCut === nLatCuts - 2) {
@@ -301,8 +305,8 @@ export default {
 			const vertTop = new Vector4(0, width / 2, 0);
 			const vertBottom = new Vector4(0, -width / 2, 0);
 
-			const rotor = Rotor4.planeAngle([Math.cos(angle), 0, 0, -Math.sin(angle), 0, 0], angleTurn);
-			const offset = new Vector4(Math.cos(angle), 0, Math.sin(angle));
+			const rotor = Rotor4.planeAngle([cos(angle), 0, 0, -sin(angle), 0, 0], angleTurn);
+			const offset = new Vector4(cos(angle), 0, sin(angle));
 
 			verts.push(vertTop.multRotor(rotor).add(offset), vertBottom.multRotor(rotor).add(offset));
 
@@ -326,14 +330,14 @@ export default {
 	// https://en.wikipedia.org/wiki/5-cell#Construction
 	pentachoron() {
 		const s = Math.SQRT1_2;
-		const f = Math.sqrt(1 / 5);
+		const f = sqrt(1 / 5);
 
 		return new Geometry4([
 			new Vector4(s, -f, s, s).normalize(),
 			new Vector4(-s, -f, s, -s).normalize(),
 			new Vector4(-s, -f, -s, s).normalize(),
 			new Vector4(s, -f, -s, -s).normalize(),
-			new Vector4(0, Math.sqrt(5) - f, 0, 0).normalize(),
+			new Vector4(0, sqrt(5) - f, 0, 0).normalize(),
 		], [
 			[0, 1, 2, 3],
 			[0, 1, 2, 4],
@@ -486,7 +490,12 @@ export default {
 	},
 	
 	hexacosichoron() {
-		return new Geometry4();
+		const verts = [];
+
+		hexadecachoronVerts(verts);
+		octachoronVerts(verts);
+
+		return new Geometry4(verts);
 	},
 
 	spherinder() {
@@ -497,8 +506,68 @@ export default {
 
 	},
 
-	kleinBottle() {
+	kleinBottle(nStrips=12, nLongCuts=4, radius=0.6) {
+		const verts = [];
+		const faces = [];
 
+		const plane = [1, 0, 0, 0, 0, 0];
+		for (let i = 0; i < nStrips; i++) {
+			const time = i / nStrips;
+
+			// Arbitrary parameterization of ring offsets
+			const offset = new Vector4(
+				time > 0.5 ? -(sin(REV * time) ** 2) : 0,
+				sin(REV * (time - 0.1)),
+				0,
+				-(sin(PI * (time)) ** 2),
+			).multScalar(3);
+			const angle = PI * (time > 0.75 ? cos(REV * time) ** 2 : 0);
+
+			const rotor = Rotor4.planeAngle(plane, angle);
+
+			const vertIndexOffset = verts.length;
+			// Generate this ring's vertices
+			const ringVerts = [];
+			for (let nLongCut = 0; nLongCut < nLongCuts; nLongCut++) {
+				const polygonAngle = REV * (nLongCut / nLongCuts);
+				const ringVert = new Vector4(radius * cos(polygonAngle), 0, radius * sin(polygonAngle), 0);
+				ringVerts.push(ringVert.multRotor(rotor).add(offset));
+
+				// Index of the vertex adjacent to the current one on this longitude cut
+				const adjacentVertIndex = (nLongCut + 1) % nLongCuts;
+
+				if (i !== nStrips - 1) {
+					// Make a triangle strip
+					faces.push([
+						vertIndexOffset + nLongCut,
+						vertIndexOffset + adjacentVertIndex,
+						vertIndexOffset + nLongCut + nLongCuts,
+					], [
+						vertIndexOffset + adjacentVertIndex,
+						vertIndexOffset + adjacentVertIndex + nLongCuts,
+						vertIndexOffset + nLongCut + nLongCuts,
+					]);
+
+					continue;
+				}
+
+				// This ring has the opposite orientation as the starting ring
+				// Get the starting ring indexes in reverse order
+				faces.push([
+					vertIndexOffset + nLongCut,
+					vertIndexOffset + adjacentVertIndex,
+					mod(-nLongCut + 1, nLongCuts),
+				], [
+					vertIndexOffset + adjacentVertIndex,
+					mod(-adjacentVertIndex + 1, nLongCuts),
+					mod(-nLongCut + 1, nLongCuts),
+				]);
+			}
+
+			verts.push(...ringVerts);
+			// faces.push([i, (i + 1) % nStrips]);
+		}
+		return new Geometry4(verts, faces);
 	},
 
 	testGeometry: {
@@ -516,3 +585,7 @@ export default {
 		]),
 	},
 };
+
+function mod(a, b) {
+	return (a % b + b) % b;
+}

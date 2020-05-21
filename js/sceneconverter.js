@@ -138,9 +138,14 @@ class GeometryProjected {
 					const vertsFace = [];
 
 					for (const index of face) {
+						const vert = verts[index];
 						// Discard the array and check the next face if any vertex is behind
-						if (verts[index][3] <= 0) continue facesLoop;
-						vertsFace.push(verts[index]);
+						if (!vert) {
+							throw new RangeError(`Vertex index ${index} does not exist in verts array of length ${verts.length}`);
+						} else if (vert[3] <= 0) {
+							continue facesLoop;
+						}
+						vertsFace.push(vert);
 					}
 
 					positions.push(...vertsFace.flat());

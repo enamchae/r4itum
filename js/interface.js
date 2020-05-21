@@ -350,6 +350,9 @@ export class ObjectList extends HTMLElement {
 								menu.button("600-cell", () => {
 									createObject(construct.hexacosichoron(), "600-cell");
 								});
+								menu.button("Klein bottle", () => {
+									createObject(construct.kleinBottle(), "Klein bottle");
+								});
 							});
 						});
 
