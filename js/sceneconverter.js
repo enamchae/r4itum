@@ -647,7 +647,7 @@ export class Camera3Wrapper4 extends Object4 {
 		this.object3 = camera;
 		priv.set(this, {
 			fovAngle: camera?.fov * Math.PI / 180 ?? Math.PI / 2,
-			radius: 1,
+			radius: 1 / 3,
 		});
 	}
 

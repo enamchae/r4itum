@@ -41,29 +41,8 @@ export const user = {
 	 * @param  {...Object4} objects 
 	 */
 	replaceSelection(...objects) {
-		// Indicate that all current selections are unselected
-		for (const object of this.selectedObjects) {
-			for (const viewport of Viewport.members) {
-				const rep = viewport.converter.objectReps.get(object);
-				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
-			}
-		}
-
 		// Replace selections
 		this.selectedObjects = objects;
-
-		// Indicate that all current selections are selected
-		for (let i = 0; i < objects.length; i++) {
-			for (const viewport of Viewport.members) {
-				const rep = viewport.converter.objectReps.get(objects[i]);
-				rep?.setViewportState(i === 0 ? SceneConverter.ViewportStates.SELECTED_PRIMARY : SceneConverter.ViewportStates.SELECTED);
-			}
-		}
-
-		// Update object info panels
-		for (const panel of ObjectPropertiesControl.members) {
-			panel.setTargetObject(this.selectedObjectPrimary);
-		}
 
 		return this;
 	},
@@ -211,13 +190,11 @@ export class Viewport extends HTMLElement {
 
 		// console.time("select object");
 		if (rep) {
-			user.replaceSelection(rep.object);
+			tiedActions.replaceSelection(rep.object);
 		} else {
-			user.replaceSelection();
+			tiedActions.replaceSelection();
 		}
 		// console.timeEnd("select object");
-
-		this.queueRender();
 
 		return this;
 	}
@@ -229,6 +206,36 @@ export class Viewport extends HTMLElement {
 	get camera3() {
 		return this.camera3Wrapper.object3;
 	}
+}
+
+function createPolygonInputBlock() {
+	const editor = new PositiveNumberEditor(6);
+
+	return createElement("input-block", {
+		children: [
+			createElement("label", {
+				textContent: "Regular polygon",
+			}),
+			editor,
+			createElement("button", {
+				textContent: "Create",
+				listeners: {
+					click: [
+						[() => {
+							createObject(construct.polygon(editor.value), "Polygon");
+						}],
+					],
+				},
+			}),
+		],
+	});
+}
+
+function createObject(geometry, name) {
+	const object = new Mesh4(geometry).setName(name);
+	tiedActions.addObject(object);
+	tiedActions.replaceSelection(object);
+	contextMenus.clear();
 }
 
 export class ObjectList extends HTMLElement {
@@ -285,18 +292,59 @@ export class ObjectList extends HTMLElement {
 					[event => {
 						const menu = contextMenus.addMenu();
 						menu.positionFromEvent(event);
-						menu.buttonSubmenu("Construct",
-								menu => {
-									menu.button("Vertex", () => {
-										const object = new Mesh4(construct.vert()).setName("Vertex");
-										tiedActions.addObject(object);
-										user.replaceSelection(object);
-										contextMenus.clear();
-									});
-									menu.buttonSubmenu("2D");
-									menu.buttonSubmenu("3D");
-									menu.buttonSubmenu("4D");
+
+						menu.buttonSubmenu("Construct", menu => {
+							menu.button("Vertex", () => {
+								createObject(construct.vert(), "Vertex");
+							});
+
+							menu.buttonSubmenu("2D", menu => {
+								menu.element(createPolygonInputBlock());
+							});
+
+							menu.buttonSubmenu("3D", menu => {
+								menu.button("Tetrahedron", () => {
+									createObject(construct.tetrahedron(), "Tetrahedron");
 								});
+								menu.button("Cube", () => {
+									createObject(construct.hexahedron(), "Cube");
+								});
+								menu.button("Octahedron", () => {
+									createObject(construct.octahedron(), "Octahedron");
+								});
+								menu.button("Dodecahedron", () => {
+									createObject(construct.dodecahedron(), "Dodecahedron");
+								});
+								menu.button("Icosahedron", () => {
+									createObject(construct.icosahedron(), "Icosahedron");
+								});
+								menu.button("Möbius strip", () => {
+									createObject(construct.mobiusStrip(), "Möbius strip");
+								});
+							});
+
+							menu.buttonSubmenu("4D", menu => {
+								menu.button("5-cell", () => {
+									createObject(construct.pentachoron(), "5-cell");
+								});
+								menu.button("Tesseract", () => {
+									createObject(construct.octachoron(), "Tesseract");
+								});
+								menu.button("16-cell", () => {
+									createObject(construct.hexadecachoron(), "16-cell");
+								});
+								menu.button("24-cell", () => {
+									createObject(construct.icositetrachoron(), "24-cell");
+								});
+								menu.button("120-cell", () => {
+									createObject(construct.hecatonicosachoron(), "120-cell");
+								});
+								menu.button("600-cell", () => {
+									createObject(construct.hexacosichoron(), "600-cell");
+								});
+							});
+						});
+
 						menu.buttonSubmenu("Import");
 					}],
 				],
@@ -319,8 +367,7 @@ export class ObjectList extends HTMLElement {
 				listeners: {
 					click: [
 						[() => {
-							user.replaceSelection(object);
-							Viewport.allNeedRerender = true;
+							tiedActions.replaceSelection(object);
 						}],
 					],
 				},
@@ -595,7 +642,8 @@ Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
 		const transformsChildren = [
 			this.appendHeading("Position", null),
 			this.posEditor,
-			this.appendHeading("Rotation", null, `Orientations of an object may be represented as a plane of rotation paired with an angle
+
+			this.appendHeading("Simple rotation", null, `Orientations of an object may be represented as a plane of rotation paired with an angle
 A plane can be represented as a collection of coefficients which determine how much influence each basis plane has on the plane of rotation
 The plane must not be all zeros in order for the angle to have an effect`),
 			this.rotEditor,
@@ -663,8 +711,7 @@ export class CameraPropertiesControl extends HTMLElement {
 								// temp solution to get viewport
 								const viewport = Viewport.members.values().next().value;
 
-								user.replaceSelection(viewport.camera);
-								Viewport.allNeedRerender = true;
+								tiedActions.replaceSelection(viewport.camera);
 							}],
 						],
 
@@ -685,8 +732,7 @@ export class CameraPropertiesControl extends HTMLElement {
 								// temp solution to get viewport
 								const viewport = Viewport.members.values().next().value;
 
-								user.replaceSelection(viewport.camera3Wrapper);
-								Viewport.allNeedRerender = true;
+								tiedActions.replaceSelection(viewport.camera3Wrapper);
 							}],
 						],
 
@@ -704,7 +750,7 @@ export class CameraPropertiesControl extends HTMLElement {
 
 function preventDefault(event) {
 	event.preventDefault(); 
-};
+}
 
 
 // Other

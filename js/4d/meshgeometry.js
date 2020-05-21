@@ -22,10 +22,8 @@ export class Geometry4 {
 
 		this.facets = facets;
 	
-		priv.set(this, {
-			edgesCache: null,
-			facesCache: null,
-		});
+		priv.set(this, {});
+		this.resetCache();
 	}
 
 	edges() {
@@ -122,6 +120,13 @@ export class Geometry4 {
 
 	vertsToFaces() {
 		return this.vertsToFacets(this.faces());
+	}
+
+	resetCache() {
+		Object.assign(_(this), {
+			edgesCache: null,
+			facesCache: null,
+		});
 	}
 }
 

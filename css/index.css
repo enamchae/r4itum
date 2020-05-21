@@ -2,6 +2,29 @@
 	box-sizing: border-box;
 }
 
+:root {
+	--font: Overpass, Arial, sans-serif;
+
+	--col-red-1-7f: #9b21217f;
+	--col-yellow-1-7f: #6b48167f;
+
+	--col-green-0-7f: #0316117f;
+	--col-green-0-cf: #031611cf;
+	--col-green-1-7f: #0f382e7f;
+	--col-green-1_5-3f: #123f343f;
+	--col-green-2-cf: #2a6a52cf;
+	--col-green-2-af: #2a6a52af;
+	--col-green-2-7f: #2a6a527f;
+	--col-green-3-7f: #54ad8c7f;
+
+	--panel-section-padding-horizontal: 1em;
+	--panel-section-padding: .5em var(--panel-section-padding-horizontal);
+
+	--input-border-radius: 8px;
+
+	--overlay-box-shadow: 0 5px 8px var(--col-green-2-7f);
+}
+
 body,
 h1,
 h2,
@@ -10,9 +33,27 @@ h3 {
 	font-weight: 600;
 }
 
+.inactive {
+	opacity: .75;
+}
+
+.disabled {
+	opacity: .5;
+	pointer-events: none;
+}
+
+.hidden {
+	display: none;
+}
+
+::selection {
+	background: #ffffff3f;
+}
+
 main {
 	width: 100vw;
 	height: 100vh;
+	overflow: hidden;
 
 	min-width: 50em;
 	min-height: 40em;
@@ -26,24 +67,6 @@ main {
 
 	display: flex;
 	flex-direction: column;
-
-	--font: Overpass, Arial, sans-serif;
-
-	--col-red-1-7f: #9b21217f;
-	--col-yellow-1-7f: #6b48167f;
-
-	--col-green-0-7f: #0316117f;
-	--col-green-1-7f: #0f382e7f;
-	--col-green-1_5-3f: #123f343f;
-	--col-green-2-cf: #2a6a52cf;
-	--col-green-2-af: #2a6a52af;
-	--col-green-2-7f: #2a6a527f;
-	--col-green-3-7f: #54ad8c7f;
-
-	--panel-section-padding-horizontal: 1em;
-	--panel-section-padding: .5em var(--panel-section-padding-horizontal);
-
-	--input-border-radius: 8px;
 }
 
 main > workspace- {
@@ -57,52 +80,36 @@ main > workspace- > * {
 	grid-column: 1;
 }
 
-main > workspace- > viewport- {
+viewport- {
+	position: relative;
 	/* center contents */
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	display: grid;
 
 	overflow: hidden;
 }
 
-main > workspace- > viewport- > * {
-	position: absolute;
+viewport- > * {
+	grid-row: 1;
+	grid-column: 1;
 }
 
-main > workspace- > overlays- {
+viewport- > overlays- {
+	margin: 1em;
+}
+
+overlays- {
 	pointer-events: none;
 
-	margin: 1em;
 	position: relative;
 
 	color: #ffffffdf;
-
-	--overlay-box-shadow: 0 5px 8px var(--col-green-2-7f);
 }
 
-main > workspace- > overlays- .inactive {
-	opacity: .75;
-}
-
-main > workspace- > overlays- .disabled {
-	opacity: .5;
-	pointer-events: none;
-}
-
-main > workspace- > overlays- .hidden {
-	display: none;
-}
-
-main > workspace- > overlays- ::selection {
-	background: #ffffff3f;
-}
-
-main > workspace- > overlays- > * {
+overlays- > * {
 	position: absolute;
 }
 
-main > workspace- > overlays- > toolbar- {
+overlays- > toolbar- {
 	bottom: 0;
 	right: 0;
 
@@ -112,7 +119,7 @@ main > workspace- > overlays- > toolbar- {
 	pointer-events: initial;
 }
 
-main > workspace- > overlays- > toolbar- > tool-button {
+overlays- > toolbar- > tool-button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -126,11 +133,11 @@ main > workspace- > overlays- > toolbar- > tool-button {
 	box-shadow: var(--overlay-box-shadow);
 }
 
-main > workspace- > overlays- > toolbar- > tool-button + * {
+overlays- > toolbar- > tool-button + * {
 	margin: 1em;
 }
 
-main > workspace- > overlays- > panels- {
+overlays- > panels- {
 	top: 0;
 
 	width: 100%;
@@ -138,16 +145,16 @@ main > workspace- > overlays- > panels- {
 	align-items: start;
 }
 
-main > workspace- > overlays- > panels- > * + .panel {
+overlays- > panels- > * + .panel {
 	margin-left: 12px;
 }
 
-main > workspace- > overlays- > context-menus {
+overlays- > context-menus {
 	position: relative;
 }
 
-main > workspace- > overlays- .panel,
-main > workspace- > overlays- context-menu {
+overlays- .panel,
+overlays- context-menu {
 	display: flex;
 	flex-direction: column;
 	overflow: auto;
@@ -162,32 +169,42 @@ main > workspace- > overlays- context-menu {
 	letter-spacing: .05em;
 }
 
-main > workspace- > overlays- context-menu {
+overlays- context-menu {
+	background: var(--col-green-0-cf);
 	position: absolute;
-	width: 200px;
+	min-width: 140px;
 }
 
-main > workspace- > overlays- .panel {
+overlays- context-menu .submenu-switch:after {
+	content: "⋯";
+
+	font-size: 2em;
+	line-height: 1;
+
+	opacity: .6;
+}
+
+overlays- .panel {
 	width: 240px;
 }
 
-main > workspace- > overlays- h2,
-main > workspace- > overlays- h3 {
+overlays- h2,
+overlays- h3 {
 	cursor: default;
 
 	color: #fff;
 	letter-spacing: .1em;
 }
 
-main > workspace- > overlays- h2 {
+overlays- h2 {
 	font-size: 1.25em;
 }
 
-main > workspace- > overlays- h3 {
+overlays- h3 {
 	font-size: 1.2em;
 }
 
-main > workspace- > overlays- form.horizontal {
+overlays- form.horizontal {
 	display: flex;
 	justify-content: space-evenly;
 	flex-wrap: wrap;
@@ -195,8 +212,8 @@ main > workspace- > overlays- form.horizontal {
 
 /* Inputs and labels */
 
-main > workspace- > overlays- input,
-main > workspace- > overlays- button {
+overlays- input,
+overlays- button {
 	border: 0;
 
 	text-align: center;
@@ -204,16 +221,17 @@ main > workspace- > overlays- button {
 	color: inherit;
 }
 
-main > workspace- > overlays- input {
+overlays- input {
 	margin: 0;
 	width: 100%; /* Inputs automatically have a fixed size */
 }
 
 /* Text inputs */
-main > workspace- > overlays- input:not([type]),
-main > workspace- > overlays- input[type=""],
-main > workspace- > overlays- input[type="text"],
-main > workspace- > overlays- input[type="number"] {
+
+overlays- input:not([type]),
+overlays- input[type=""],
+overlays- input[type="text"],
+overlays- input[type="number"] {
 	border-radius: var(--input-border-radius);
 	outline: 0;
 	box-shadow: 0 2px 12px -4px var(--col-green-0-7f) inset;
@@ -221,40 +239,40 @@ main > workspace- > overlays- input[type="number"] {
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- button,
-main > workspace- > overlays- ul.bars > li {
+overlays- button,
+overlays- ul.bars > li {
 	color: #fff;
 }
 
-main > workspace- > overlays- input[type="color"] {
+overlays- input[type="color"] {
 	width: 3em;
 }
 
-main > workspace- > overlays- button,
-main > workspace- > overlays- input[type="color"] {
+overlays- button,
+overlays- input[type="color"] {
 	border-radius: var(--input-border-radius);
 }
 
-main > workspace- > overlays- button,
-main > workspace- > overlays- input[type="color"],
-main > workspace- > overlays- ul.bars > li {
+overlays- button,
+overlays- input[type="color"],
+overlays- ul.bars > li {
 	box-shadow: 0 -4px 12px -8px var(--col-green-0-7f) inset;
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- button:hover,
-main > workspace- > overlays- input[type="color"]:hover,
-main > workspace- > overlays- ul.bars > li.button:hover {
+overlays- button:hover,
+overlays- input[type="color"]:hover,
+overlays- ul.bars > li.button:hover {
 	background: var(--col-green-2-7f);
 }
 
-main > workspace- > overlays- button:active,
-main > workspace- > overlays- input[type="color"]:active,
-main > workspace- > overlays- ul.bars > li.button:active {
+overlays- button:active,
+overlays- input[type="color"]:active,
+overlays- ul.bars > li.button:active {
 	background: var(--col-green-0-7f);
 }
 
-main > workspace- > overlays- input.error-flash {
+overlays- input.error-flash {
 	animation: error-flash 1s linear;
 }
 
@@ -267,20 +285,31 @@ main > workspace- > overlays- input.error-flash {
 	}
 }
 
-main > workspace- > overlays- input.erroneous {
+overlays- input.erroneous {
 	background: var(--col-yellow-1-7f);
 }
 
-main > workspace- > overlays- label {
+overlays- label {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 }
 
+/* Input blocks */
+
+overlays- input-block {
+	display: flex;
+	flex-direction: column;
+}
+
+overlays- input-block > * + label {
+	margin-top: .25em;
+}
+
 /* Tooltips */
 
-main > workspace- > overlays- [title]:not([title=""]) {
+overlays- [title]:not([title=""]) {
 	cursor: help;
 
 	text-decoration: underline dotted;
@@ -288,25 +317,23 @@ main > workspace- > overlays- [title]:not([title=""]) {
 
 /* Bar lists */
 
-main > workspace- > overlays- ul.bars {
+overlays- ul.bars {
 	min-height: 2em;
-	max-height: 200px;
 	overflow-y: auto;
 	padding: 0;
 	margin: 0;
 
 	list-style: none;
-	border-radius: var(--input-border-radius);
 }
 
-main > workspace- > overlays- ul.bars:empty {
+overlays- ul.bars:empty {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	background: var(--col-green-1-7f);
 }
 
-main > workspace- > overlays- ul.bars:empty:after {
+overlays- ul.bars:empty:after {
 	content: attr(data-empty-text);
 
 	text-align: center;
@@ -316,7 +343,7 @@ main > workspace- > overlays- ul.bars:empty:after {
 	opacity: .5;
 }
 
-main > workspace- > overlays- ul.bars > li {
+overlays- ul.bars > li {
 	display: flex;
 	align-items: center;
 	height: 2.5em;
@@ -329,11 +356,11 @@ main > workspace- > overlays- ul.bars > li {
 	cursor: default;
 }
 
-main > workspace- > overlays- ul.bars > li > :first-child {
+overlays- ul.bars > li > :first-child {
 	flex-grow: 1;
 }
 
-main > workspace- > overlays- ul.bars > li:nth-child(n + 2):before {
+overlays- ul.bars > li:nth-child(n + 2):before {
 	content: " ";
 	
 	position: absolute;
@@ -351,7 +378,7 @@ main > workspace- > overlays- ul.bars > li:nth-child(n + 2):before {
 
 /* Vector editor */
 
-main > workspace- > overlays- vector-editor > form {
+overlays- vector-editor > form {
 	display: grid;
 	
 	grid-template-columns: auto auto;
@@ -360,7 +387,7 @@ main > workspace- > overlays- vector-editor > form {
 
 /* Rotor editor */
 
-main > workspace- > overlays- rotor-editor > form {
+overlays- rotor-editor > form {
 	display: grid;
 	
 	grid-template-columns: repeat(3, auto);
@@ -368,71 +395,60 @@ main > workspace- > overlays- rotor-editor > form {
 	gap: 4px;
 }
 
-main > workspace- > overlays- rotor-editor angle-editor,
-main > workspace- > overlays- rotor-editor angle-editor input {
+overlays- rotor-editor angle-editor,
+overlays- rotor-editor angle-editor input {
 	font-size: 1.2em;
 }
 
-main > workspace- > overlays- rotor-editor angle-editor {
+overlays- rotor-editor angle-editor {
 	margin: 1em 0;
 }
 
-main > workspace- > overlays- rotor-editor angle-editor input {
+overlays- rotor-editor angle-editor input {
 	width: 4em;
 }
 
-main > workspace- > overlays- rotor-editor angle-editor,
-main > workspace- > overlays- rotor-editor .fill-row {
+overlays- rotor-editor angle-editor,
+overlays- rotor-editor .fill-row {
 	grid-column: 1 / -1;
 }
 
 /* Angle editor */
 
-main > workspace- > overlays- angle-editor input {
+overlays- angle-editor input {
 	margin: 0 .25em;
 
 	text-align: right;
 }
-main > workspace- > overlays- angle-editor form {
+overlays- angle-editor form {
 	display: flex;
 	justify-content: center;
 }
 
-/* Input blocks */
-
-main > workspace- > overlays- input-block {
-	display: flex;
-	flex-direction: column;
-}
-
-main > workspace- > overlays- input-block > * + label {
-	margin-top: .25em;
-}
-
 /* Panel layout */
 
-main > workspace- > overlays- .panel > *:not(:empty) {
+overlays- .panel > *:not(:empty) {
 	padding: var(--panel-section-padding);
 }
 
-main > workspace- > overlays- .panel > h2 {
+overlays- .panel > h2 {
 	box-shadow: 0 2px 16px var(--col-green-1-7f);
 
 	background: var(--col-green-0-7f);
 }
 
-main > workspace- > overlays- .panel > .panel-content {
+overlays- .panel > .panel-content {
 	max-height: 250px;
 	overflow: auto;
 }
 
-main > workspace- > overlays- .panel > .panel-content * + h3 {
+overlays- .panel > .panel-content * + h3 {
 	padding: 0;
 
 	margin-top: 1em;
 }
 
-main > workspace- > overlays- .panel > .panel-content .panel-content {
+overlays- .panel > .panel-content .panel-content {
 	padding: var(--panel-section-padding);
 	/* Align to edges of outer panel */
 	position: relative;
@@ -442,18 +458,11 @@ main > workspace- > overlays- .panel > .panel-content .panel-content {
 	background: var(--col-green-1_5-3f);
 }
 
-main > workspace- > overlays- .panel ul.bars {
+overlays- .panel ul.bars {
 	margin: 8px 0;
-}
+	max-height: 200px;
 
-
-main > workspace- > overlays- context-menu .submenu-switch:after {
-	content: "⋯";
-
-	font-size: 2em;
-	line-height: 1;
-
-	opacity: .6;
+	border-radius: var(--input-border-radius);
 }
 
 main > menu-bar {

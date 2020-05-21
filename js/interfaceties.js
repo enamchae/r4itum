@@ -2,7 +2,8 @@
  * @file Links 4D operations to items in the interface.
  */
 
-import {scene, Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
+import {user, scene, Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
+import {SceneConverter} from "./sceneconverter.js";
 
 export default {
 	addObject(...objects) {
@@ -26,6 +27,35 @@ export default {
 			}
 		}
 	
+		Viewport.allNeedRerender = true;
+	},
+
+	replaceSelection(...objects) {
+		// Indicate that all current selections are unselected
+		for (const object of user.selectedObjects) {
+			for (const viewport of Viewport.members) {
+				const rep = viewport.converter.objectReps.get(object);
+				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
+			}
+		}
+
+		user.replaceSelection(...objects);
+
+		// Indicate that all current selections are selected
+		for (let i = 0; i < objects.length; i++) {
+			for (const viewport of Viewport.members) {
+				const rep = viewport.converter.objectReps.get(objects[i]);
+				rep?.setViewportState(i === 0
+						? SceneConverter.ViewportStates.SELECTED_PRIMARY
+						: SceneConverter.ViewportStates.SELECTED);
+			}
+		}
+
+		// Update object info panels
+		for (const panel of ObjectPropertiesControl.members) {
+			panel.setTargetObject(user.selectedObjectPrimary);
+		}
+
 		Viewport.allNeedRerender = true;
 	},
 

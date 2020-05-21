@@ -6,7 +6,6 @@ import {Polymultivector, Vector4, Rotor4} from "./4d/vector.js";
 import {declade, createElement, privMap} from "./util.js";
 
 /**
- * @abstract
  * @fires ValueEditor#update When any value is changed.
  */
 class ValueEditor extends HTMLElement {
