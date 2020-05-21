@@ -5,7 +5,7 @@
 import {Geometry4} from "./meshgeometry.js";
 import {Vector4, Rotor4} from "./vector.js";
 
-const {sqrt, cos, sin, PI} = Math;
+const {sqrt, cos, sin, sign, PI} = Math;
 const REV = 2 * PI;
 
 const sqrt1_3 = sqrt(1 / 3);
@@ -40,6 +40,103 @@ function hexadecachoronVerts(verts=[]) {
 	}
 
 	return verts;
+}
+
+const icosahedronCoords = [
+	new Vector4(-1, phi, 0),
+	new Vector4(1, phi, 0),
+	new Vector4(-1, -phi, 0),
+	new Vector4(1, -phi, 0),
+	new Vector4(0, -1, phi),
+	new Vector4(0, 1, phi),
+	new Vector4(0, -1, -phi),
+	new Vector4(0, 1, -phi),
+	new Vector4(phi, 0, -1),
+	new Vector4(phi, 0, 1),
+	new Vector4(-phi, 0, -1),
+	new Vector4(-phi, 0, 1),
+];
+
+const icosahedronFaceVertIndexes = [
+	[0, 11, 5],
+	[0, 5, 1],
+	[0, 1, 7],
+	[0, 7, 10],
+	[0, 10, 11],
+	[1, 5, 9],
+	[5, 11, 4],
+	[11, 10, 2],
+	[10, 7, 6],
+	[7, 1, 8],
+	[3, 9, 4],
+	[3, 4, 2],
+	[3, 2, 6],
+	[3, 6, 8],
+	[3, 8, 9],
+	[4, 9, 5],
+	[2, 4, 11],
+	[6, 2, 10],
+	[8, 6, 7],
+	[9, 8, 1],
+];
+
+/**
+ * 
+ * @param {*} verts 
+ * @param {*} [settings]
+ * @returns Map<number, Vector4[]>
+ */
+function icosahedronVerts(verts=[], {
+	normalizing=false,
+	scaleFactor=1,
+	fixedIndex=3,
+	fixedValue=0,
+	signMap,
+}={}) {
+	for (const sourceCoord of icosahedronCoords) {
+		const vert = new Vector4();
+		// Set the fixed value
+		vert[fixedIndex] = fixedValue;
+
+		// Place the other values around it
+		vert[fixedIndex > 0 ? 0 : 1] = sourceCoord[0];
+		vert[fixedIndex > 1 ? 1 : 2] = sourceCoord[1];
+		vert[fixedIndex > 2 ? 2 : 3] = sourceCoord[2];
+		
+		if (normalizing) {
+			vert.normalize();
+		} else {
+			vert.scale(scaleFactor);
+		}
+
+		verts.push(vert);
+
+		if (signMap) {
+			const key = signPrimitive(vert);
+			const signList = signMap.get(key) || [];
+			signMap.set(key, signList);
+			signList.push(vert);
+		}
+	}
+	return verts;
+}
+
+function icosahedronFaces(faces=[], {
+	offsetIndex=0,
+	creatingCells=false,
+	fixedValue=0,
+}={}) {
+	for (const vertIndexes of icosahedronFaceVertIndexes) {
+		const facet = vertIndexes.map(index => offsetIndex + index);
+
+		if (creatingCells) {
+			facet.push(fixedValue);
+		}
+
+		faces.push(facet);
+	}
+
+	return faces;
 }
 
 // TODO figure out common properties (e.g. default orientation, edge length)
@@ -198,41 +295,10 @@ export default {
 
 	// http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 	icosahedron() {
-		return new Geometry4([
-			new Vector4(-1, phi, 0).normalize(),
-			new Vector4(1, phi, 0).normalize(),
-			new Vector4(-1, -phi, 0).normalize(),
-			new Vector4(1, -phi, 0).normalize(),
-			new Vector4(0, -1, phi).normalize(),
-			new Vector4(0, 1, phi).normalize(),
-			new Vector4(0, -1, -phi).normalize(),
-			new Vector4(0, 1, -phi).normalize(),
-			new Vector4(phi, 0, -1).normalize(),
-			new Vector4(phi, 0, 1).normalize(),
-			new Vector4(-phi, 0, -1).normalize(),
-			new Vector4(-phi, 0, 1).normalize(),
-		], [
-			[0, 11, 5],
-			[0, 5, 1],
-			[0, 1, 7],
-			[0, 7, 10],
-			[0, 10, 11],
-			[1, 5, 9],
-			[5, 11, 4],
-			[11, 10, 2],
-			[10, 7, 6],
-			[7, 1, 8],
-			[3, 9, 4],
-			[3, 4, 2],
-			[3, 2, 6],
-			[3, 6, 8],
-			[3, 8, 9],
-			[4, 9, 5],
-			[2, 4, 11],
-			[6, 2, 10],
-			[8, 6, 7],
-			[9, 8, 1],
-		]);
+		return new Geometry4(
+			icosahedronCoords.map(vert => vert.clone().normalize()),
+			icosahedronFaceVertIndexes,
+		);
 	},
 
 	latlongsphere(nLatCuts=6, nLongCuts=8) {
@@ -439,7 +505,7 @@ export default {
 		// [0]  1 pole on a (±1, 0, 0, 0)-permutation vertex
 		// [1]  1 pole on a different (±1, 0, 0, 0)-permutation vertex that is not the opposite of [0]
 		// [2:6]  A (±.5, ±.5, ±.5, ±.5) point such that:
-		//    • The point has the same sign as [0] for the axis that [0] covers
+		//    • The point has the same sign as [0] for the axis that [0] covers (e.g. the Z axis, if (0, 0, ±1, 0))
 		//    • The point has the same sign as [1] for the axis that [1] covers
 		//    • For the axes not covered, the signs can vary
 		//			(e.g. if [0] is (0, 0, 0, −1)
@@ -489,13 +555,64 @@ export default {
 		return new Geometry4();
 	},
 	
+	// https://en.wikipedia.org/wiki/600-cell
+	// http://eusebeia.dyndns.org/4d/600-cell
 	hexacosichoron() {
 		const verts = [];
+		const faces = [];
 
-		hexadecachoronVerts(verts);
+		const values = [1, -1];
+
+		const signMap = new Map();
+
+		// All (±1, 0, 0, 0)-permutation vertices (16-cell vertices) are part of the solid
+		for (let i = 0; i < 4; i++) {
+			for (let j = 0; j < 2; j++) {
+				const vert = new Vector4();
+				vert[i] = values[j];
+	
+				// Assuming the golden ratio φ (phi)
+	
+				// For each 16-cell vertex, there are 12 vertices that are φ⁻¹ units away from it
+				// These vertices can form an icosahedron (edge length φ⁻¹) with each other
+	
+				// For the axis that the 16-cell vertex covers (e.g. the Y axis, if (0, ±1, 0, 0)), the coordinate is
+				// φ / 2, with the same sign as the 16-cell vertex
+				// (e.g. if the 16-cell vertex is (0, 0, −1, 0), then the icosahedron's vertex is (<X>, <Y>, −φ / 2, <W>))
+	
+				// The remaining icosahedral vertices are made by filling the remaining axes with ±1 / 2, ±φ⁻¹ / 2, and 0 in the same way
+				// as the icosahedron construction pattern
+	
+				// All icosahedral vertices happen to be the even permutations of (±φ, ±1, ±φ⁻¹, 0) / 2
+	
+				verts.push(vert);
+				const offsetIndex = verts.length;
+				icosahedronVerts(verts, {
+					scaleFactor: iphi / 2,
+					
+					fixedIndex: i,
+					fixedValue: sign(values[j]) * phi / 2,
+
+					signMap,
+				});
+				icosahedronFaces(faces, {
+					creatingCells: true,
+	
+					offsetIndex, // Icosahedron vert indexes start at `offsetIndex`
+					fixedValue: offsetIndex - 1, // The 16-cell vert index precedes them; `offsetIndex - 1`
+				});
+			}
+		}
+	
+		// All (±.5, ±.5, ±.5, ±.5) vertices (tesseract vertices) are part of the solid
 		octachoronVerts(verts);
 
-		return new Geometry4(verts);
+		// For each tesseract vertex, there are also 12 vertices that are φ⁻¹ units away from it
+		// They are all vertices that are part of the previously formed icosahedra, whose signs match to it for every axis
+
+		console.log(faces.length);
+
+		return new Geometry4(verts, faces);
 	},
 
 	spherinder() {
@@ -588,4 +705,13 @@ export default {
 
 function mod(a, b) {
 	return (a % b + b) % b;
+}
+
+function signPrimitive(vector) {
+	let primitive = 0;
+	for (const component of vector) {
+		primitive <<= 2;
+		primitive += sign(component) + 1;
+	}
+	return primitive;
 }
