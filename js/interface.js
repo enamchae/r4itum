@@ -68,6 +68,11 @@ export class Viewport extends HTMLElement {
 	 */
 	static camera3Wrappers = new WeakMap();
 
+	static queueAllRerender() {
+		this.allNeedRerender = true;
+		return this;
+	}
+
 	/**
 	 * @type Camera4
 	 */
@@ -321,6 +326,9 @@ export class ObjectList extends HTMLElement {
 								menu.button("Möbius strip", () => {
 									createObject(construct.mobiusStrip(), "Möbius strip");
 								});
+								menu.button("Lat-long sphere", () => {
+									createObject(construct.latlongsphere(), "Sphere");
+								});
 							});
 
 							menu.buttonSubmenu("4D", menu => {
@@ -477,21 +485,30 @@ export class ObjectPropertiesControl extends HTMLElement {
 
 		if (object instanceof Mesh4) {
 			// Tint
-			this.appendHeading("Tint");
-			createElement("input", {
-				properties: {
-					type: "color",
-					value: `#${object.tint.toString(16)}`,
-				},
-				listeners: {
-					change: [
-						[event => {
-							object.tint = parseInt(event.currentTarget.value.slice(1), 16);
-							Viewport.allNeedRerender = true;
-						}],
-					],
-				},
+			this.appendHeading("Display");
+
+			createElement("div", {
+				classes: ["panel-content"],
 				parent: this.textContainer,
+
+				children: [
+					this.appendHeading("Tint", null),
+					createElement("input", {
+						properties: {
+							type: "color",
+							value: `#${object.tint.toString(16)}`,
+						},
+						listeners: {
+							change: [
+								[event => {
+									object.tint = parseInt(event.currentTarget.value.slice(1), 16);
+									Viewport.queueAllRerender();
+								}],
+							],
+						},
+						parent: this.textContainer,
+					}),
+				],
 			});
 		}
 
@@ -511,7 +528,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 								const viewport = Viewport.camera3Wrappers.get(object);
 								object.setUsingPerspective(value, viewport.aspectRatio);
 							}
-							Viewport.allNeedRerender = true;
+							Viewport.queueAllRerender();
 
 							perspectiveSettings.classList.toggle("hidden", !value);
 							parallelSettings.classList.toggle("hidden", value);
@@ -576,7 +593,7 @@ Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 1
 							update: [
 								[({detail}) => {
 									object.fovAngle = detail.valueUsed * Math.PI / 180;
-									Viewport.allNeedRerender = true;
+									Viewport.queueAllRerender();
 								}],
 							],
 						},
@@ -589,7 +606,7 @@ Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 1
 					update: [
 						[({detail}) => {
 							object.radius = detail.valueUsed;
-							Viewport.allNeedRerender = true;
+							Viewport.queueAllRerender();
 						}],
 					],
 				},
@@ -621,7 +638,7 @@ Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
 						} else { // Only set the changed value
 							object.pos[detail.index] = detail.valueUsed;
 						}
-						Viewport.allNeedRerender = true;
+						Viewport.queueAllRerender();
 					}],
 				],
 			},
@@ -632,7 +649,7 @@ Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
 				update: [
 					[({detail}) => {
 						object.setRot(detail.currentTarget.value);
-						Viewport.allNeedRerender = true;
+						Viewport.queueAllRerender();
 					}],
 				],
 			},
@@ -655,7 +672,7 @@ The plane must not be all zeros in order for the angle to have an effect`),
 					update: [
 						[({detail}) => {
 							object.scl[detail.index] = detail.valueUsed;
-							Viewport.allNeedRerender = true;
+							Viewport.queueAllRerender();
 						}],
 					],
 				},
@@ -764,7 +781,7 @@ addEventListener("resize", () => {
 		viewport.refreshSize();
 	}
 
-	Viewport.allNeedRerender = true;
+	Viewport.queueAllRerender();
 });
 
 // Constantly check if any of the viewports need to be updated

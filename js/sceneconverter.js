@@ -42,6 +42,7 @@ export class SceneConverter {
 
 		priv.set(this, {
 			lastCamera: null,
+			lastObjects: new WeakMap(),
 		});
 	}
 
@@ -53,9 +54,11 @@ export class SceneConverter {
 		const cameraNotUpdated = _(this).lastCamera?.eq(camera);
 
 		for (const object of this.scene4.objectsAll()) {
-			if (false/* cameraNotUpdated */ /* && object needs update */) continue;
+			const objectNotUpdated = _(this).lastObjects.get(object)?.eq(object);
+			if (cameraNotUpdated && objectNotUpdated) continue; // Don't rerender if the projection has not updated
 
 			this.refreshObject(object, camera);
+			_(this).lastObjects.set(object, object.clone());
 		}
 
 		_(this).lastCamera = camera.clone();
@@ -246,7 +249,7 @@ void main() {
 
 	mediump vec4 pos3 = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 
-	gl_PointSize = 75. / pos3.z / position.w; // arbitrary constant
+	gl_PointSize = 50. / pos3.z / position.w; // arbitrary constant
 	gl_Position = pos3;
 }`,
 			fragmentShader: `

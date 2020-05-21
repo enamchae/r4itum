@@ -13,7 +13,32 @@ const iphi = phi - 1; // === 1 / phi
 const phiSqrt1_3 = phi * sqrt1_3;
 const iphiSqrt1_3 = iphi * sqrt1_3;
 
-// unsure how these will be called yet
+function octachoronVerts(verts=[]) {
+	const values = [.5, -.5];
+	for (let i = 0; i < 0b10000; i++) {
+		verts.push(new Vector4(
+			values[0b1 & i],
+			values[0b1 & i >>> 1],
+			values[0b1 & i >>> 2], 
+			values[0b1 & i >>> 3]));
+	}
+
+	return verts;
+}
+
+function hexadecachoronVerts(verts=[]) {
+	for (let i = 0; i < 4; i++) {
+		const vert0 = new Vector4();
+		const vert1 = new Vector4();
+		vert0[i] = 1;
+		vert1[i] = -1;
+
+		verts.push(vert0, vert1);
+	}
+
+	return verts;
+}
+
 // TODO figure out common properties (e.g. default orientation, edge length)
 export default {
 	vert() {
@@ -171,18 +196,18 @@ export default {
 	// http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 	icosahedron() {
 		return new Geometry4([
-			new Vector4(-1, phi, 0),
-			new Vector4(1, phi, 0),
-			new Vector4(-1, -phi, 0),
-			new Vector4(1, -phi, 0),
-			new Vector4(0, -1, phi),
-			new Vector4(0, 1, phi),
-			new Vector4(0, -1, -phi),
-			new Vector4(0, 1, -phi),
-			new Vector4(phi, 0, -1),
-			new Vector4(phi, 0, 1),
-			new Vector4(-phi, 0, -1),
-			new Vector4(-phi, 0, 1),
+			new Vector4(-1, phi, 0).normalize(),
+			new Vector4(1, phi, 0).normalize(),
+			new Vector4(-1, -phi, 0).normalize(),
+			new Vector4(1, -phi, 0).normalize(),
+			new Vector4(0, -1, phi).normalize(),
+			new Vector4(0, 1, phi).normalize(),
+			new Vector4(0, -1, -phi).normalize(),
+			new Vector4(0, 1, -phi).normalize(),
+			new Vector4(phi, 0, -1).normalize(),
+			new Vector4(phi, 0, 1).normalize(),
+			new Vector4(-phi, 0, -1).normalize(),
+			new Vector4(-phi, 0, 1).normalize(),
 		], [
 			[0, 11, 5],
 			[0, 5, 1],
@@ -304,11 +329,11 @@ export default {
 		const f = Math.sqrt(1 / 5);
 
 		return new Geometry4([
-			new Vector4(s, s, s, -f),
-			new Vector4(-s, -s, s, -f),
-			new Vector4(-s, s, -s, -f),
-			new Vector4(s, -s, -s, -f),
-			new Vector4(0, 0, 0, Math.sqrt(5) - f),
+			new Vector4(s, -f, s, s).normalize(),
+			new Vector4(-s, -f, s, -s).normalize(),
+			new Vector4(-s, -f, -s, s).normalize(),
+			new Vector4(s, -f, -s, -s).normalize(),
+			new Vector4(0, Math.sqrt(5) - f, 0, 0).normalize(),
 		], [
 			[0, 1, 2, 3],
 			[0, 1, 2, 4],
@@ -322,14 +347,7 @@ export default {
 		// General form of cube
 
 		const verts = [];
-		const values = [.5, -.5];
-		for (let i = 0; i < 0b10000; i++) {
-			verts.push(new Vector4(
-				values[0b1 & i],
-				values[0b1 & i >>> 1],
-				values[0b1 & i >>> 2], 
-				values[0b1 & i >>> 3]));
-		}
+		octachoronVerts(verts);
 
 		const faces = [];
 
@@ -363,16 +381,7 @@ export default {
 		// General form of orthoplex
 		// Vertices are permutations of (±1, 0, 0, 0) (2 for each axis)
 		// All vertices are connected, apart from opposite vertices which lie on the same axis
-		return new Geometry4([
-			new Vector4(-1, 0, 0, 0),
-			new Vector4(1, 0, 0, 0),
-			new Vector4(0, -1, 0, 0),
-			new Vector4(0, 1, 0, 0),
-			new Vector4(0, 0, -1, 0),
-			new Vector4(0, 0, 1, 0),
-			new Vector4(0, 0, 0, -1),
-			new Vector4(0, 0, 0, 1),
-		], [
+		return new Geometry4(hexadecachoronVerts(), [
 			[0, 2, 4, 6],
 			[0, 2, 4, 7],
 			[0, 2, 5, 6],
@@ -397,14 +406,7 @@ export default {
 
 		// [0, 8)
 		// permutations of (±1, 0, 0, 0)
-		for (let i = 0; i < 4; i++) {
-			const vert0 = new Vector4();
-			const vert1 = new Vector4();
-			vert0[i] = 1;
-			vert1[i] = -1;
-
-			verts.push(vert0, vert1);
-		}
+		hexadecachoronVerts(verts);
 
 		// [8, 24)
 		// (±.5, ±.5, ±.5, ±.5)
@@ -425,14 +427,7 @@ export default {
 		// 22  + − − −
 		// 23  − − − −
 		//     ⋮
-		const values = [.5, -.5];
-		for (let i = 0; i < 0b10000; i++) {
-			verts.push(new Vector4(
-				values[0b1 & i],
-				values[(0b10 & i) >>> 1],
-				values[(0b100 & i) >>> 2], 
-				values[(0b1000 & i) >>> 3]));
-		}
+		octachoronVerts(verts);
 
 		const faces = [];
 
@@ -487,11 +482,11 @@ export default {
 	},
 
 	hecatonicosachoron() {
-
+		return new Geometry4();
 	},
 	
 	hexacosichoron() {
-		
+		return new Geometry4();
 	},
 
 	spherinder() {

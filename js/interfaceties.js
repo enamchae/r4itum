@@ -12,7 +12,7 @@ export default {
 			objectList.addItem(...objects);
 		}
 	
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	removeObject(...objects) {
@@ -27,7 +27,7 @@ export default {
 			}
 		}
 	
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	replaceSelection(...objects) {
@@ -56,7 +56,7 @@ export default {
 			panel.setTargetObject(user.selectedObjectPrimary);
 		}
 
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	setObjectPos(object, pos, resetting=true) {
@@ -68,7 +68,7 @@ export default {
 				panel.posEditor.refill(pos);
 			}
 		}
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	setObjectRot(object, rot, resetting=true) {
@@ -80,7 +80,7 @@ export default {
 				panel.rotEditor.refill(rot);
 			}
 		}
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	setObjectScl(object, scl, resetting=true) {
@@ -92,7 +92,7 @@ export default {
 				panel.sclEditor.refill(scl);
 			}
 		}
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	},
 
 	setCameraRadius(camera, radius) {
@@ -102,6 +102,6 @@ export default {
 				panel.radiusEditor?.refill(radius);
 			}
 		}
-		Viewport.allNeedRerender = true;
+		Viewport.queueAllRerender();
 	}
 };

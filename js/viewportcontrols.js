@@ -190,9 +190,7 @@ export function attachViewportControls(viewport, user) {
 		if (event.repeat || event.key !== "Delete" || user.selectedObjects.length === 0) return;
 		
 		tiedActions.removeObject(...user.selectedObjects);
-		user.replaceSelection();
-
-		viewport.constructor.allNeedRerender = true;
+		tiedActions.replaceSelection();
 	});
 
 	let transforming = false;

@@ -193,7 +193,7 @@ export class Object4 {
 		this.setPos(this.pos.add(this.localForward().multScalar(distance)));
 		return this;
 	}
-    
+
     get scene() {
         return _(this).scene;
     }
@@ -205,6 +205,16 @@ export class Object4 {
 
         _(this).scene = scene;
     }
+
+	clone() {
+		return new Object4(this.pos.clone(), this.rot.clone(), this.scl.clone());
+	}
+
+	eq(object) {
+		return this.pos.eq(object.pos)
+				&& this.rot.eq(object.rot)
+				&& this.scl.eq(object.scl);
+	}
 }
 
 const priv = new WeakMap();
@@ -225,7 +235,7 @@ export class Camera4 extends Object4 {
 	}
 
 	clone() {
-		return new Camera4(this.pos, this.rot, this);
+		return new Camera4(this.pos.clone(), this.rot.clone(), this);
 	}
 
 	/**
