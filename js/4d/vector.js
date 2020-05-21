@@ -446,6 +446,22 @@ export class Vector4 extends Polymultivector {
 	clone() {
 		return new Vector4(...this);
 	}
+
+	get x() {
+		return this[0];
+	}
+
+	get y() {
+		return this[1];
+	}
+
+	get z() {
+		return this[2];
+	}
+
+	get w() {
+		return this[3];
+	}
 }
 
 /**

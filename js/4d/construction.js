@@ -623,7 +623,7 @@ export default {
 
 	},
 
-	kleinBottle(nStrips=12, nLongCuts=4, radius=0.6) {
+	kleinBottle(nStrips=12, nLongCuts=4, radius=0.3) {
 		const verts = [];
 		const faces = [];
 
@@ -636,8 +636,8 @@ export default {
 				time > 0.5 ? -(sin(REV * time) ** 2) : 0,
 				sin(REV * (time - 0.1)),
 				0,
-				-(sin(PI * (time)) ** 2),
-			).multScalar(3);
+				-(sin(PI * time) ** 2),
+			);
 			const angle = PI * (time > 0.75 ? cos(REV * time) ** 2 : 0);
 
 			const rotor = Rotor4.planeAngle(plane, angle);

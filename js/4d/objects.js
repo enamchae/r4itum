@@ -1,5 +1,8 @@
 /**
  * @file Handles 4D objects and their properties, along with the world itself's.
+ * 
+ * Acknowledgements:
+ *  - Steven Hollasch's [university thesis](https://hollasch.github.io/ray4/Four-Space_Visualization_of_4D_Objects.html) on 4D-to-2D visualization. Gave all the formulas for dimension-reduction projection!
  */
 
 import {Vector4, Rotor4, Line4, Space3_4} from "./vector.js";
@@ -183,6 +186,54 @@ export class Object4 {
 		transformMatrix[2] = transformMatrix[3].cross(transformMatrix[0], transformMatrix[1]).normalize();
 
 		return Object.seal(transformMatrix);
+	}
+	
+	/**
+	 * 
+	 * @param {Vector4[]} points 
+	 * @param {object} [options] 
+	 * @param {Vector4[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
+	 * @param {function} [options.callback]
+	 * @returns {Vector4[]}
+	 */
+	projectVector4(points, {destinationPoints=[], callback}={}) {
+		const projectionMatrix = this.projectionMatrix();
+	
+		// Factor used to determine distortion due to focal length
+		const distortionFac = this.usingPerspective
+				? 1 / Math.tan(this.fovAngle / 2)
+				: 1 / this.radius;
+		
+		for (let i = 0; i < points.length; i++) {
+			const point = points[i];
+	
+			const translated = point.subtract(this.pos);
+	
+			let distance = this.usingPerspective ? translated.dot(projectionMatrix[3]) : this.radius;
+	
+			// Now accounts for distance as well
+			// Shrink the transformed point depending on its distance from the camera 
+			const distanceDistortionFac = distortionFac / distance;
+	
+			// Why do I need to negate the coordinated in order for them to face the right direction?
+			const pointProjected = new Vector4(
+				-translated.dot(projectionMatrix[0]) * distanceDistortionFac,
+				-translated.dot(projectionMatrix[1]) * distanceDistortionFac,
+				-translated.dot(projectionMatrix[2]) * distanceDistortionFac,
+				distance,
+			);
+	
+			// Reassign coordinates
+			if (destinationPoints[i]) {
+				destinationPoints[i].copy(pointProjected);
+			} else {
+				destinationPoints[i] = pointProjected;
+			}
+	
+			callback?.(pointProjected, i);
+		}
+	
+		return destinationPoints;
 	}
 
 	localSpace() {

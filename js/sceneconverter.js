@@ -5,7 +5,6 @@
 import {Geometry4} from "./4d/meshgeometry.js";
 import {Vector4, Rotor4, Space3_4, Line4} from "./4d/vector.js";
 import {Object4, Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
-import {projectVector4} from "./4d/projection.js";
 import {privMap} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
@@ -235,6 +234,10 @@ void main() {
 		});
 	}
 
+	wireMat() {
+		return meshMats[this.viewportState].wire;
+	}
+
 	locusMat() {
 		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(this.viewportState)
 				? "1, .65, 0"
@@ -322,6 +325,7 @@ void main() {
 	 */
 	updatePresence() {
 		this.converter.scene3.add(this.locus);
+		this.converter.scene3.add(this.wire);
 		
 		if (this.object.geometry.faces().length === 0) {
 			this.converter.scene3.remove(this.mesh3);
@@ -338,7 +342,7 @@ void main() {
 	 * @param {Camera4} camera 
 	 */
 	updateProjection(camera) {
-		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
+		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 
 		this.mesh3.geometry = new Three.BufferGeometry();
 		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
@@ -358,21 +362,16 @@ void main() {
 
 		// Ignore if there are no facets to be drawn
 		if (this.object.geometry.facets.length === 0) return this;
-		
-		if (this.wire) {
-			this.converter.scene3.remove(this.wire);
-		}
 
 		const edges = this.object.geometry.edges();
 		const verts = this.geometryProjected.verts;
 
-		const wire = new Three.Mesh(new ThreeMeshLine.MeshLine(), meshMats[this.viewportState].wire);
-		wire.frustumCulled = false;
+		this.wire.geometry = new ThreeMeshLine.MeshLine();
+		this.wire.material = this.wireMat();
+		this.wire.frustumCulled = false;
 		const wireVerts = []; // [4n, 4n + 1] are rendered verts, [4n + 2, 4n + 3] are not
 
-		for (let i = 0; i < edges.length; i++) {
-			const edge = edges[i];
-
+		for (const edge of edges) {
 			// Check if the edge goes behind the camera; if so, do not add this edge
 			if (verts[edge[0]][3] <= 0 || verts[edge[1]][3] <= 0) {
 				continue;
@@ -400,10 +399,7 @@ void main() {
 			return .03 / wireVerts[i].w;
 		};
 
-		wire.geometry.setVertices(wireVerts, taperCallback);
-
-		this.wire = wire;
-		this.converter.scene3.add(wire);
+		this.wire.geometry.setVertices(wireVerts, taperCallback);
 		
 		return this;
 	}
@@ -416,7 +412,7 @@ void main() {
 		this.viewportState = viewportState;
 
 		this.mesh3.material = this.faceMat();
-		this.wire.material = meshMats[viewportState].wire;
+		this.wire.material = this.wireMat();
 		this.locus.material = this.locusMat();
 		return this;
 	}
@@ -535,7 +531,7 @@ void main() {
 	 * @param {Camera4} camera 
 	 */
 	updateProjection(camera) {
-		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
+		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 		this.mesh3.geometry = new Three.BufferGeometry();
 		this.mesh3.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, true));
 		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
@@ -561,38 +557,8 @@ class Axis4Rep {
 		this.geometryProjected = new GeometryProjected(object.geometry);
 	}
 
-	// Grid shader technique from https://github.com/Fyrestar/THREE.InfiniteGridHelper/blob/master/InfiniteGridHelper.js
 	lineMat() {
-		return new Three.LineBasicMaterial({
-// 			vertexShader: `
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-
-// attribute mediump vec4 position4;
-// attribute mediump vec4 position;
-
-// varying mediump vec4 vPosition4;
-// varying mediump vec4 vPosition3;
-
-// void main() {
-// 	vPosition4 = position4;
-// 	vPosition3 = position;
-
-// 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
-// }`,
-// 			fragmentShader: `
-// varying mediump vec4 vPosition4;
-// varying mediump vec4 vPosition3;
-
-// void main() {
-// 	if (vPosition3.w <= 0.) {
-// 		discard;
-// 	}
-
-// 	gl_FragColor = vec4(1, 0, 0, 1);
-// }`,
-			color: this.object.color,
-		});
+		return new Three.LineBasicMaterial({color: this.object.color});
 	}
 
 	initializeThreeMeshes() {
@@ -631,7 +597,7 @@ class Axis4Rep {
 	updateProjection(camera) {
 		// camera.localSpace().intersectionWithLine(this.object.line);
 
-		this.geometryProjected.verts = projectVector4(this.object.transformedVerts(), camera);
+		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 		this.line.geometry = new Three.BufferGeometry();
 		this.line.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, false));
 		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
