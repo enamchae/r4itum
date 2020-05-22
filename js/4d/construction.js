@@ -43,10 +43,6 @@ function hexadecachoronVerts(verts=[]) {
 }
 
 const icosahedronCoords = [
-	new Vector4(-1, phi, 0),
-	new Vector4(1, phi, 0),
-	new Vector4(-1, -phi, 0),
-	new Vector4(1, -phi, 0),
 	new Vector4(0, -1, phi),
 	new Vector4(0, 1, phi),
 	new Vector4(0, -1, -phi),
@@ -55,6 +51,10 @@ const icosahedronCoords = [
 	new Vector4(phi, 0, 1),
 	new Vector4(-phi, 0, -1),
 	new Vector4(-phi, 0, 1),
+	new Vector4(-1, phi, 0),
+	new Vector4(1, phi, 0),
+	new Vector4(-1, -phi, 0),
+	new Vector4(1, -phi, 0),
 ];
 
 const icosahedronFaceVertIndexes = [
@@ -82,8 +82,10 @@ const icosahedronFaceVertIndexes = [
 
 /**
  * 
- * @param {*} verts 
- * @param {*} [settings]
+ * @param {Vector4[]} [verts] 
+ * @param {object} [settings]
+ * @param {number} [settings.scaleFactor] Factor by which all values apart from the `fixedValue` will be multiplied. No effect if `normalizing` is `true`.
+ * @param {number} [settings.fixedValue] 
  * @returns Map<number, Vector4[]>
  */
 function icosahedronVerts(verts=[], {
@@ -95,27 +97,31 @@ function icosahedronVerts(verts=[], {
 }={}) {
 	for (const sourceCoord of icosahedronCoords) {
 		const vert = new Vector4();
-		// Set the fixed value
-		vert[fixedIndex] = fixedValue;
-
-		// Place the other values around it
+		// Place the other values around the fixed value
 		vert[fixedIndex > 0 ? 0 : 1] = sourceCoord[0];
 		vert[fixedIndex > 1 ? 1 : 2] = sourceCoord[1];
 		vert[fixedIndex > 2 ? 2 : 3] = sourceCoord[2];
 		
+		if (!normalizing)  {
+			vert.scale(scaleFactor);
+		}
+
+		// Set the fixed value
+		vert[fixedIndex] = fixedValue;
+
 		if (normalizing) {
 			vert.normalize();
-		} else {
-			vert.scale(scaleFactor);
 		}
 
 		verts.push(vert);
 
 		if (signMap) {
+			const index = verts.length - 1; // Index of this vertex in the verts array
+
 			const key = signPrimitive(vert);
 			const signList = signMap.get(key) || [];
 			signMap.set(key, signList);
-			signList.push(vert);
+			signList.push(index);
 		}
 	}
 	return verts;
@@ -561,56 +567,110 @@ export default {
 		const verts = [];
 		const faces = [];
 
-		const values = [1, -1];
-
 		const signMap = new Map();
 
 		// All (±1, 0, 0, 0)-permutation vertices (16-cell vertices) are part of the solid
-		for (let i = 0; i < 4; i++) {
-			for (let j = 0; j < 2; j++) {
-				const vert = new Vector4();
-				vert[i] = values[j];
-	
-				// Assuming the golden ratio φ (phi)
-	
-				// For each 16-cell vertex, there are 12 vertices that are φ⁻¹ units away from it
-				// These vertices can form an icosahedron (edge length φ⁻¹) with each other
-	
-				// For the axis that the 16-cell vertex covers (e.g. the Y axis, if (0, ±1, 0, 0)), the coordinate is
-				// φ / 2, with the same sign as the 16-cell vertex
-				// (e.g. if the 16-cell vertex is (0, 0, −1, 0), then the icosahedron's vertex is (<X>, <Y>, −φ / 2, <W>))
-	
-				// The remaining icosahedral vertices are made by filling the remaining axes with ±1 / 2, ±φ⁻¹ / 2, and 0 in the same way
-				// as the icosahedron construction pattern
-	
-				// All icosahedral vertices happen to be the even permutations of (±φ, ±1, ±φ⁻¹, 0) / 2
-	
-				verts.push(vert);
-				const offsetIndex = verts.length;
-				icosahedronVerts(verts, {
-					scaleFactor: iphi / 2,
-					
-					fixedIndex: i,
-					fixedValue: sign(values[j]) * phi / 2,
+		{
+			const values = [1, -1];
+			for (let i = 0; i < 4; i++) {
+				for (let j = 0; j < 2; j++) {
+					const vert = new Vector4();
+					vert[i] = values[j];
+		
+					// Assuming the golden ratio φ (phi)
+		
+					// For each 16-cell vertex, there are 12 vertices that are φ⁻¹ units away from it
+					// These vertices can form an icosahedron (edge length φ⁻¹) with each other
+		
+					// For the axis that the 16-cell vertex covers, the coordinate is φ / 2, with the same sign as the 16-cell vertex
+					// (e.g. if the 16-cell vertex is (0, 0, −1, 0), then the icosahedron's vertex is (<X>, <Y>, −φ / 2, <W>))
+		
+					// The remaining icosahedral vertices are made by filling the remaining axes with ±1 / 2, ±φ⁻¹ / 2, and 0 in the same way
+					// as the icosahedron construction pattern
+		
+					// All icosahedral vertices happen to be the even permutations of (±φ, ±1, ±φ⁻¹, 0) / 2
+		
+					verts.push(vert);
+					const offsetIndex = verts.length;
+					icosahedronVerts(verts, {
+						scaleFactor: iphi / 2,
+						
+						fixedIndex: i,
+						fixedValue: sign(values[j]) * phi / 2,
 
-					signMap,
-				});
-				icosahedronFaces(faces, {
-					creatingCells: true,
-	
-					offsetIndex, // Icosahedron vert indexes start at `offsetIndex`
-					fixedValue: offsetIndex - 1, // The 16-cell vert index precedes them; `offsetIndex - 1`
-				});
+						signMap,
+					});
+					icosahedronFaces(faces, {
+						creatingCells: true,
+		
+						offsetIndex, // Icosahedron vert indexes start at `offsetIndex`
+						fixedValue: offsetIndex - 1, // The 16-cell vert index precedes them; `offsetIndex - 1`
+					});
+				}
 			}
 		}
 	
 		// All (±.5, ±.5, ±.5, ±.5) vertices (tesseract vertices) are part of the solid
-		octachoronVerts(verts);
+		{
+			// octachoronVerts(verts);
+			const values = [.5, -.5];
 
-		// For each tesseract vertex, there are also 12 vertices that are φ⁻¹ units away from it
-		// They are all vertices that are part of the previously formed icosahedra, whose signs match to it for every axis
+			// Dependent on how the vertices were ordered when being added to the array
+			const cellConnections = [
+				[0, 1, 2],
+				[3, 4, 5],
+				[6, 7, 8],
+				[9, 10, 11],
 
-		console.log(faces.length);
+				[0, 8, ],
+			];
+
+			for (let i = 0; i < 0b10000; i++) {
+				const vert = new Vector4(
+					values[0b1 & i],
+					values[0b1 & i >>> 1],
+					values[0b1 & i >>> 2],
+					values[0b1 & i >>> 3]);
+
+				const index = verts.push(vert) - 1; // Index of this new vertex in the vertices array
+
+				// For each tesseract vertex, there are also 12 vertices that are φ⁻¹ units away from it
+				// They are the vertices that are part of the previously formed icosahedra, but whose signs match to it for every axis
+
+				// The vertices that connect to an icosahedral vertex can be determined as follows:
+				//    0. 16-cell or tesseract vertices as described above (3 vertices)
+				//    1. 0 is fixed to the same axis, the other values rotate into each other's axes (2 vertices) (e.g. (φ, 1, φ⁻¹, 0) and (φ⁻¹, φ, 1, 0) and (1, φ⁻¹, φ, 0))
+				//    2. φ is fixed to the same axis, the other values rotate into each other's axes (2 vertices) (e.g. (φ, 1, φ⁻¹, 0) and (φ, 0, 1, φ⁻¹))
+				//    3. Same as 2., but the value in the other vertex in the axis occupied by the 0 in this vertex is negated (2 vertices) (e.g. (φ, 1, φ⁻¹, 0) and (φ, 0, 1, −φ⁻¹))
+				//    4. 1 and φ switch axes, and 0 and φ⁻¹ switch axes (1 vertex) (e.g. (φ, 1, φ⁻¹, 0) and (1, φ, 0, φ⁻¹))
+				//    5. Same as 4., but the value in the other vertex in the axis occupied by the 0 in this vertex is negated (1 vertex)
+				//    6. 1 takes the place of φ⁻¹, 
+
+				const connectedVerts = [];
+
+				for (let j = 0; j < 4; j++) {
+					const vertClone = vert.clone();
+					vertClone[j] = 0;
+					const signs = signPrimitive(vertClone);
+					const signMatches = signMap.get(signs);
+
+					connectedVerts.push(...signMatches);
+				}
+
+				// for (const vertIndexes of cellConnections) {
+				// 	faces.push([
+				// 		connectedVerts[vertIndexes[0]],
+				// 		connectedVerts[vertIndexes[1]],
+				// 		connectedVerts[vertIndexes[2]],
+				// 		index,
+				// 	]);
+				// }
+
+				// console.log(connectedVerts.map(i => verts[i]));
+			}
+		}
+
+		// console.log(faces.length);
 
 		return new Geometry4(verts, faces);
 	},
