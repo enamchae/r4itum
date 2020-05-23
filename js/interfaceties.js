@@ -2,8 +2,9 @@
  * @file Links 4D operations to items in the interface.
  */
 
-import {user, scene, Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
+import {scene, Viewport, ObjectPropertiesControl, ObjectList} from "./interface.js";
 import {SceneConverter} from "./sceneconverter.js";
+import userSelection from "./userselection.js";
 
 export default {
 	addObject(...objects) {
@@ -32,14 +33,14 @@ export default {
 
 	replaceSelection(...objects) {
 		// Indicate that all current selections are unselected
-		for (const object of user.selectedObjects) {
+		for (const object of userSelection.objects()) {
 			for (const viewport of Viewport.members) {
 				const rep = viewport.converter.objectReps.get(object);
 				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
 			}
 		}
 
-		user.replaceSelection(...objects);
+		userSelection.replace(...objects);
 
 		// Indicate that all current selections are selected
 		for (let i = 0; i < objects.length; i++) {
@@ -53,7 +54,7 @@ export default {
 
 		// Update object info panels
 		for (const panel of ObjectPropertiesControl.members) {
-			panel.setTargetObject(user.selectedObjectPrimary);
+			panel.setTargetObject(userSelection.objectPrimary);
 		}
 
 		Viewport.queueAllRerender();

@@ -28,28 +28,6 @@ const lastSelectedViewport = qs("viewport-"); // temp
 
 const contextMenus = qs("context-menus");
 
-export const user = {
-	/**
-	 * @type Object4[]
-	 */
-	selectedObjects: [],
-
-	get selectedObjectPrimary() {
-		return this.selectedObjects[0];
-	},
-
-	/**
-	 * 
-	 * @param  {...Object4} objects 
-	 */
-	replaceSelection(...objects) {
-		// Replace selections
-		this.selectedObjects = objects;
-
-		return this;
-	},
-};
-
 // Classes
 
 // Multiple viewports currently not supported
@@ -125,7 +103,7 @@ export class Viewport extends HTMLElement {
 	}
 
 	attachControls() {
-		attachViewportControls(this, user);
+		attachViewportControls(this);
 		return this;
 	}
 
@@ -249,7 +227,6 @@ function createObject(geometry, name) {
 	tiedActions.replaceSelection(object);
 	contextMenus.clear();
 
-	console.log(lastSelectedViewport);
 	lastSelectedViewport.focus();
 }
 

@@ -5,6 +5,7 @@
 import {Geometry4} from "./4d/meshgeometry.js";
 import {Vector4, Rotor4, Space3_4, Line4} from "./4d/vector.js";
 import {Object4, Mesh4, Camera4, PlaneRef4, Axis4} from "./4d/objects.js";
+import userSelection from "./userselection.js";
 import {privMap} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
@@ -284,6 +285,12 @@ void main() {
 		this.locus = new Three.Points();
 
 		this.converter.objectClickboxes.set(this.mesh3, this);
+
+		if (userSelection.contains(this.object)) {
+			this.viewportState = userSelection.objectPrimary === this.object
+					? SceneConverter.ViewportStates.SELECTED_PRIMARY
+					: SceneConverter.ViewportStates.SELECTED;
+		}
 
 		this.setViewportState(this.viewportState);
 		

@@ -3,10 +3,11 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
+import userSelection from "./userselection.js";
 import tiedActions from "./interfaceties.js";
 import * as Three from "./_libraries/three.module.js";
 
-export function attachViewportControls(viewport, user) {
+export function attachViewportControls(viewport) {
 	const canvas = viewport.renderer.domElement;
 
 	// Coords recorder
@@ -54,7 +55,7 @@ export function attachViewportControls(viewport, user) {
 		canvas.addEventListener("mousedown", event => {
 			if (event.button !== 1 || shiftPressed) return;
 
-			viewport.requestPointerLock();
+			canvas.requestPointerLock();
 
 			holding = true;
 		});
@@ -125,7 +126,7 @@ export function attachViewportControls(viewport, user) {
 		canvas.addEventListener("mousemove", event => {
 			if (!holding) return;
 
-			viewport.requestPointerLock();
+			canvas.requestPointerLock();
 
 			if (altPressed) { // Move 4D camera
 				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
@@ -187,9 +188,9 @@ export function attachViewportControls(viewport, user) {
 	// DEL to delete the selected object
 
 	viewport.addEventListener("keydown", event => {
-		if (event.repeat || event.key !== "Delete" || user.selectedObjects.length === 0) return;
+		if (event.repeat || event.key !== "Delete" || userSelection.size === 0) return;
 		
-		tiedActions.removeObject(...user.selectedObjects);
+		tiedActions.removeObject(...userSelection.objects());
 		tiedActions.replaceSelection();
 	});
 
@@ -197,7 +198,7 @@ export function attachViewportControls(viewport, user) {
 	// G to move the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = user.selectedObjectPrimary;
+		const object = userSelection.objectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
 
 		transforming = true;
@@ -240,7 +241,7 @@ export function attachViewportControls(viewport, user) {
 	// R to rotate the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = user.selectedObjectPrimary;
+		const object = userSelection.objectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
 
 		transforming = true;
@@ -284,7 +285,7 @@ export function attachViewportControls(viewport, user) {
 	// S to scale the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = user.selectedObjectPrimary;
+		const object = userSelection.objectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
 
 		transforming = true;
