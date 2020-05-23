@@ -187,11 +187,11 @@ export class Object4 {
 
 		// Added elements allow translation
 		return new Matrix5([
-			transformMatrix[0].concat([this.pos[0]]),
-			transformMatrix[1].concat([this.pos[1]]),
-			transformMatrix[2].concat([this.pos[2]]),
-			transformMatrix[3].concat([this.pos[3]]),
-		]);
+			transformMatrix[0],
+			transformMatrix[1],
+			transformMatrix[2],
+			transformMatrix[3],
+		])/* .mult(Matrix5.fromTranslation(this.pos.scale(-1))) */;
 	}
 
 	localSpace() {
@@ -242,6 +242,15 @@ export class Camera4 extends Object4 {
 
 		Object.assign(this, options);
 	}
+
+	/**
+	 * Calculates the distance of a point from this camera's viewbox.
+	 * @param {Vector4} vector
+	 * @returns {number}  
+	 */
+	viewboxDistanceFrom(vector) {
+		return this.localForward().dot(vector.subtract(this.pos));
+	}
 	
 	/**
 	 * 
@@ -260,7 +269,7 @@ export class Camera4 extends Object4 {
 				: 1 / this.radius;
 		
 		for (let i = 0; i < points.length; i++) {
-			const point = points[i];
+			const point = points[i].subtract(this.pos);
 	
 			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.radius;
 	
@@ -313,13 +322,19 @@ export class Camera4 extends Object4 {
 			const distance = point[3];
 			const distanceDistortionFac = distortionFac / distance;
 
-			console.log(-point[0] / distanceDistortionFac, unprojectionMatrix[0]);
+			const pointUndistorted = new Vector4(
+				-point[0] / distanceDistortionFac,
+				-point[1] / distanceDistortionFac,
+				-point[2] / distanceDistortionFac,
+				distance,
+			);
 	
 			const pointUnprojected = new Vector4(
-				unprojectionMatrix.dot4WithColumn(pointUndistorted, 0),
-				unprojectionMatrix.dot4WithColumn(pointUndistorted, 1),
-				unprojectionMatrix.dot4WithColumn(pointUndistorted, 2),
-				this.usingPerspective ? unprojectionMatrix.dot4WithColumn(pointUndistorted, 3) : this.radius,
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 0) + this.pos[0],
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 1) + this.pos[1],
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 2) + this.pos[2],
+				// Cannot accurately derive point distance in parllel projection
+				this.usingPerspective ? unprojectionMatrix.dot4WithColumn(pointUndistorted, 3) + this.pos[3] : this.radius,
 			);
 	
 			// Reassign coordinates

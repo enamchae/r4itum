@@ -205,12 +205,16 @@ export function attachViewportControls(viewport, user) {
 
 		const initialPos = object.pos.clone();
 
-		console.log(viewport.camera.localUp());
+		const directions = [
+			new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
+			new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
+		];
+		const distance = viewport.camera.viewboxDistanceFrom(object.pos);
+		directions[0][3] = distance;
+		directions[1][3] = distance;
+		console.log(distance);
 
-		const up = new Three.Vector3(0, 1, 0)
-				.applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
-		const right = new Three.Vector3(1, 0, 0)
-				.applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+		const [up, right] = viewport.camera.unprojectVector4(directions);
 
 		console.log(up, right);
 

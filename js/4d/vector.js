@@ -491,6 +491,16 @@ export class Matrix5 extends Array {
 		Object.seal(this);
 	}
 
+	static fromTranslation(offset) {
+		return new Matrix5([
+			[1, 0, 0, 0, offset[0]],
+			[0, 1, 0, 0, offset[1]],
+			[0, 0, 1, 0, offset[2]],
+			[0, 0, 0, 1, offset[3]],
+			[0, 0, 0, 0, 1],
+		]);
+	}
+
 	/**
 	 * 
 	 * @param {number[][]} columns 
@@ -519,6 +529,10 @@ export class Matrix5 extends Array {
 
 	inverse() {
 		return new Matrix5(matrixWrapper(this).inv());
+	}
+
+	mult(matrix) {
+		return new Matrix5(matrixWrapper(this).prod(matrixWrapper(matrix)));
 	}
 
 	/**
