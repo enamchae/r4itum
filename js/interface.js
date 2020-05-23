@@ -193,34 +193,6 @@ export class Viewport extends HTMLElement {
 	}
 }
 
-function createPolygonInputBlock() {
-	const editor = new PositiveNumberEditor(6).override({
-		inputStepValue() {
-			return 1;
-		},
-
-		isValidValue(value) {
-			return value > 0 && value % 1 === 0;
-		},
-	});
-
-	return createElement("input-block", {
-		children: [
-			editor,
-			createElement("button", {
-				textContent: "Create",
-				listeners: {
-					click: [
-						[() => {
-							createObject(construct.polygon(editor.value), "Polygon");
-						}],
-					],
-				},
-			}),
-		],
-	});
-}
-
 function createObject(geometry, name) {
 	const object = new Mesh4(geometry).setName(name);
 	tiedActions.addObject(object);
@@ -266,12 +238,6 @@ export class ObjectList extends HTMLElement {
 				["data-empty-text", "nothing"],
 			],
 
-			listeners: {
-				mousedown: [ // Not click event!
-					[preventDefault],
-				],
-			},
-
 			parent: this.textContainer,
 		});
 
@@ -304,7 +270,7 @@ export class ObjectList extends HTMLElement {
 								});
 								menu.element(editor);
 
-								menu.button("Polygon", () => {
+								menu.button("n-gon", () => {
 									createObject(construct.polygon(editor.value), "Polygon");
 								});
 							});
@@ -396,9 +362,29 @@ export class ObjectList extends HTMLElement {
 		return this;
 	}
 
+	getBar(object) {
+		return this.bars.get(object);
+	}
+
+	highlightBar(object) {
+		const bar = this.getBar(object);
+
+		if (bar) {
+			bar.classList.add("highlighted");
+			bar.scrollIntoView();
+		}
+
+		return this;
+	}
+
+	unhighlightBar(object) {
+		this.getBar(object)?.classList.remove("highlighted");
+		return this;
+	}
+
 	removeItem(...objects) {
 		for (const object of objects) {
-			this.bars.get(object)?.remove();
+			this.getBar(object)?.remove();
 		}
 
 		return this;
@@ -746,8 +732,8 @@ export class CameraPropertiesControl extends HTMLElement {
 							}],
 						],
 
-						mousedown: [ // Not click event!
-							[preventDefault],
+						mousedown: [
+							[focusLastViewport],
 						],
 					},
 				}),
@@ -768,7 +754,7 @@ export class CameraPropertiesControl extends HTMLElement {
 						],
 
 						mousedown: [
-							[preventDefault], // Prevent losing focus from viewport
+							[focusLastViewport],
 						],
 					},
 				}),
@@ -781,6 +767,11 @@ export class CameraPropertiesControl extends HTMLElement {
 
 function preventDefault(event) {
 	event.preventDefault(); 
+}
+
+function focusLastViewport(event) {
+	event.preventDefault();
+	lastSelectedViewport.focus();
 }
 
 

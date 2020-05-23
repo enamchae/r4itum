@@ -10,7 +10,7 @@
 import matrixWrapper from "../_libraries/matrix.js";
 
 /**
- * @class Used to represent general properties of mixed-rank/rank-n vectors.
+ * Used to represent general properties of mixed-rank/rank-n vectors.
  */
 export class Polymultivector extends Array {
 	constructor(elements, length=elements.length) {
@@ -119,7 +119,7 @@ export class Polymultivector extends Array {
 }
 
  /**
- * @class Sum of the even-rank vectors available in 4-space, together given by the geometric product of two 4D vectors.
+ * Sum of the even-rank vectors available in 4-space, together given by the geometric product of two 4D vectors.
  * 
  * Components are stored as coefficients in the order [1, xy, xz, xw, yz, yw, zw, xyzw].
  * 
@@ -308,7 +308,7 @@ export class Rotor4 extends Polymultivector {
 }
 
 /**
- * @class Rank-2 (2D-array-like) vector, given by the outer product of two 4D vectors.
+ * Rank-2 (2D-array-like) vector, given by the outer product of two 4D vectors.
  * 
  * Components are stored in the order [xy, xz, xw, yz, yw, zw].
  * 
@@ -343,7 +343,7 @@ export class Bivector4 extends Polymultivector {
 }
 
 /**
- * @class Rank-1 vector with 4 components, one for each dimension in 4D. 
+ * Rank-1 vector with 4 components, one for each dimension in 4D. 
  */
 export class Vector4 extends Polymultivector {
 	/**
@@ -476,7 +476,7 @@ export class Vector4 extends Polymultivector {
 }
 
 /**
- * @class A 5×5 matrix.
+ * A 5×5 matrix.
  */
 export class Matrix5 extends Array {
 	/**
@@ -554,7 +554,7 @@ export class Matrix5 extends Array {
 }
 
 /**
- * @class Represents a 3-space that exists in 4-space.
+ * Represents a 3-space that exists in 4-space.
  */
 export class Space3_4 {
 	/**
@@ -599,7 +599,7 @@ export class Space3_4 {
 }
 
 /**
- * @class Represents a 1-space, or line, that exists in 4-space.
+ * Represents a 1-space, or line, that exists in 4-space.
  * 
  * Can be represented as vectors in the form `(this.offset) + (this.direction) * scalar`, where `scalar` is any real number.
  */

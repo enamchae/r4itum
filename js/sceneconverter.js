@@ -37,6 +37,15 @@ export class SceneConverter {
 	objectReps = new WeakMap();
 	objectClickboxes = new Map();
 
+	static selectionState(object) {
+		if (object === userSelection.objectPrimary) {
+			return this.ViewportStates.SELECTED_PRIMARY;
+		} else if (userSelection.objectsSubordinate.has(object)) {
+			return this.ViewportStates.SELECTED;
+		}
+		return this.ViewportStates.DEFAULT;
+	}
+
 	constructor(scene4) {
 		this.scene4 = scene4;
 
@@ -286,13 +295,7 @@ void main() {
 
 		this.converter.objectClickboxes.set(this.mesh3, this);
 
-		if (userSelection.contains(this.object)) {
-			this.viewportState = userSelection.objectPrimary === this.object
-					? SceneConverter.ViewportStates.SELECTED_PRIMARY
-					: SceneConverter.ViewportStates.SELECTED;
-		}
-
-		this.setViewportState(this.viewportState);
+		this.setViewportStateBySelection();
 		
 		return this;
 	}
@@ -418,6 +421,11 @@ void main() {
 	setViewportState(viewportState=this.viewportState) {
 		this.viewportState = viewportState;
 		this.setMaterials();
+		return this;
+	}
+
+	setViewportStateBySelection() {
+		this.setViewportState(SceneConverter.selectionState(this.object));
 		return this;
 	}
 
@@ -549,8 +557,6 @@ void main() {
 		
 		return this;
 	}
-
-
 }
 
 class Axis4Rep {
@@ -618,7 +624,7 @@ class Axis4Rep {
 }
 
 /**
- * @class Provides `Object4` properties for a Three camera.
+ * Provides `Object4` properties for a Three camera.
  */
 export class Camera3Wrapper4 extends Object4 {
 	/**

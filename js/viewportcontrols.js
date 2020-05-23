@@ -21,9 +21,6 @@ export function attachViewportControls(viewport) {
 	// Click to focus
 
 	viewport.tabIndex = -1; // element must have tabIndex to be focusable
-	viewport.addEventListener("click", () => {
-		viewport.focus();
-	});
 
 	// Click to select an object
 
@@ -188,7 +185,7 @@ export function attachViewportControls(viewport) {
 	// DEL to delete the selected object
 
 	viewport.addEventListener("keydown", event => {
-		if (event.repeat || event.key !== "Delete" || userSelection.size === 0) return;
+		if (event.target !== event.currentTarget || event.repeat || event.key !== "Delete" || userSelection.size === 0) return;
 		
 		tiedActions.removeObject(...userSelection.objects());
 		tiedActions.replaceSelection();
@@ -199,7 +196,7 @@ export function attachViewportControls(viewport) {
 
 	viewport.addEventListener("keydown", keydownEvent => {
 		const object = userSelection.objectPrimary;
-		if (keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
 
 		transforming = true;
 		viewport.requestPointerLock();
@@ -242,7 +239,7 @@ export function attachViewportControls(viewport) {
 
 	viewport.addEventListener("keydown", keydownEvent => {
 		const object = userSelection.objectPrimary;
-		if (keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
 
 		transforming = true;
 		viewport.requestPointerLock();
@@ -286,7 +283,7 @@ export function attachViewportControls(viewport) {
 
 	viewport.addEventListener("keydown", keydownEvent => {
 		const object = userSelection.objectPrimary;
-		if (keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
 
 		transforming = true;
 		viewport.requestPointerLock();

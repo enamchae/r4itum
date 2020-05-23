@@ -11,6 +11,7 @@
 	--col-yellow-3-7f: #c791477f;
 
 	--col-green-0-7f: #0316117f;
+	--col-green-0-af: #031611af;
 	--col-green-0-cf: #031611cf;
 	--col-green-0_5-df: #08261fdf;
 	--col-green-1-7f: #0f382e7f;
@@ -139,7 +140,7 @@ overlays- > toolbar- > tool-button {
 
 	border-radius: .5em;
 
-	background: var(--col-green-2-af);
+	background: var(--col-green-0_5-df);
 	box-shadow: var(--overlay-box-shadow);
 }
 
@@ -173,8 +174,6 @@ overlays- context-menu {
 
 	pointer-events: initial;
 
-	border-radius: 1em;
-
 	box-shadow: var(--overlay-box-shadow);
 
 	letter-spacing: .05em;
@@ -184,6 +183,8 @@ overlays- context-menu {
 	background: var(--col-green-0_5-df);
 	position: absolute;
 	min-width: 140px;
+
+	border-radius: 1em;
 
 	align-items: center;
 	
@@ -426,6 +427,9 @@ overlays- ul.bars > li {
 	user-select: none;
 	cursor: default;
 }
+overlays- ul.bars > li.highlighted {
+	background: var(--col-green-0-af);
+}
 
 overlays- ul.bars > li > :first-child {
 	flex-grow: 1;
@@ -500,6 +504,8 @@ overlays- angle-editor form {
 
 overlays- .panel {
 	width: 240px;
+
+	border-radius: 1em;
 
 	background: var(--col-green-2-cf);
 }

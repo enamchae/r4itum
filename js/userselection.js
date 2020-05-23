@@ -2,6 +2,8 @@
  * @file Tracks user selection.
  */
 
+import {Object4} from "./4d/objects.js";
+
 export default {
 	/**
 	 * @type Object4
@@ -13,24 +15,32 @@ export default {
 	/**
 	 * @type Set<Object4>
 	 */
-	get objectsSecondary() {
-		return objectsSecondary;
+	get objectsSubordinate() {
+		return objectsSubordinate;
 	},
 
 	*objects() {
-		if (this.objectPrimary) {
-			yield this.objectPrimary;
+		if (objectPrimary) {
+			yield objectPrimary;
 		}
 
-		yield* this.objectsSecondary;
+		yield* objectsSubordinate;
 	},
 
+	/**
+	 * 
+	 * @param {Object4} object 
+	 * @returns {boolean} 
+	 */
 	contains(object) {
-		return objectPrimary === object || objectsSecondary.has(object);
+		return objectPrimary === object || objectsSubordinate.has(object);
 	},
 
+	/**
+	 * @type number
+	 */
 	get size() {
-		return (this.objectPrimary !== null ? 1 : 0) + this.objectsSecondary.size;
+		return (objectPrimary !== null ? 1 : 0) + objectsSubordinate.size;
 	},
 
 	/**
@@ -41,9 +51,9 @@ export default {
 		// Replace selections
 		objectPrimary = objects.shift() ?? null;
 
-		this.objectsSecondary.clear();
+		objectsSubordinate.clear();
 		for (const object of objects) {
-			this.objectPrimary.add(object);
+			objectsSubordinate.add(object);
 		}
 
 		return this;
@@ -51,4 +61,4 @@ export default {
 };
 
 let objectPrimary = null;
-const objectsSecondary = new Set();
+const objectsSubordinate = new Set();

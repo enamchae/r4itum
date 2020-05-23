@@ -38,17 +38,22 @@ export default {
 				const rep = viewport.converter.objectReps.get(object);
 				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
 			}
+			for (const objectList of ObjectList.members) {
+				objectList.unhighlightBar(object);
+			}
 		}
 
 		userSelection.replace(...objects);
 
 		// Indicate that all current selections are selected
-		for (let i = 0; i < objects.length; i++) {
+		for (const object of objects) {
 			for (const viewport of Viewport.members) {
-				const rep = viewport.converter.objectReps.get(objects[i]);
-				rep?.setViewportState(i === 0
-						? SceneConverter.ViewportStates.SELECTED_PRIMARY
-						: SceneConverter.ViewportStates.SELECTED);
+				const rep = viewport.converter.objectReps.get(object);
+				rep?.setViewportStateBySelection();
+			}
+
+			for (const objectList of ObjectList.members) {
+				objectList.highlightBar(object);
 			}
 		}
 
