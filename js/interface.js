@@ -214,7 +214,15 @@ export class Viewport extends HTMLElement {
 }
 
 function createPolygonInputBlock() {
-	const editor = new PositiveNumberEditor(6);
+	const editor = new PositiveNumberEditor(6).override({
+		inputStepValue() {
+			return 1;
+		},
+
+		isValidValue(value) {
+			return value > 0 && value % 1 === 0;
+		},
+	});
 
 	return createElement("input-block", {
 		children: [
@@ -591,18 +599,23 @@ export class ObjectPropertiesControl extends HTMLElement {
 				children: [
 					this.appendHeading("FOV angle", null, `Angle representing the wideness of the camera's viewbox
 Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 180° is smaller]`),
-					createElement(new AngleEditor(object.fovAngle * 180 / Math.PI), {
-						listeners: {
-							update: [
-								[({detail}) => {
-									object.fovAngle = detail.valueUsed * Math.PI / 180;
-									Viewport.queueAllRerender();
-								}],
-							],
-						},
-					}),
-				],
-			});
+					createElement(new AngleEditor(object.fovAngle * 180 / Math.PI)
+							.override({
+								isValidValue(value) {
+									return 0 < value && value < 180;
+								},
+							}), {
+								listeners: {
+									update: [
+										[({detail}) => {
+											object.fovAngle = detail.valueUsed * Math.PI / 180;
+											Viewport.queueAllRerender();
+										}],
+									],
+								},
+							}),
+						],
+					});
 
 			this.radiusEditor = createElement(new PositiveNumberEditor(object.radius), {
 				listeners: {

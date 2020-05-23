@@ -183,19 +183,13 @@ export class Object4 {
 		// original point and the nth column of the matrix ([0] :: X, [1] :: Y, etc)
 		const transformMatrix = [];
 	
-		// What methodology was used to construct this matrix? :D
 		transformMatrix[3] = cameraForward.normalize();
 		transformMatrix[0] = cameraUp.cross(cameraOver, transformMatrix[3]).normalize();
 		transformMatrix[1] = cameraOver.cross(transformMatrix[3], transformMatrix[0]).normalize();
 		transformMatrix[2] = transformMatrix[3].cross(transformMatrix[0], transformMatrix[1]).normalize();
 
 		// Added elements allow translation
-		return new Matrix5([
-			transformMatrix[0],
-			transformMatrix[1],
-			transformMatrix[2],
-			transformMatrix[3],
-		])/* .mult(Matrix5.fromTranslation(this.pos.scale(-1))) */;
+		return new Matrix5(transformMatrix);
 	}
 
 	localSpace() {
@@ -323,7 +317,6 @@ export class Camera4 extends Object4 {
 			// Shrink the transformed point depending on its distance from the camera 
 			const distanceDistortionFac = distortionFac / distance;
 	
-			// Why do I need to negate the coordinated in order for them to face the right direction?
 			const pointProjected = new Vector4(
 				-projectionMatrix.dot4WithColumn(point, 0) * distanceDistortionFac,
 				-projectionMatrix.dot4WithColumn(point, 1) * distanceDistortionFac,

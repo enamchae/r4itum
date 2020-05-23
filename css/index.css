@@ -330,7 +330,7 @@ overlays- ul.bars:empty {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	background: var(--col-green-1-7f);
+	background: var(--col-green-0-7f);
 }
 
 overlays- ul.bars:empty:after {
@@ -346,7 +346,7 @@ overlays- ul.bars:empty:after {
 overlays- ul.bars > li {
 	display: flex;
 	align-items: center;
-	height: 2.5em;
+	height: 2em;
 	padding: 0 1em;
 	position: relative;
 	overflow: hidden;

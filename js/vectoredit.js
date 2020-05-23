@@ -22,9 +22,12 @@ class ValueEditor extends HTMLElement {
 	 */
 	lastAcceptedValues;
 
+	initator;
+
 	constructor(initiator) {
 		super();
 
+		this.initiator = initiator;
 		this.lastAcceptedValues = new Polymultivector(undefined, initiator.length); // Hold off on filling the array; do some processing first
 	}
 
@@ -77,14 +80,14 @@ class ValueEditor extends HTMLElement {
 		this.createInput(initiator, i, form);
 	}
 
-	createInput(initiator, i, form, inputStep=0.1) {
+	createInput(initiator, i, form) {
 		const value = this.initiateValue(i, initiator);
 
 		const input = createElement("input", {
 			properties: {
 				type: "number",
 				value: this.convertForInput(value, i),
-				step: inputStep,
+				step: this.inputStepValue(i),
 				title: "",
 			},
 			classes: this.classListIfDisabled(i),
@@ -186,6 +189,15 @@ class ValueEditor extends HTMLElement {
 	}
 
 	/**
+	 * Determines the step to be used for the input at the given index during creation.
+	 * @param {number} index 
+	 * @returns {number}
+	 */
+	inputStepValue(index) {
+		return 0.1;
+	}
+
+	/**
 	 * Determines whether a field should be prevented from being edited.
 	 * @param {number} index 
 	 */
@@ -227,6 +239,15 @@ class ValueEditor extends HTMLElement {
 	set value(initiator) {
 		this.refill(initiator);
 	}
+
+	/**
+	 * Overrides properties on this object, to allow custom callbacks after instantiation.
+	 * @param {object} properties 
+	 * @returns {this}
+	 */
+	override(properties) {
+		return Object.assign(this, properties);
+	}
 }
 
 /**
@@ -241,7 +262,11 @@ export class VectorEditor extends ValueEditor {
 		super(initiator);
 
 		this.restrictingW = restrictingW;
-		this.fillElements(initiator);
+	}
+
+	connectedCallback() {
+		declade(this);
+		this.fillElements(this.initiator);
 	}
 
 	createInputBlock(initiator, i, form) {
@@ -294,7 +319,11 @@ export class RotorEditor extends ValueEditor {
 		super(initiator);
 
 		this.restrictingW = restrictingW;
-		this.fillElements(initiator);
+	}
+
+	connectedCallback() {
+		declade(this);
+		this.fillElements(this.initiator);
 	}
 
 	onchange(event) {
@@ -361,7 +390,7 @@ export class RotorEditor extends ValueEditor {
 		// XYZW input fills row
 		if (i === 7) {
 			inputBlock.classList.add("fill-row");
-			label.title = `Not a basis plane, but rather a side effect of rotating more than once`;
+			label.title = `Not a basis plane, but rather an occasional side effect of rotating more than once`;
 		} else {
 			inputBlock.style.cssText = `
 grid-row: ${RotorEditor.gridRows[i - 1]};
@@ -412,8 +441,11 @@ export class AngleEditor extends ValueEditor {
 		const initiator = [angle];
 
 		super(initiator);
+	}
 
-		this.fillElements(initiator);
+	connectedCallback() {
+		declade(this);
+		this.fillElements(this.initiator);
 	}
 	
 	createInputs(initiator, form) {
@@ -472,8 +504,11 @@ export class PositiveNumberEditor extends ValueEditor {
 		const initiator = [value];
 
 		super(initiator);
+	}
 
-		this.fillElements(initiator);
+	connectedCallback() {
+		declade(this);
+		this.fillElements(this.initiator);
 	}
 
 	isValidValue(value) {
