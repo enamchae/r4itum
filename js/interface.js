@@ -252,8 +252,12 @@ export class ObjectList extends HTMLElement {
 						menu.positionFromEvent(event);
 
 						menu.buttonSubmenu("Construct", menu => {
-							menu.button("Vertex", () => {
-								createObject(construct.vert(), "Vertex");
+							menu.button("Point", () => {
+								createObject(construct.point(), "Point");
+							});
+
+							menu.button("Segment", () => {
+								createObject(construct.segment(), "Segment");
 							});
 
 							menu.buttonSubmenu("2D", menu => {

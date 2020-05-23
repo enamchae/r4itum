@@ -102,6 +102,7 @@ viewport- {
 viewport- > * {
 	grid-row: 1;
 	grid-column: 1;
+	position: absolute;
 }
 
 viewport- > overlays- {
@@ -120,6 +121,8 @@ overlays- > * {
 	position: absolute;
 }
 
+/* Toolbar */
+
 overlays- > toolbar- {
 	bottom: 0;
 	right: 0;
@@ -135,7 +138,7 @@ overlays- > toolbar- > tool-button {
 	align-items: center;
 	justify-content: center;
 
-	width: 2em;
+	width: 3em;
 	height: 4em;
 
 	border-radius: .5em;

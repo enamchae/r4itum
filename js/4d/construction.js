@@ -147,8 +147,12 @@ function icosahedronFaces(faces=[], {
 
 // TODO figure out common properties (e.g. default orientation, edge length)
 export default {
-	vert() {
+	point() {
 		return new Geometry4([new Vector4()]);
+	},
+
+	segment() {
+		return new Geometry4([new Vector4(-1), new Vector4(1)], [[0, 1]]);
 	},
 
 	polygon(nSides=4) {
@@ -405,11 +409,11 @@ export default {
 		const f = sqrt(1 / 5);
 
 		return new Geometry4([
-			new Vector4(s, -f, s, s).normalize(),
-			new Vector4(-s, -f, s, -s).normalize(),
-			new Vector4(-s, -f, -s, s).normalize(),
-			new Vector4(s, -f, -s, -s).normalize(),
-			new Vector4(0, sqrt(5) - f, 0, 0).normalize(),
+			new Vector4(s, s, s, -f).normalize(),
+			new Vector4(-s, -s, s, -f).normalize(),
+			new Vector4(-s, s, -s, -f).normalize(),
+			new Vector4(s, -s, -s, -f).normalize(),
+			new Vector4(0, 0, 0, sqrt(5) - f).normalize(),
 		], [
 			[0, 1, 2, 3],
 			[0, 1, 2, 4],

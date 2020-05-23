@@ -290,8 +290,6 @@ export class VectorEditor extends ValueEditor {
 
 /**
  * Allows a user to edit the angle and plane of a rotor.
- * 
- * `inputs` and `lastAcceptedValues` only contain values for the plane coefficients.
  */
 export class RotorEditor extends ValueEditor {
 	static basisLabels = ["XY", "XZ", "XW", "YZ", "YW", "ZW", "XYZW"];
@@ -333,6 +331,7 @@ export class RotorEditor extends ValueEditor {
 	}
 
 	onanglechange(event) {
+		console.log(event);
 		const detailOld = event.detail;
 		const detail = { // Repurpose the detail object for this rotor editor
 			currentTarget: this,
@@ -404,6 +403,7 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 		for (const [input, i] of this.inputs) {
 			if (i === 0) { // Angle editor will process the value
 				input.valueRad = anglePlane[0];
+				this.lastAcceptedValues[0] = input.value;
 			} else {
 				const value = this.initiateValue(i, anglePlane);
 				input.value = this.convertForInput(value, i);
@@ -427,6 +427,7 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 	} */
 
 	get value() {
+		console.log(this.lastAcceptedValues[0]);
 		return Rotor4.planeAngle(this.lastAcceptedValues.slice(1), this.lastAcceptedValues[0] * Math.PI / 180);
 	}
 }
