@@ -5,6 +5,7 @@
 import {Vector4, Rotor4} from "./4d/vector.js";
 import userSelection from "./userselection.js";
 import tiedActions from "./interfaceties.js";
+import {qs} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 
 export function attachViewportControls(viewport) {
@@ -313,6 +314,31 @@ export function attachViewportControls(viewport) {
 		// Don't show context menu on right-click
 		viewport.addEventListener("contextmenu", preventDefault, {once: true});
 	});
+	
+
+	// Build toolbar
+
+	const toolbar = qs("toolbar-", viewport);
+
+	const toolbarSelectionSection = toolbar.section();
+	toolbarSelectionSection.button("Select");
+
+	const toolbarCameraColumn = toolbar.column();
+
+	const toolbarCamera3Section = toolbarCameraColumn.section();
+	toolbarCamera3Section.button("Pan 3D");
+	toolbarCamera3Section.button("Turn 3D");
+
+	const toolbarCamera4Section = toolbarCameraColumn.section();
+	toolbarCamera4Section.button("Pan 4D");
+	toolbarCamera4Section.button("Turn 4D");
+
+	toolbar.separator();
+
+	const toolbarObjectSection = toolbar.section();
+	toolbarObjectSection.button("Translate");
+	toolbarObjectSection.button("Rotate");
+	toolbarObjectSection.button("Scale");
 }
 
 // Aux function for event handlers

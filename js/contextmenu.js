@@ -71,7 +71,7 @@ top: ${y}px;`;
 	}
 
 	separator() {
-		return this.element(createElement("context-menu-separator"));
+		return this.element(createElement("separator-"));
 	}
 
 	label(text) {

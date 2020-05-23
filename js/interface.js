@@ -769,10 +769,6 @@ export class CameraPropertiesControl extends HTMLElement {
 	}
 }
 
-function preventDefault(event) {
-	event.preventDefault(); 
-}
-
 function focusLastViewport(event) {
 	event.preventDefault();
 	lastSelectedViewport.focus();
