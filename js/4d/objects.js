@@ -5,7 +5,7 @@
  *  - Steven Hollasch's [university thesis](https://hollasch.github.io/ray4/Four-Space_Visualization_of_4D_Objects.html) on 4D-to-2D visualization. Gave all the formulas for dimension-reduction projection!
  */
 
-import {Vector4, Rotor4, Line4, Space3_4} from "./vector.js";
+import {Vector4, Rotor4, Matrix5, Line4, Space3_4} from "./vector.js";
 import {Geometry4} from "./meshgeometry.js";
 
 // const wireframeMat = new Three.LineBasicMaterial({color: 0x000000, linewidth: 10});
@@ -163,7 +163,7 @@ export class Object4 {
 	}
 	
 	/**
-	 * @returns Vector4[]
+	 * @returns Matrix5
 	 */
 	projectionMatrix() {
 		// The camera is facing from `this.pos` to `this.localForward()`
@@ -185,7 +185,13 @@ export class Object4 {
 		transformMatrix[1] = cameraOver.cross(transformMatrix[3], transformMatrix[0]).normalize();
 		transformMatrix[2] = transformMatrix[3].cross(transformMatrix[0], transformMatrix[1]).normalize();
 
-		return Object.seal(transformMatrix);
+		// Added elements allow translation
+		return new Matrix5([
+			transformMatrix[0].concat([this.pos[0]]),
+			transformMatrix[1].concat([this.pos[1]]),
+			transformMatrix[2].concat([this.pos[2]]),
+			transformMatrix[3].concat([this.pos[3]]),
+		]);
 	}
 	
 	/**
@@ -207,9 +213,7 @@ export class Object4 {
 		for (let i = 0; i < points.length; i++) {
 			const point = points[i];
 	
-			const translated = point.subtract(this.pos);
-	
-			let distance = this.usingPerspective ? translated.dot(projectionMatrix[3]) : this.radius;
+			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.radius;
 	
 			// Now accounts for distance as well
 			// Shrink the transformed point depending on its distance from the camera 
@@ -217,9 +221,9 @@ export class Object4 {
 	
 			// Why do I need to negate the coordinated in order for them to face the right direction?
 			const pointProjected = new Vector4(
-				-translated.dot(projectionMatrix[0]) * distanceDistortionFac,
-				-translated.dot(projectionMatrix[1]) * distanceDistortionFac,
-				-translated.dot(projectionMatrix[2]) * distanceDistortionFac,
+				-projectionMatrix.dot4WithColumn(point, 0) * distanceDistortionFac,
+				-projectionMatrix.dot4WithColumn(point, 1) * distanceDistortionFac,
+				-projectionMatrix.dot4WithColumn(point, 2) * distanceDistortionFac,
 				distance,
 			);
 	

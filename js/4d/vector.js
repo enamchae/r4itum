@@ -6,8 +6,11 @@
  * 	- Mathoma's [video lectures](https://www.youtube.com/watch?v=iwQlrgAduMg&list=PLpzmRsG7u_gqaTo_vEseQ7U8KFvtiJY4K&index=13) that go a little more in depth about rotors and geometric algebra. Gave a few examples and proofs to fully drive in the geometric algebra techniques and the vectors' behavior!
  */
 
+
+import matrixWrapper from "../_libraries/matrix.js";
+
 /**
- * @class Used to represent general properties of rank-n vectors and sums of them.
+ * @class Used to represent general properties of mixed-rank/rank-n vectors.
  */
 export class Polymultivector extends Array {
 	constructor(elements, length=elements.length) {
@@ -16,7 +19,11 @@ export class Polymultivector extends Array {
 		this.copy(elements);
 
 		// Prevent new elements from being added
-		Object.seal(this);
+		// Object.seal(this);
+	}
+
+	static withLength(length) {
+		return new this(undefined, length);
 	}
 
 	set(...elements) {
@@ -88,6 +95,10 @@ export class Polymultivector extends Array {
 			}
 		}
 		return true;
+	}
+
+	clone() {
+		return new Polymultivector(this);
 	}
 
 	/**
@@ -461,6 +472,70 @@ export class Vector4 extends Polymultivector {
 
 	get w() {
 		return this[3];
+	}
+}
+
+/**
+ * @class A 5×5 matrix.
+ */
+export class Matrix5 extends Array {
+	/**
+	 * 
+	 * @param {number[][]} columns 
+	 */
+	constructor(columns) {
+		super(5);
+
+		this.copy(columns);
+
+		Object.seal(this);
+	}
+
+	/**
+	 * 
+	 * @param {number[][]} columns 
+	 */
+	copy(columns) {
+		let i = 0;
+		while (i < this.length) {
+			const column = new Polymultivector(columns?.[i], this.length);
+			if (columns?.[i]?.[i] === undefined) {
+				column[i] = 1; // Fill with identity matrix value if the provided column does not extend this far
+			}
+			
+			this[i] = column;
+			i++;
+		}
+		return this;
+	}
+
+	clone() {
+		return new Matrix5(this.map(column => column.clone()));
+	}
+
+	determinant() {
+		return matrixWrapper(this).det();
+	}
+
+	inverse() {
+		return new Matrix5(matrixWrapper(this).inv());
+	}
+
+	/**
+	 * Calculates the dot product of a homogeneous `Vector4` and a column from this matrix.
+	 * @param {Vector4} vector The vector to dot with.
+	 * @param {number} columnIndex Index of the column to dot with.
+	 * @returns 
+	 */
+	dot4WithColumn(vector, columnIndex) {
+		let cumsum = 0;
+
+		const column = this[columnIndex];
+		for (let i = 0; i < column.length; i++) {
+			cumsum += (vector?.[i] ?? 1) * column[i];
+		}
+
+		return cumsum;
 	}
 }
 

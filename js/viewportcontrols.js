@@ -205,8 +205,14 @@ export function attachViewportControls(viewport, user) {
 
 		const initialPos = object.pos.clone();
 
-		const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
-		const right = new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+		console.log(viewport.camera.localUp());
+
+		const up = new Three.Vector3(0, 1, 0)
+				.applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+		const right = new Three.Vector3(1, 0, 0)
+				.applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4());
+
+		console.log(up, right);
 
 		let movementX = 0;
 		let movementY = 0;
@@ -248,8 +254,10 @@ export function attachViewportControls(viewport, user) {
 		const initialRot = object.rot.clone();
 
 		// Bivector represents current viewing plane of 3D camera
-		const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion);
-		const right = new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion);
+		const up = new Three.Vector3(0, 1, 0)
+				.applyQuaternion(viewport.camera3.quaternion);
+		const right = new Three.Vector3(1, 0, 0)
+				.applyQuaternion(viewport.camera3.quaternion);
 		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
 
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start

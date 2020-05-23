@@ -644,7 +644,6 @@ export default {
 				//    3. Same as 2., but the value in the other vertex in the axis occupied by the 0 in this vertex is negated (2 vertices) (e.g. (φ, 1, φ⁻¹, 0) and (φ, 0, 1, −φ⁻¹))
 				//    4. 1 and φ switch axes, and 0 and φ⁻¹ switch axes (1 vertex) (e.g. (φ, 1, φ⁻¹, 0) and (1, φ, 0, φ⁻¹))
 				//    5. Same as 4., but the value in the other vertex in the axis occupied by the 0 in this vertex is negated (1 vertex)
-				//    6. 1 takes the place of φ⁻¹, 
 
 				const connectedVerts = [];
 
