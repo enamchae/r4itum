@@ -7,7 +7,7 @@ import tiedActions from "./interfaceties.js";
 import * as Three from "./_libraries/three.module.js";
 
 export function attachViewportControls(viewport, user) {
-	const element = viewport.renderer.domElement;
+	const canvas = viewport.renderer.domElement;
 
 	// Coords recorder
 	// let x;
@@ -19,9 +19,9 @@ export function attachViewportControls(viewport, user) {
 
 	// Click to focus
 
-	element.tabIndex = -1; // element must have tabIndex to be focusable
-	element.addEventListener("click", () => {
-		element.focus();
+	viewport.tabIndex = -1; // element must have tabIndex to be focusable
+	viewport.addEventListener("click", () => {
+		viewport.focus();
 	});
 
 	// Click to select an object
@@ -29,18 +29,18 @@ export function attachViewportControls(viewport, user) {
 	{
 		let mousedownEvent = null; // Keeps track of the current mousedown event. `null` if there was no mousedown on the canvas
 	
-		element.addEventListener("mousedown", event => {
+		canvas.addEventListener("mousedown", event => {
 			if (event.button !== 0 || transforming) return;
 	
 			mousedownEvent = event;
 		});
 	
-		element.addEventListener("mouseup", event => {
+		canvas.addEventListener("mouseup", event => {
 			if (event.button !== 0 || !mousedownEvent) return;
 	
 			// Only treat this as a click if the mouse has moved less than `maxClickSelectDeviation` px away from mousedown
 			if ((event.clientX - mousedownEvent.clientX) ** 2 + (event.clientY - mousedownEvent.clientY) ** 2 <= maxClickSelectDeviation ** 2) {
-				viewport.raycastSelectFrom(mousedownEvent, element);
+				viewport.raycastSelectFrom(mousedownEvent, canvas);
 			}
 	
 			mousedownEvent = null;
@@ -51,15 +51,15 @@ export function attachViewportControls(viewport, user) {
 
 	{
 		let holding = false;
-		element.addEventListener("mousedown", event => {
+		canvas.addEventListener("mousedown", event => {
 			if (event.button !== 1 || shiftPressed) return;
 
-			element.requestPointerLock();
+			viewport.requestPointerLock();
 
 			holding = true;
 		});
 
-		element.addEventListener("mousemove", event => {
+		canvas.addEventListener("mousemove", event => {
 			if (!holding) return;
 
 			// Angle by which to turn the camera, in terms of mouse movement distance
@@ -101,7 +101,7 @@ export function attachViewportControls(viewport, user) {
 			viewport.queueRender();
 		});
 
-		element.addEventListener("mouseup", event => {
+		canvas.addEventListener("mouseup", event => {
 			if (event.button !== 1 || !holding) return;
 
 			document.exitPointerLock();
@@ -114,7 +114,7 @@ export function attachViewportControls(viewport, user) {
 
 	{
 		let holding = false;
-		element.addEventListener("mousedown", event => {
+		canvas.addEventListener("mousedown", event => {
 			if (event.button !== 1 || !shiftPressed) return;
 
 			holding = true;
@@ -122,10 +122,10 @@ export function attachViewportControls(viewport, user) {
 
 		const rightVectorX = new Vector4(-1, 0, 0, 0);
 		const rightVectorZ = new Vector4(0, 0, -1, 0);
-		element.addEventListener("mousemove", event => {
+		canvas.addEventListener("mousemove", event => {
 			if (!holding) return;
 
-			element.requestPointerLock();
+			viewport.requestPointerLock();
 
 			if (altPressed) { // Move 4D camera
 				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
@@ -150,7 +150,7 @@ export function attachViewportControls(viewport, user) {
 			viewport.queueRender();
 		});
 
-		element.addEventListener("mouseup", event => {
+		canvas.addEventListener("mouseup", event => {
 			if (event.button !== 1 || !holding) return;
 
 			document.exitPointerLock();
@@ -161,7 +161,7 @@ export function attachViewportControls(viewport, user) {
 
 	// Scroll to move forward
 
-	element.addEventListener("wheel", event => {
+	canvas.addEventListener("wheel", event => {
 		if (altPressed) {
 			if (viewport.camera.usingPerspective) {
 				viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
@@ -186,7 +186,7 @@ export function attachViewportControls(viewport, user) {
 
 	// DEL to delete the selected object
 
-	element.addEventListener("keydown", event => {
+	viewport.addEventListener("keydown", event => {
 		if (event.repeat || event.key !== "Delete" || user.selectedObjects.length === 0) return;
 		
 		tiedActions.removeObject(...user.selectedObjects);
@@ -196,12 +196,12 @@ export function attachViewportControls(viewport, user) {
 	let transforming = false;
 	// G to move the selected object
 
-	element.addEventListener("keydown", keydownEvent => {
+	viewport.addEventListener("keydown", keydownEvent => {
 		const object = user.selectedObjectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
 
 		transforming = true;
-		element.requestPointerLock();
+		viewport.requestPointerLock();
 
 		const initialPos = object.pos.clone();
 
@@ -219,9 +219,9 @@ export function attachViewportControls(viewport, user) {
 
 			tiedActions.setObjectPos(object, newPos);
 		};
-		element.addEventListener("mousemove", mousemove);
+		viewport.addEventListener("mousemove", mousemove);
 
-		element.addEventListener("mousedown", event => {
+		viewport.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
 				tiedActions.setObjectPos(object, initialPos);
 			} else if (event.button !== 0) { // If not left-click, ignore
@@ -230,21 +230,21 @@ export function attachViewportControls(viewport, user) {
 
 			transforming = false;
 			document.exitPointerLock();
-			element.removeEventListener("mousemove", mousemove);
+			viewport.removeEventListener("mousemove", mousemove);
 		}, {once: true});
 
 		// Don't show context menu on right-click
-		element.addEventListener("contextmenu", preventDefault, {once: true});
+		viewport.addEventListener("contextmenu", preventDefault, {once: true});
 	});
 
 	// R to rotate the selected object
 
-	element.addEventListener("keydown", keydownEvent => {
+	viewport.addEventListener("keydown", keydownEvent => {
 		const object = user.selectedObjectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
 
 		transforming = true;
-		element.requestPointerLock();
+		viewport.requestPointerLock();
 
 		const initialRot = object.rot.clone();
 
@@ -263,9 +263,9 @@ export function attachViewportControls(viewport, user) {
 			// TODO take influence from 4D camera rotation
 			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
 		};
-		element.addEventListener("mousemove", mousemove);
+		viewport.addEventListener("mousemove", mousemove);
 
-		element.addEventListener("mousedown", event => {
+		viewport.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
 				tiedActions.setObjectRot(object, initialRot);
 			} else if (event.button !== 0) { // If not left-click, ignore
@@ -274,21 +274,21 @@ export function attachViewportControls(viewport, user) {
 
 			transforming = false;
 			document.exitPointerLock();
-			element.removeEventListener("mousemove", mousemove);
+			viewport.removeEventListener("mousemove", mousemove);
 		}, {once: true});
 
 		// Don't show context menu on right-click
-		element.addEventListener("contextmenu", preventDefault, {once: true});
+		viewport.addEventListener("contextmenu", preventDefault, {once: true});
 	});
 
 	// S to scale the selected object
 
-	element.addEventListener("keydown", keydownEvent => {
+	viewport.addEventListener("keydown", keydownEvent => {
 		const object = user.selectedObjectPrimary;
 		if (keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
 
 		transforming = true;
-		element.requestPointerLock();
+		viewport.requestPointerLock();
 
 		const initialScale = object.scl.clone();
 
@@ -298,9 +298,9 @@ export function attachViewportControls(viewport, user) {
 
 			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
 		};
-		element.addEventListener("mousemove", mousemove);
+		viewport.addEventListener("mousemove", mousemove);
 
-		element.addEventListener("mousedown", event => {
+		viewport.addEventListener("mousedown", event => {
 			if (event.button === 2) { // If right-click, reset
 				tiedActions.setObjectScl(object, initialScale);
 			} else if (event.button !== 0) { // If not left-click, ignore
@@ -309,11 +309,11 @@ export function attachViewportControls(viewport, user) {
 
 			transforming = false;
 			document.exitPointerLock();
-			element.removeEventListener("mousemove", mousemove);
+			viewport.removeEventListener("mousemove", mousemove);
 		}, {once: true});
 
 		// Don't show context menu on right-click
-		element.addEventListener("contextmenu", preventDefault, {once: true});
+		viewport.addEventListener("contextmenu", preventDefault, {once: true});
 	});
 }
 

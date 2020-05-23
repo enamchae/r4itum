@@ -24,6 +24,8 @@ for (let i = 0; i < 4; i++) {
 	scene.addObjectReference(new Axis4(i, 8, axisColors[i]));
 }
 
+const lastSelectedViewport = qs("viewport-"); // temp
+
 const contextMenus = qs("context-menus");
 
 export const user = {
@@ -226,9 +228,6 @@ function createPolygonInputBlock() {
 
 	return createElement("input-block", {
 		children: [
-			createElement("label", {
-				textContent: "Regular polygon",
-			}),
 			editor,
 			createElement("button", {
 				textContent: "Create",
@@ -249,6 +248,9 @@ function createObject(geometry, name) {
 	tiedActions.addObject(object);
 	tiedActions.replaceSelection(object);
 	contextMenus.clear();
+
+	console.log(lastSelectedViewport);
+	lastSelectedViewport.focus();
 }
 
 export class ObjectList extends HTMLElement {
@@ -312,10 +314,26 @@ export class ObjectList extends HTMLElement {
 							});
 
 							menu.buttonSubmenu("2D", menu => {
-								menu.element(createPolygonInputBlock());
+								menu.label("Regular polygon");
+								
+								const editor = new PositiveNumberEditor(6).override({
+									inputStepValue() {
+										return 1;
+									},
+							
+									isValidValue(value) {
+										return value > 0 && value % 1 === 0;
+									},
+								});
+								menu.element(editor);
+
+								menu.button("Polygon", () => {
+									createObject(construct.polygon(editor.value), "Polygon");
+								});
 							});
 
 							menu.buttonSubmenu("3D", menu => {
+								menu.label("Regular polyhedron");
 								menu.button("Tetrahedron", () => {
 									createObject(construct.tetrahedron(), "Tetrahedron");
 								});
@@ -331,6 +349,7 @@ export class ObjectList extends HTMLElement {
 								menu.button("Icosahedron", () => {
 									createObject(construct.icosahedron(), "Icosahedron");
 								});
+								menu.separator();
 								menu.button("Möbius strip", () => {
 									createObject(construct.mobiusStrip(), "Möbius strip");
 								});
@@ -340,6 +359,7 @@ export class ObjectList extends HTMLElement {
 							});
 
 							menu.buttonSubmenu("4D", menu => {
+								menu.label("Regular polychoron");
 								menu.button("5-cell", () => {
 									createObject(construct.pentachoron(), "5-cell");
 								});
@@ -358,6 +378,7 @@ export class ObjectList extends HTMLElement {
 								menu.button("600-cell", () => {
 									createObject(construct.hexacosichoron(), "600-cell");
 								});
+								menu.separator();
 								menu.button("Klein bottle", () => {
 									createObject(construct.kleinBottle(), "Klein bottle");
 								});
@@ -400,7 +421,7 @@ export class ObjectList extends HTMLElement {
 
 	removeItem(...objects) {
 		for (const object of objects) {
-			this.bars.get(object).remove();
+			this.bars.get(object)?.remove();
 		}
 
 		return this;

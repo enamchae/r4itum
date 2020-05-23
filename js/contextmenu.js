@@ -43,7 +43,6 @@ export class ContextMenuContainer extends HTMLElement {
 }
 
 export class ContextMenu extends HTMLElement {
-	barsContainer;
 
 	/**
 	 * @type ContextMenu
@@ -52,11 +51,6 @@ export class ContextMenu extends HTMLElement {
 
 	constructor() {
 		super();
-
-		this.barsContainer = createElement("ul", {
-			classes: ["bars"],
-			parent: this,
-		});
 	}
 
 	positionFromEvent(mouseEvent, offset=1) {
@@ -72,8 +66,18 @@ top: ${y}px;`;
 	}
 
 	element(element) {
-		this.barsContainer.append(element);
+		this.append(element);
 		return element;
+	}
+
+	separator() {
+		return this.element(createElement("context-menu-separator"));
+	}
+
+	label(text) {
+		return this.element(createElement("label", {
+			textContent: text,
+		}));
 	}
 
 	/**
@@ -82,14 +86,14 @@ top: ${y}px;`;
 	 * @param {function} clickHandler 
 	 */
 	button(label, clickHandler) {
-		return this.element(createElement("li", {
+		return this.element(createElement("button", {
 			listeners: {
 				click: [
 					[clickHandler],
 				],
 			},
 
-			classes: ["button"],
+			classes: ["row-item"],
 
 			children: [
 				createElement("div", {
@@ -107,7 +111,7 @@ top: ${y}px;`;
 	buttonSubmenu(label, submenuBuilder) {
 		let timeout;
 
-		const button = createElement("li", {
+		const button = createElement("button", {
 			listeners: {
 				mouseover: [
 					[() => {
@@ -131,7 +135,7 @@ top: ${y}px;`;
 				],
 			},
 
-			classes: ["button", "submenu-switch"],
+			classes: ["row-item", "submenu-switch"],
 
 			children: [
 				createElement("div", {
@@ -185,16 +189,5 @@ top: ${y}px;`;
 		this.remove();
 		this.clearSubmenu();
 		return this;
-	}
-}
-
-/**
- * @class Container for an item in a context menu.
- */
-export class ContextMenuComponent extends HTMLElement {
-	constructor(element) {
-		super();
-
-		this.append(element);
 	}
 }

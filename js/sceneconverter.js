@@ -285,7 +285,7 @@ void main() {
 
 		this.converter.objectClickboxes.set(this.mesh3, this);
 
-		this.setViewportState();
+		this.setViewportState(this.viewportState);
 		
 		return this;
 	}
@@ -410,7 +410,11 @@ void main() {
 	 */
 	setViewportState(viewportState=this.viewportState) {
 		this.viewportState = viewportState;
+		this.setMaterials();
+		return this;
+	}
 
+	setMaterials() {
 		this.mesh3.material = this.faceMat();
 		this.wire.material = this.wireMat();
 		this.locus.material = this.locusMat();

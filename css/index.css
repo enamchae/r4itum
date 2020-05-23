@@ -7,9 +7,12 @@
 
 	--col-red-1-7f: #9b21217f;
 	--col-yellow-1-7f: #6b48167f;
+	--col-red-3-7f: #cf51517f;
+	--col-yellow-3-7f: #c791477f;
 
 	--col-green-0-7f: #0316117f;
 	--col-green-0-cf: #031611cf;
+	--col-green-0_5-df: #08261fdf;
 	--col-green-1-7f: #0f382e7f;
 	--col-green-1_5-3f: #123f343f;
 	--col-green-2-cf: #2a6a52cf;
@@ -21,6 +24,9 @@
 	--panel-section-padding: .5em var(--panel-section-padding-horizontal);
 
 	--input-border-radius: 8px;
+	--error-flash-color: var(--col-red-1-7f);
+
+	--separator-height: 1px;
 
 	--overlay-box-shadow: 0 5px 8px var(--col-green-2-7f);
 }
@@ -31,6 +37,10 @@ h2,
 h3 {
 	margin: 0;
 	font-weight: 600;
+}
+
+button {
+	background: none;
 }
 
 .inactive {
@@ -149,6 +159,8 @@ overlays- > panels- > * + .panel {
 	margin-left: 12px;
 }
 
+/* Context menus */
+
 overlays- > context-menus {
 	position: relative;
 }
@@ -164,15 +176,54 @@ overlays- context-menu {
 	border-radius: 1em;
 
 	box-shadow: var(--overlay-box-shadow);
-	background: var(--col-green-2-cf);
 
 	letter-spacing: .05em;
 }
 
 overlays- context-menu {
-	background: var(--col-green-0-cf);
+	background: var(--col-green-0_5-df);
 	position: absolute;
 	min-width: 140px;
+
+	align-items: center;
+	
+	--error-flash-color: var(--col-red-3-7f);
+}
+
+overlays- context-menu label {
+	margin: .5em 0;
+
+	border-bottom: solid var(--separator-height) #ffffff7f;
+}
+
+overlays- context-menu button.row-item {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 2em;
+	padding: 0 1em;
+	position: relative;
+	overflow: hidden;
+	white-space: nowrap;
+
+	user-select: none;
+	cursor: default;
+
+	font-size: 1.1em;
+	text-align: initial;
+}
+
+overlays- context-menu button.row-item > :first-child {
+	flex-grow: 1;
+}
+
+overlays- context-menu context-menu-separator {
+	height: var(--separator-height);
+	width: 90%;
+
+	margin: .5em 0;
+
+	background: #fff;
 }
 
 overlays- context-menu .submenu-switch:after {
@@ -182,10 +233,6 @@ overlays- context-menu .submenu-switch:after {
 	line-height: 1;
 
 	opacity: .6;
-}
-
-overlays- .panel {
-	width: 240px;
 }
 
 overlays- h2,
@@ -216,6 +263,7 @@ overlays- input,
 overlays- button {
 	border: 0;
 
+	font-size: 1.2em;
 	text-align: center;
 	font-family: var(--font);
 	color: inherit;
@@ -235,9 +283,44 @@ overlays- input[type="number"] {
 	border-radius: var(--input-border-radius);
 	outline: 0;
 	box-shadow: 0 2px 12px -4px var(--col-green-0-7f) inset;
+}
 
+overlays- .panel input:not([type]):not(.erroneous),
+overlays- .panel input[type=""]:not(.erroneous),
+overlays- .panel input[type="text"]:not(.erroneous),
+overlays- .panel input[type="number"]:not(.erroneous) {
 	background: var(--col-green-1-7f);
 }
+
+overlays- .panel input.erroneous {
+	background: var(--col-yellow-1-7f);
+}
+
+overlays- context-menu input:not([type]):not(.erroneous),
+overlays- context-menu input[type=""]:not(.erroneous),
+overlays- context-menu input[type="text"]:not(.erroneous),
+overlays- context-menu input[type="number"]:not(.erroneous) {
+	background: var(--col-green-3-7f);
+}
+
+overlays- context-menu input.erroneous {
+	background: var(--col-yellow-3-7f);
+}
+
+overlays- input.error-flash {
+	animation: error-flash 1s linear;
+}
+
+@keyframes error-flash {
+	0% {
+		background: var(--error-flash-color);
+	}
+	50% {
+		background: var(--error-flash-color);
+	}
+}
+
+/* Buttons */
 
 overlays- button,
 overlays- ul.bars > li {
@@ -248,15 +331,20 @@ overlays- input[type="color"] {
 	width: 3em;
 }
 
-overlays- button,
+overlays- .panel button,
 overlays- input[type="color"] {
 	border-radius: var(--input-border-radius);
 }
 
-overlays- button,
+overlays- .panel button,
 overlays- input[type="color"],
 overlays- ul.bars > li {
 	box-shadow: 0 -4px 12px -8px var(--col-green-0-7f) inset;
+}
+
+overlays- .panel button,
+overlays- input[type="color"],
+overlays- ul.bars > li {
 	background: var(--col-green-1-7f);
 }
 
@@ -270,23 +358,6 @@ overlays- button:active,
 overlays- input[type="color"]:active,
 overlays- ul.bars > li.button:active {
 	background: var(--col-green-0-7f);
-}
-
-overlays- input.error-flash {
-	animation: error-flash 1s linear;
-}
-
-@keyframes error-flash {
-	0% {
-		background: var(--col-red-1-7f);
-	}
-	50% {
-		background: var(--col-red-1-7f);
-	}
-}
-
-overlays- input.erroneous {
-	background: var(--col-yellow-1-7f);
 }
 
 overlays- label {
@@ -346,7 +417,7 @@ overlays- ul.bars:empty:after {
 overlays- ul.bars > li {
 	display: flex;
 	align-items: center;
-	height: 2em;
+	height: 2.5em;
 	padding: 0 1em;
 	position: relative;
 	overflow: hidden;
@@ -366,14 +437,14 @@ overlays- ul.bars > li:nth-child(n + 2):before {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: calc(var(--separator-height) * -1 / 2);
+	top: 0;
 	margin: auto;
 	width: calc(100% - 20px);
 	height: var(--separator-height);
 
-	background: #ffffff7f;
+	z-index: 1;
 
-	--separator-height: 2px;
+	background: #ffffff7f;
 }
 
 /* Vector editor */
@@ -426,6 +497,12 @@ overlays- angle-editor form {
 }
 
 /* Panel layout */
+
+overlays- .panel {
+	width: 240px;
+
+	background: var(--col-green-2-cf);
+}
 
 overlays- .panel > *:not(:empty) {
 	padding: var(--panel-section-padding);
