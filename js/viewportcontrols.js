@@ -205,18 +205,7 @@ export function attachViewportControls(viewport, user) {
 
 		const initialPos = object.pos.clone();
 
-		const directions = [
-			new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
-			new Three.Vector3(1, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
-		];
-		const distance = viewport.camera.viewboxDistanceFrom(object.pos);
-		directions[0][3] = distance;
-		directions[1][3] = distance;
-		console.log(distance);
-
-		const [up, right] = viewport.camera.unprojectVector4(directions);
-
-		console.log(up, right);
+		const {up, right} = localUpAndRight(viewport, object);
 
 		let movementX = 0;
 		let movementY = 0;
@@ -224,9 +213,11 @@ export function attachViewportControls(viewport, user) {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
 
-			tiedActions.setObjectPos(object,
-					initialPos.add(right.multScalar(movementX * movementSensitivity))
-							.add(up.multScalar(-movementY * movementSensitivity)));
+			const newPos = initialPos
+					.add(right.multScalar(movementX * movementSensitivity))
+					.add(up.multScalar(-movementY * movementSensitivity));
+
+			tiedActions.setObjectPos(object, newPos);
 		};
 		element.addEventListener("mousemove", mousemove);
 
@@ -258,10 +249,7 @@ export function attachViewportControls(viewport, user) {
 		const initialRot = object.rot.clone();
 
 		// Bivector represents current viewing plane of 3D camera
-		const up = new Three.Vector3(0, 1, 0)
-				.applyQuaternion(viewport.camera3.quaternion);
-		const right = new Three.Vector3(1, 0, 0)
-				.applyQuaternion(viewport.camera3.quaternion);
+		const {up, right} = localUpAndRight(viewport, object);
 		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
 
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
@@ -332,6 +320,27 @@ export function attachViewportControls(viewport, user) {
 // Aux function for event handlers
 function preventDefault(event) {
 	event.preventDefault();
+}
+
+function localUpAndRight(viewport, object) {
+	// `distance3` allows zoom to affect movement speed
+	let distance3 = viewport.camera3Wrapper.viewboxDistanceFrom(object.pos);
+	if (viewport.camera3Wrapper.usingPerspective) {
+		distance3 /= 4; // Arbitrary correction constant
+	}
+	
+	const directions = [
+		new Three.Vector3(0, distance3, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
+		new Three.Vector3(distance3, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
+	];
+
+	// `distance4` allows unprojection to work correctly
+	const distance4 = viewport.camera.viewboxDistanceFrom(object.pos);
+	directions[0][3] = distance4;
+	directions[1][3] = distance4;
+
+	const [up, right] = viewport.camera.unprojectVector4(directions);
+	return {up, right};
 }
 
 const maxClickSelectDeviation = 4; // Maximum distance (px) the mouse can move for a click to be interpreted as a mouse select

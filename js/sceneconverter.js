@@ -625,6 +625,10 @@ export class Camera3Wrapper4 extends Object4 {
 		});
 	}
 
+	localForward() {
+		return this.object3.getWorldDirection().toArray(new Vector4());
+	}
+
 	get pos() {
 		return this.object3.position.toArray(new Vector4());
 	}
@@ -710,6 +714,17 @@ export class Camera3Wrapper4 extends Object4 {
 		this.object3 = camera;
 
 		return this;
+	}
+
+	/**
+	 * Calculates the distance of a point from this object's viewbox.
+	 * @param {Vector4} vector
+	 * @returns {number}  
+	 */
+	viewboxDistanceFrom(vector) {
+		return this.usingPerspective
+				? this.localForward().dot(vector.subtract(this.pos))
+				: this.radius;
 	}
 }
 

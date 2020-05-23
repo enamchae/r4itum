@@ -75,6 +75,9 @@ export class Scene4 {
     }
 };
 
+const priv = new WeakMap();
+const _ = key => priv.get(key);
+
 export class Object4 {
     /**
      * @type Scene4
@@ -163,6 +166,7 @@ export class Object4 {
 	}
 	
 	/**
+	 * Intended for cameras.
 	 * @returns Matrix5
 	 */
 	projectionMatrix() {
@@ -226,30 +230,72 @@ export class Object4 {
 	}
 }
 
-const priv = new WeakMap();
-const _ = key => priv.get(key);
-
 export class Camera4 extends Object4 {
 	name = "Camera";
 
-	usingPerspective = true;
-
-	fovAngle = Math.PI / 2;
-	radius = 1;
-
-	constructor(pos, rot, options={}) {
+	constructor(pos, rot, {
+		usingPerspective=true,
+		fovAngle=Math.PI / 2,
+		radius=1,
+	}={}) {
 		super(pos, rot);
 
-		Object.assign(this, options);
+		Object.assign(this, {
+			usingPerspective,
+			fovAngle,
+			radius,
+		});
 	}
 
-	/**
-	 * Calculates the distance of a point from this camera's viewbox.
-	 * @param {Vector4} vector
-	 * @returns {number}  
-	 */
-	viewboxDistanceFrom(vector) {
-		return this.localForward().dot(vector.subtract(this.pos));
+	get usingPerspective() {
+		return _(this).usingPerspective;
+	}
+
+	set usingPerspective(value) {
+		this.setUsingPerspective(value);
+	}
+
+	setUsingPerspective(value) {
+		_(this).usingPerspective = Boolean(value);
+		return this;
+	}
+
+	get fovAngle() {
+		return _(this).fovAngle;
+	}
+
+	set fovAngle(angle) {
+		this.setFovAngle(angle);
+	}
+
+	setFovAngle(angle) {
+		if (isNaN(angle)) {
+			throw new TypeError(`${angle} not a number`);
+		} else if (angle <= 0 || angle >= Math.PI) {
+			throw new RangeError(`${angle} out of FOV range`);
+		}
+
+		_(this).fovAngle = angle;
+		return this;
+	}
+
+	get radius() {
+		return _(this).radius;
+	}
+
+	set radius(radius) {
+		this.setRadius(radius);
+	}
+
+	setRadius(radius) {
+		if (isNaN(radius)) {
+			throw new TypeError(`${radius} not a number`);
+		} else if (radius <= 0) {
+			throw new RangeError(`${radius} not positive`);
+		}
+
+		_(this).radius = radius;
+		return this;
 	}
 	
 	/**
@@ -348,6 +394,17 @@ export class Camera4 extends Object4 {
 		}
 	
 		return destinationPoints;
+	}
+
+	/**
+	 * Calculates the distance of a point from this object's viewbox.
+	 * @param {Vector4} vector
+	 * @returns {number}  
+	 */
+	viewboxDistanceFrom(vector) {
+		return this.usingPerspective
+				? this.localForward().dot(vector.subtract(this.pos))
+				: this.radius;
 	}
 
 	clone() {
