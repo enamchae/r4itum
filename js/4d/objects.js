@@ -193,52 +193,6 @@ export class Object4 {
 			transformMatrix[3].concat([this.pos[3]]),
 		]);
 	}
-	
-	/**
-	 * 
-	 * @param {Vector4[]} points 
-	 * @param {object} [options] 
-	 * @param {Vector4[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
-	 * @param {function} [options.callback]
-	 * @returns {Vector4[]}
-	 */
-	projectVector4(points, {destinationPoints=[], callback}={}) {
-		const projectionMatrix = this.projectionMatrix();
-	
-		// Factor used to determine distortion due to focal length
-		const distortionFac = this.usingPerspective
-				? 1 / Math.tan(this.fovAngle / 2)
-				: 1 / this.radius;
-		
-		for (let i = 0; i < points.length; i++) {
-			const point = points[i];
-	
-			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.radius;
-	
-			// Now accounts for distance as well
-			// Shrink the transformed point depending on its distance from the camera 
-			const distanceDistortionFac = distortionFac / distance;
-	
-			// Why do I need to negate the coordinated in order for them to face the right direction?
-			const pointProjected = new Vector4(
-				-projectionMatrix.dot4WithColumn(point, 0) * distanceDistortionFac,
-				-projectionMatrix.dot4WithColumn(point, 1) * distanceDistortionFac,
-				-projectionMatrix.dot4WithColumn(point, 2) * distanceDistortionFac,
-				distance,
-			);
-	
-			// Reassign coordinates
-			if (destinationPoints[i]) {
-				destinationPoints[i].copy(pointProjected);
-			} else {
-				destinationPoints[i] = pointProjected;
-			}
-	
-			callback?.(pointProjected, i);
-		}
-	
-		return destinationPoints;
-	}
 
 	localSpace() {
 		return new Space3_4(this.localForward(), this.pos);
@@ -287,6 +241,98 @@ export class Camera4 extends Object4 {
 		super(pos, rot);
 
 		Object.assign(this, options);
+	}
+	
+	/**
+	 * 
+	 * @param {Vector4[]} points 
+	 * @param {object} [options] 
+	 * @param {Vector4[]} [options.destinationPoints] Group of projected point objects to which the locations of projected points should be copied.
+	 * @param {function} [options.callback]
+	 * @returns {Vector4[]}
+	 */
+	projectVector4(points, {destinationPoints=[], callback}={}) {
+		const projectionMatrix = this.projectionMatrix();
+	
+		// Factor used to determine distortion due to focal length
+		const distortionFac = this.usingPerspective
+				? 1 / Math.tan(this.fovAngle / 2)
+				: 1 / this.radius;
+		
+		for (let i = 0; i < points.length; i++) {
+			const point = points[i];
+	
+			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.radius;
+	
+			// Now accounts for distance as well
+			// Shrink the transformed point depending on its distance from the camera 
+			const distanceDistortionFac = distortionFac / distance;
+	
+			// Why do I need to negate the coordinated in order for them to face the right direction?
+			const pointProjected = new Vector4(
+				-projectionMatrix.dot4WithColumn(point, 0) * distanceDistortionFac,
+				-projectionMatrix.dot4WithColumn(point, 1) * distanceDistortionFac,
+				-projectionMatrix.dot4WithColumn(point, 2) * distanceDistortionFac,
+				distance,
+			);
+	
+			// Reassign coordinates
+			if (destinationPoints[i]) {
+				destinationPoints[i].copy(pointProjected);
+			} else {
+				destinationPoints[i] = pointProjected;
+			}
+	
+			callback?.(pointProjected, i);
+		}
+	
+		return destinationPoints;
+	}
+
+	/**
+	 * 
+	 * @param {Vector4[]} points 
+	 * @param {object} [options] 
+	 * @param {Vector4[]} [options.destinationPoints] 
+	 * @param {function} [options.callback]
+	 * @returns {Vector4[]}
+	 */
+	unprojectVector4(points, {destinationPoints=[], callback}={}) {
+		const unprojectionMatrix = this.projectionMatrix().inverse();
+	
+		// Factor used to determine distortion due to focal length
+		const distortionFac = this.usingPerspective
+				? 1 / Math.tan(this.fovAngle / 2)
+				: 1 / this.radius;
+		
+		for (let i = 0; i < points.length; i++) {
+			const point = points[i];
+	
+			// Formulas in `projectVector4`, but reversed
+
+			const distance = point[3];
+			const distanceDistortionFac = distortionFac / distance;
+
+			console.log(-point[0] / distanceDistortionFac, unprojectionMatrix[0]);
+	
+			const pointUnprojected = new Vector4(
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 0),
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 1),
+				unprojectionMatrix.dot4WithColumn(pointUndistorted, 2),
+				this.usingPerspective ? unprojectionMatrix.dot4WithColumn(pointUndistorted, 3) : this.radius,
+			);
+	
+			// Reassign coordinates
+			if (destinationPoints[i]) {
+				destinationPoints[i].copy(pointUnprojected);
+			} else {
+				destinationPoints[i] = pointUnprojected;
+			}
+	
+			callback?.(pointUnprojected, i);
+		}
+	
+		return destinationPoints;
 	}
 
 	clone() {
