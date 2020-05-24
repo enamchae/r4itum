@@ -180,7 +180,6 @@ overlays- context-menu button.row-item {
 	overflow: hidden;
 	white-space: nowrap;
 
-	user-select: none;
 	cursor: default;
 
 	font-size: 1.1em;
@@ -305,6 +304,12 @@ overlays- input[type="color"] {
 	width: 3em;
 }
 
+overlays- button,
+overlays- input[type="color"],
+overlays- ul.bars > li.button {
+	user-select: none;
+}
+
 overlays- .panel button,
 overlays- input[type="color"] {
 	border-radius: var(--input-border-radius);
@@ -397,7 +402,6 @@ overlays- ul.bars > li {
 	overflow: hidden;
 	white-space: nowrap;
 
-	user-select: none;
 	cursor: default;
 }
 
@@ -480,6 +484,18 @@ overlays- toolbar- button {
 	width: 4em;
 	height: 4em;
 	padding: .5em;
+}
+
+overlays- toolbar- button.subhighlighted,
+overlays- toolbar- button.subhighlighted:hover,
+overlays- toolbar- button.subhighlighted:active {
+	background: var(--col-green-2-7f);
+}
+
+overlays- toolbar- button.highlighted,
+overlays- toolbar- button.highlighted:hover,
+overlays- toolbar- button.highlighted:active {
+	background: var(--col-green-0-af);
 }
 
 overlays- toolbar- button + button:before {

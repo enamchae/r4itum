@@ -53,10 +53,67 @@ const handlers = {
 	},
 
 	setToolMode(toolMode, viewport) {
+		toolModeButtons.get(currentToolMode)?.classList.remove("highlighted");
+
 		this.clear();
 		toolMode(viewport);
+
+		toolModeButtons.get(toolMode)?.classList.add("highlighted");
+		currentToolMode = toolMode;
 	},
 };
+
+function toolbarHandler(toolMode, viewport) {
+	return () => {
+		handlers.setToolMode(toolMode, viewport);
+		viewport.focus();
+	};
+}
+
+/**
+ * @type ToolMode
+ */
+let currentToolMode = null;
+
+/**
+ * @type Map<ToolMode, HTMLButtonElement>
+ */
+const toolModeButtons = new Map();
+
+function linkToolModeButton(button, toolMode, viewport) {
+	toolModeButtons.set(toolMode, button);
+	button.addEventListener("click", toolbarHandler(toolMode, viewport));
+	return button;
+}
+
+function wrapHandler(handler, viewport, prerequisite, data={}) {
+	return event => {
+		if (!prerequisite(event, viewport)) return;
+		handler(Object.assign(data, {event, viewport}));
+	};
+}
+
+// /**
+//  * 
+//  * @param {function} mousemoveHandler 
+//  * @returns {function} 
+//  */
+// function wrapPointerLockAction(mousemoveHandler) {
+// 	return data => {
+// 		const event = data.event;
+// 		event.currentTarget.requestPointerLock();
+
+// 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+// 			mousemoveHandler(Object.assign(data, {mousemoveEvent}));
+// 		});
+		
+// 		handlers.add(event.currentTarget, "mouseup", () => {
+// 			document.exitPointerLock();
+// 			removeMousemove();
+// 		}, {once: true});
+// 	};
+// }
+
 
 /**
  * @typedef {function} ToolMode
@@ -203,49 +260,6 @@ const ToolMode = {
 	},
 };
 
-function wrapHandler(handler, viewport, prerequisite, data={}) {
-	return event => {
-		if (!prerequisite(event, viewport)) return;
-		handler(Object.assign(data, {event, viewport}));
-	};
-}
-
-// /**
-//  * 
-//  * @param {function} mousemoveHandler 
-//  * @returns {function} 
-//  */
-// function wrapPointerLockAction(mousemoveHandler) {
-// 	return data => {
-// 		const event = data.event;
-// 		event.currentTarget.requestPointerLock();
-
-// 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
-// 			mousemoveHandler(Object.assign(data, {mousemoveEvent}));
-// 		});
-		
-// 		handlers.add(event.currentTarget, "mouseup", () => {
-// 			document.exitPointerLock();
-// 			removeMousemove();
-// 		}, {once: true});
-// 	};
-// }
-
-/**
- * @type Map<ToolMode, HTMLButtonElement>
- */
-const toolModeButtons = new Map();
-
-function toolbarHandler(toolMode, viewport) {
-	return () => handlers.setToolMode(toolMode, viewport);
-}
-
-function linkToolModeButton(button, toolMode, viewport) {
-	toolModeButtons.set(toolMode, button);
-	button.addEventListener("click", toolbarHandler(toolMode, viewport));
-	return button;
-}
-
 /**
  * Object containing common listeners.
  */
@@ -256,6 +270,7 @@ const actions = {
 
 	turn3: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.turn3)?.classList.add("subhighlighted");
 
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
@@ -280,12 +295,14 @@ const actions = {
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
 			document.exitPointerLock();
+			associatedToolButton(actions.turn3)?.classList.remove("subhighlighted");
 			removeMousemove();
 		}, {once: true});
 	},
 
 	turn4: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.turn4)?.classList.add("subhighlighted");
 
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
@@ -308,12 +325,14 @@ const actions = {
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
 			document.exitPointerLock();
+			associatedToolButton(actions.turn4)?.classList.remove("subhighlighted");
 			removeMousemove();
 		}, {once: true});
 	},
 
 	pan3: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.pan3)?.classList.add("subhighlighted");
 
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
@@ -329,12 +348,14 @@ const actions = {
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
 			document.exitPointerLock();
+			associatedToolButton(actions.pan3)?.classList.remove("subhighlighted");
 			removeMousemove();
 		}, {once: true});
 	},
 
 	pan4: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.pan4)?.classList.add("subhighlighted");
 
 		const rightVectorX = new Vector4(-1, 0, 0, 0);
 		const rightVectorZ = new Vector4(0, 0, -1, 0);
@@ -351,6 +372,7 @@ const actions = {
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
 			document.exitPointerLock();
+			associatedToolButton(actions.pan4)?.classList.remove("subhighlighted");
 			removeMousemove();
 		}, {once: true});
 	},
@@ -358,6 +380,20 @@ const actions = {
 
 function angleFromMovement(mousemoveEvent) {
 	return Math.sqrt(mousemoveEvent.movementX ** 2 + mousemoveEvent.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
+}
+/**
+ * Semantically, which actions are "associated" with which tool modes.
+ * @type Map<Function, ToolMode>
+ */
+const actionAssociations = new Map([
+	[actions.select, ToolMode.SELECTION],
+	[actions.pan3, ToolMode.PAN3],
+	[actions.turn3, ToolMode.TURN3],
+	[actions.pan4, ToolMode.PAN4],
+	[actions.turn4, ToolMode.TURN4],
+]);
+function associatedToolButton(action) {
+	return toolModeButtons.get(actionAssociations.get(action));
 }
 
 export function attachViewportControls(viewport) {
@@ -557,7 +593,7 @@ export function attachViewportControls(viewport) {
 	toolbarObjectSection.button("Rotate");
 	toolbarObjectSection.button("Scale");
 
-	ToolMode.SELECTION(viewport);
+	handlers.setToolMode(ToolMode.SELECTION, viewport);
 }
 
 // Aux function for event handlers
