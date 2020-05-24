@@ -400,7 +400,10 @@ overlays- ul.bars > li {
 	user-select: none;
 	cursor: default;
 }
-overlays- ul.bars > li.highlighted {
+
+overlays- ul.bars > li.highlighted,
+overlays- ul.bars > li.highlighted:hover,
+overlays- ul.bars > li.highlighted:active {
 	background: var(--col-green-0-af);
 }
 

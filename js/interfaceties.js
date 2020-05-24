@@ -36,7 +36,7 @@ export default {
 		for (const object of userSelection.objects()) {
 			for (const viewport of Viewport.members) {
 				const rep = viewport.converter.objectReps.get(object);
-				rep?.setViewportState(SceneConverter.ViewportStates.DEFAULT);
+				rep?.setViewportState(SceneConverter.ViewportState.DEFAULT);
 			}
 			for (const objectList of ObjectList.members) {
 				objectList.unhighlightBar(object);

@@ -10,7 +10,7 @@ import {privMap} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 import * as ThreeMeshLine from "./_libraries/threeMeshLine.js";
 
-const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
+const meshMats = [ // Indexed by `SceneConverter.ViewportState`
 	[0x6A8177],
 	[0xFF7700],
 	[0xFFAA00],
@@ -19,7 +19,7 @@ const meshMats = [ // Indexed by `SceneConverter.ViewportStates`
 }));
 
 export class SceneConverter {
-	static ViewportStates = Object.freeze({
+	static ViewportState = Object.freeze({
 		DEFAULT: 0,
 		SELECTED: 1,
 		SELECTED_PRIMARY: 2,
@@ -39,11 +39,11 @@ export class SceneConverter {
 
 	static selectionState(object) {
 		if (object === userSelection.objectPrimary) {
-			return this.ViewportStates.SELECTED_PRIMARY;
+			return this.ViewportState.SELECTED_PRIMARY;
 		} else if (userSelection.objectsSubordinate.has(object)) {
-			return this.ViewportStates.SELECTED;
+			return this.ViewportState.SELECTED;
 		}
-		return this.ViewportStates.DEFAULT;
+		return this.ViewportState.DEFAULT;
 	}
 
 	constructor(scene4) {
@@ -189,7 +189,7 @@ class Mesh4Rep {
 	wire;
 	locus;
 
-	viewportState = SceneConverter.ViewportStates.DEFAULT;
+	viewportState = SceneConverter.ViewportState.DEFAULT;
 
 	constructor(object, converter) {
 		this.object = object;
@@ -200,7 +200,7 @@ class Mesh4Rep {
 
 	faceMat() {
 		let color;
-		if ([SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(this.viewportState)) {
+		if ([SceneConverter.ViewportState.SELECTED, SceneConverter.ViewportState.SELECTED_PRIMARY].includes(this.viewportState)) {
 			color = "1, 1, .875";
 		} else {
 			const tint = this.object.tint;
@@ -249,7 +249,7 @@ void main() {
 	}
 
 	locusMat() {
-		const color = [SceneConverter.ViewportStates.SELECTED, SceneConverter.ViewportStates.SELECTED_PRIMARY].includes(this.viewportState)
+		const color = [SceneConverter.ViewportState.SELECTED, SceneConverter.ViewportState.SELECTED_PRIMARY].includes(this.viewportState)
 				? "1, .65, 0"
 				: ".4, .5, .45";
 

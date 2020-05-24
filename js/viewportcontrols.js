@@ -25,13 +25,10 @@ const handlers = {
 	 */
 	add(targetElement, eventType, handler, options={}) {
 		let callback;
-
 		if (options.once) {
 			// Intercept the event handler to remove `once` listeners
 			callback = event => {
-				if (options.once) {
-					this.active.delete(key);
-				}
+				this.active.delete(key);
 				handler(event);
 			};
 		} else {
@@ -55,61 +52,198 @@ const handlers = {
 		this.active.clear();
 	},
 
-	setToolMode(viewport, toolMode) {
+	setToolMode(toolMode, viewport) {
 		this.clear();
 		toolMode(viewport);
 	},
 };
 
-let userToolMode = null;
 /**
- * @enum
+ * @typedef {function} ToolMode
  */
-const ToolModes = {
+
+/**
+ * @enum {ToolMode}
+ */
+const ToolMode = {
 	SELECTION: viewport => {
 		handlers.add(viewport.canvas, "click", wrapHandler(
 			actions.select,
 			viewport,
-			event => event.button !== 0
+			event => event.button === 0
 		));
 		
 		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.turn,
+			actions.turn3,
 			viewport,
-			event => event.button !== 1 || shiftPressed,
+			event => event.button === 1 && !shiftPressed && !altPressed,
 		));
 		
 		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.pan,
+			actions.turn4,
 			viewport,
-			event => event.button !== 1 || !shiftPressed,
+			event => event.button === 1 && !shiftPressed && altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan3,
+			viewport,
+			event => event.button === 1 && shiftPressed && !altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan4,
+			viewport,
+			event => event.button === 1 && shiftPressed && altPressed,
+		));
+	},
+
+	PAN3: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && !altPressed,
+		));
+
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && !altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && altPressed,
+		));
+	},
+
+	PAN4: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && !altPressed,
+		));
+
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && !altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && altPressed,
 		));
 	},
 
 	TURN3: viewport => {
 		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.turn,
+			actions.turn3,
 			viewport,
-			event => (event.button !== 0 && event.button !== 1) || shiftPressed,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && !altPressed,
+		));
+
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && altPressed,
 		));
 		
 		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.pan,
+			actions.pan3,
 			viewport,
-			event => (event.button !== 0 && event.button !== 1) || !shiftPressed,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && !altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && altPressed,
+		));
+	},
+
+	TURN4: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && !altPressed,
+		));
+
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && !shiftPressed && altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan4,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && !altPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan3,
+			viewport,
+			event => (event.button === 0 || event.button === 1) && shiftPressed && altPressed,
 		));
 	},
 };
 
-function wrapHandler(handler, viewport, ignoreCondition, data={}) {
+function wrapHandler(handler, viewport, prerequisite, data={}) {
 	return event => {
-		if (ignoreCondition(event, viewport)) return;
+		if (!prerequisite(event, viewport)) return;
 		handler(Object.assign(data, {event, viewport}));
 	};
 }
 
-function toolbarHandler(viewport, toolMode) {
-	return () => handlers.setToolMode(viewport, toolMode);
+// /**
+//  * 
+//  * @param {function} mousemoveHandler 
+//  * @returns {function} 
+//  */
+// function wrapPointerLockAction(mousemoveHandler) {
+// 	return data => {
+// 		const event = data.event;
+// 		event.currentTarget.requestPointerLock();
+
+// 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+// 			mousemoveHandler(Object.assign(data, {mousemoveEvent}));
+// 		});
+		
+// 		handlers.add(event.currentTarget, "mouseup", () => {
+// 			document.exitPointerLock();
+// 			removeMousemove();
+// 		}, {once: true});
+// 	};
+// }
+
+/**
+ * @type Map<ToolMode, HTMLButtonElement>
+ */
+const toolModeButtons = new Map();
+
+function toolbarHandler(toolMode, viewport) {
+	return () => handlers.setToolMode(toolMode, viewport);
+}
+
+function linkToolModeButton(button, toolMode, viewport) {
+	toolModeButtons.set(toolMode, button);
+	button.addEventListener("click", toolbarHandler(toolMode, viewport));
+	return button;
 }
 
 /**
@@ -120,45 +254,28 @@ const actions = {
 		viewport.raycastSelectFrom(event, viewport.canvas);
 	},
 
-	turn: ({event, viewport}) => {
+	turn3: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
 
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
-			const angle = Math.sqrt(event.movementX ** 2 + event.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
+			const angle = angleFromMovement(event);
 
-			if (altPressed) { // Rotate 4D camera
-				// `movementX` mapped to ZW (no CTRL) or XW (CTRL) plane (horizontal), `movementY` mapped to WY plane (vertical)
-				const plane = ctrlPressed
-						? [0, 0, 0, 0, -event.movementY, event.movementX]
-						: [0, 0, event.movementX, 0, -event.movementY, 0];
+			// Equivalent to 4D turn, but for 3D (and with `Rotor4.planeAngle`'s concept expanded here)
 
-				const rot = viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle));
-				// Reset any residual XY/XZ/YZ rotation
-				// rot[1] = 0;
-				// rot[2] = 0;
-				// rot[4] = 0;
-				// rot.normalize();
+			// `movementX` mapped to XZ plane (horizontal), `movementY` mapped to ZY plane (vertical)
+			const plane = new Vector4(-event.movementY, -event.movementX, 0).normalize().scale(Math.sin(angle / 2));
 
-				tiedActions.setObjectRot(viewport.camera, rot);
+			viewport.camera3.quaternion.multiply(new Three.Quaternion(plane[0], plane[1], plane[2], Math.cos(angle / 2)));
+			
+			// Reset any residual XY rotation
+			// temp disabled because it does not have the intended effect when not looking from the front
+			// viewport.camera3.quaternion.z = 0;
+			// viewport.camera3.quaternion.normalize();
 
-			} else { // Rotate 3D camera
-				// Equivalent to above, but for 3D (and with `Rotor4.planeAngle`'s concept expanded here)
-
-				// `movementX` mapped to XZ plane (horizontal), `movementY` mapped to ZY plane (vertical)
-				const plane = new Vector4(-event.movementY, -event.movementX, 0).normalize().scale(Math.sin(angle / 2));
-
-				viewport.camera3.quaternion.multiply(new Three.Quaternion(plane[0], plane[1], plane[2], Math.cos(angle / 2)));
-				
-				// Reset any residual XY rotation
-				// temp disabled because it does not have the intended effect when not looking from the front
-				// viewport.camera3.quaternion.z = 0;
-				// viewport.camera3.quaternion.normalize();
-
-				const quat = viewport.camera3.quaternion;
-				const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
-				tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, {resetting: false});
-			}
+			const quat = viewport.camera3.quaternion;
+			const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
+			tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, {resetting: false});
 		});
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
@@ -167,32 +284,69 @@ const actions = {
 		}, {once: true});
 	},
 
-	pan: ({event, viewport}) => {
+	turn4: ({event, viewport}) => {
+		event.currentTarget.requestPointerLock();
+
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
+			// Angle by which to turn the camera, in terms of mouse movement distance
+			const angle = angleFromMovement(event);
+
+			// `movementX` mapped to ZW (no CTRL) or XW (CTRL) plane (horizontal), `movementY` mapped to WY plane (vertical)
+			const plane = ctrlPressed
+					? [0, 0, 0, 0, -event.movementY, event.movementX]
+					: [0, 0, event.movementX, 0, -event.movementY, 0];
+
+			const rotNew = viewport.camera.rot.mult(Rotor4.planeAngle(plane, angle));
+			// Reset any residual XY/XZ/YZ rotation
+			// rot[1] = 0;
+			// rot[2] = 0;
+			// rot[4] = 0;
+			// rot.normalize();
+
+			tiedActions.setObjectRot(viewport.camera, rotNew);
+		});
+		
+		handlers.add(event.currentTarget, "mouseup", () => {
+			document.exitPointerLock();
+			removeMousemove();
+		}, {once: true});
+	},
+
+	pan3: ({event, viewport}) => {
+		event.currentTarget.requestPointerLock();
+
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
+			const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
+			const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
+
+			const posNew = viewport.camera3.position
+					.add(right.multiplyScalar(event.movementX * movementSensitivity))
+					.add(up.multiplyScalar(event.movementY * movementSensitivity))
+					.toArray(new Vector4());
+
+			tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
+		});
+		
+		handlers.add(event.currentTarget, "mouseup", () => {
+			document.exitPointerLock();
+			removeMousemove();
+		}, {once: true});
+	},
+
+	pan4: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
 
 		const rightVectorX = new Vector4(-1, 0, 0, 0);
 		const rightVectorZ = new Vector4(0, 0, -1, 0);
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
-			if (altPressed) { // Move 4D camera
-				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
-				const up = viewport.camera.localUp(); // local up vector
+			const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
+			const up = viewport.camera.localUp(); // local up vector
 
-				const posNew = viewport.camera.pos
-						.add(right.scale(event.movementX * movementSensitivity))
-						.add(up.scale(event.movementY * movementSensitivity));
+			const posNew = viewport.camera.pos
+					.add(right.scale(event.movementX * movementSensitivity))
+					.add(up.scale(event.movementY * movementSensitivity));
 
-				tiedActions.setObjectPos(viewport.camera, posNew);
-			} else { // Move 3D camera
-				const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
-				const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
-
-				const posNew = viewport.camera3.position
-						.add(right.multiplyScalar(event.movementX * movementSensitivity))
-						.add(up.multiplyScalar(event.movementY * movementSensitivity))
-						.toArray(new Vector4());
-
-				tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
-			}
+			tiedActions.setObjectPos(viewport.camera, posNew);
 		});
 		
 		handlers.add(event.currentTarget, "mouseup", () => {
@@ -201,6 +355,10 @@ const actions = {
 		}, {once: true});
 	},
 };
+
+function angleFromMovement(mousemoveEvent) {
+	return Math.sqrt(mousemoveEvent.movementX ** 2 + mousemoveEvent.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
+}
 
 export function attachViewportControls(viewport) {
 	const canvas = viewport.canvas;
@@ -376,20 +534,20 @@ export function attachViewportControls(viewport) {
 	const toolbar = qs("toolbar-", viewport);
 
 	const toolbarSelectionSection = toolbar.section().label("Selection");
-	toolbarSelectionSection.button("Select", toolbarHandler(viewport, ToolModes.SELECTION));
+	linkToolModeButton(toolbarSelectionSection.button("Select"), ToolMode.SELECTION, viewport);
 
 	toolbar.separator();
 
 	const toolbarCameraColumn = toolbar.column();
 
 	const toolbarCamera4Section = toolbarCameraColumn.section().label("4D camera controls");
-	toolbarCamera4Section.button("Pan 4D");
-	toolbarCamera4Section.button("Turn 4D");
+	linkToolModeButton(toolbarCamera4Section.button("Pan 4D"), ToolMode.PAN4, viewport);
+	linkToolModeButton(toolbarCamera4Section.button("Turn 4D"), ToolMode.TURN4, viewport);
 	toolbarCamera4Section.button("Zoom 4D");
 
 	const toolbarCamera3Section = toolbarCameraColumn.section().label("3D camera controls");
-	toolbarCamera3Section.button("Pan 3D");
-	toolbarCamera3Section.button("Turn 3D", toolbarHandler(viewport, ToolModes.TURN3));
+	linkToolModeButton(toolbarCamera3Section.button("Pan 3D"), ToolMode.PAN3, viewport);
+	linkToolModeButton(toolbarCamera3Section.button("Turn 3D"), ToolMode.TURN3, viewport);
 	toolbarCamera3Section.button("Zoom 3D");
 
 	toolbar.separator();
@@ -399,7 +557,7 @@ export function attachViewportControls(viewport) {
 	toolbarObjectSection.button("Rotate");
 	toolbarObjectSection.button("Scale");
 
-	ToolModes.SELECTION(viewport);
+	ToolMode.SELECTION(viewport);
 }
 
 // Aux function for event handlers
