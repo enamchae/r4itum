@@ -100,6 +100,7 @@ export class Object4 {
 		priv.set(this, {
 			pos,
 			rot,
+			rot2: new Rotor4(),
 			scl,
 		});
 	}
@@ -133,6 +134,15 @@ export class Object4 {
 
 	setRot(rot) {
 		this.rot.copy(rot);
+		return this;
+	}
+
+	get rot2() {
+		return _(this).rot2;
+	}
+
+	setRot2(rot) {
+		this.rot2.copy(rot);
 		return this;
 	}
 
@@ -439,7 +449,7 @@ export class Mesh4 extends Object4 {
 
 	transformedVerts() {
 		return this.geometry.verts.map(vert => {
-			return vert.multComponents(this.scl).multRotor(this.rot).add(this.pos);
+			return vert.multComponents(this.scl).multRotor(this.rot).multRotor(this.rot2).add(this.pos);
 		});
 	}
 }
