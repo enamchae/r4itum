@@ -511,6 +511,25 @@ export class ObjectPropertiesControl extends HTMLElement {
 						},
 						parent: this.textContainer,
 					}),
+
+					this.appendHeading("Face opacity", null),
+					createElement(new PositiveNumberEditor(object.opacity).override({
+						isValidValue(value, index) {
+							return 0 <= value && value <= 1;
+						},
+
+						inputStepValue() {
+							return 0.05;
+						},
+					}), {
+						listeners: {
+							update: [
+								[({detail}) => {
+									tiedActions.setObjectOpacity(object, detail.valueUsed);
+								}],
+							],
+						},
+					}),
 				],
 			});
 		}

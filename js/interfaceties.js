@@ -107,6 +107,14 @@ export default {
 		}
 	},
 
+	setObjectOpacity(object, opacity) {
+		object.opacity = opacity;
+		for (const viewport of Viewport.members) {
+			viewport.converter.objectReps.get(object)?.setMaterials();
+		}
+		Viewport.queueAllRerender();
+	},
+
 	setCameraRadius(camera, radius, {resetting=true, rerendering=true}={}) {
 		if (resetting) {
 			camera.radius = radius;

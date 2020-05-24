@@ -206,7 +206,7 @@ class ValueEditor extends HTMLElement {
 	}
 
 	classListIfDisabled(index) {
-		return this.isDisabled(index) ? ["disabled"] : [];
+		return this.isDisabled(index) ? ["hidden"] : [];
 	}
 
 	/**

@@ -198,16 +198,17 @@ class Mesh4Rep {
 		this.geometryProjected = new GeometryProjected(object.geometry);
 	}
 
-	faceMat() {
-		let color;
+	get faceColor() {
 		if ([SceneConverter.ViewportState.SELECTED, SceneConverter.ViewportState.SELECTED_PRIMARY].includes(this.viewportState)) {
-			color = "1, 1, .875";
+			return "1, 1, .875";
 		} else {
 			const tint = this.object.tint;
 			// Convert integer color into vector components
-			color = `${(0xFF & tint >>> 16) / 0xFF}, ${(0xFF & tint >>> 8) / 0xFF}, ${(0xFF & tint) / 0xFF}`;
+			return `${(0xFF & tint >>> 16) / 0xFF}, ${(0xFF & tint >>> 8) / 0xFF}, ${(0xFF & tint) / 0xFF}`;
 		}
-		
+	}
+
+	faceMat() {
 		return new Three.RawShaderMaterial({
 			vertexShader: `
 uniform mat4 modelViewMatrix;
@@ -235,12 +236,12 @@ void main() {
 		discard;
 	}
 
-	gl_FragColor = vec4(${color}, .2);
+	gl_FragColor = vec4(${this.faceColor}, ${this.object.opacity});
 }`,
 
-			transparent: true,
+			transparent: this.object.opacity < 1,
+			depthWrite: this.object.opacity >= 1,
 			side: Three.DoubleSide,
-			depthWrite: false,
 		});
 	}
 
