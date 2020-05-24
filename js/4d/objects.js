@@ -426,6 +426,7 @@ export class Mesh4 extends Object4 {
 	geometry;
 
 	tint = 0xFFFFFF;
+	opacity = 0.25;
 
 	constructor(geometry, pos, rot, scl) {
 		super(pos, rot, scl);

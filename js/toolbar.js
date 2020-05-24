@@ -33,9 +33,16 @@ export class ToolbarColumn extends HTMLElement {
 }
 
 export class ToolbarSection extends HTMLElement {
-	button(content) {
+	button(content, clickHandler) {
 		return createElement("button", {
 			textContent: content,
+
+			listeners: {
+				click: [
+					[clickHandler],
+				],
+			},
+
 			parent: this,
 		});
 	}

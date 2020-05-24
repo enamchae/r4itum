@@ -8,8 +8,79 @@ import tiedActions from "./interfaceties.js";
 import {qs} from "./util.js";
 import * as Three from "./_libraries/three.module.js";
 
+const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
+
+const handlers = {
+	active: new Set(),
+
+	/**
+	 * 
+	 * @param {*} targetElement 
+	 * @param {*} eventType 
+	 * @param {*} handler 
+	 * @param {*} [options] 
+	 * @returns {function} A function that removes the event listener.
+	 */
+	add(targetElement, eventType, handler, options) {
+		const key = {targetElement, eventType, handler, options};
+		this.active.add(key);
+		targetElement.addEventListener(eventType, handler, options);
+
+		return () => {
+			targetElement.removeEventListener(eventType, handler, options);
+			this.active.remove(key);
+		};
+	},
+
+	clear() {
+		for (const {targetElement, eventType, handler, options} of this.active) {
+			targetElement.removeEventListener(eventType, handler, options);
+		}
+		this.active.clear();
+	},
+
+	setToolMode(viewport, toolMode) {
+		console.log("j");
+		this.clear();
+		toolMode(viewport);
+	},
+};
+
+let userToolMode = null;
+/**
+ * @enum
+ */
+const ToolModes = {
+	SELECTION: viewport => {
+		handlers.add(viewport.canvas, "click", wrapHandler(
+			actions.select,
+			viewport,
+			event => event.button !== 0));
+	},
+};
+
+function wrapHandler(handler, viewport, ignoreCondition) {
+	return event => {
+		if (ignoreCondition(event, viewport)) return;
+		handler(event, viewport);
+	};
+}
+
+function toolbarHandler(viewport, toolMode) {
+	return () => handlers.setToolMode(viewport, toolMode);
+}
+
+/**
+ * Object containing common listeners.
+ */
+const actions = {
+	select: (event, viewport) => {
+		viewport.raycastSelectFrom(event, viewport.canvas);
+	},
+};
+
 export function attachViewportControls(viewport) {
-	const canvas = viewport.renderer.domElement;
+	const canvas = viewport.canvas;
 
 	// Coords recorder
 	// let x;
@@ -22,29 +93,6 @@ export function attachViewportControls(viewport) {
 	// Click to focus
 
 	viewport.tabIndex = -1; // element must have tabIndex to be focusable
-
-	// Click to select an object
-
-	{
-		let mousedownEvent = null; // Keeps track of the current mousedown event. `null` if there was no mousedown on the canvas
-	
-		canvas.addEventListener("mousedown", event => {
-			if (event.button !== 0 || transforming) return;
-	
-			mousedownEvent = event;
-		});
-	
-		canvas.addEventListener("mouseup", event => {
-			if (event.button !== 0 || !mousedownEvent) return;
-	
-			// Only treat this as a click if the mouse has moved less than `maxClickSelectDeviation` px away from mousedown
-			if ((event.clientX - mousedownEvent.clientX) ** 2 + (event.clientY - mousedownEvent.clientY) ** 2 <= maxClickSelectDeviation ** 2) {
-				viewport.raycastSelectFrom(mousedownEvent, canvas);
-			}
-	
-			mousedownEvent = null;
-		});
-	}
 
 	// Scroll-click to turn
 
@@ -321,17 +369,21 @@ export function attachViewportControls(viewport) {
 	const toolbar = qs("toolbar-", viewport);
 
 	const toolbarSelectionSection = toolbar.section();
-	toolbarSelectionSection.button("Select");
+	toolbarSelectionSection.button("Select", toolbarHandler(viewport, ToolModes.SELECTION));
+
+	toolbar.separator();
 
 	const toolbarCameraColumn = toolbar.column();
-
-	const toolbarCamera3Section = toolbarCameraColumn.section();
-	toolbarCamera3Section.button("Pan 3D");
-	toolbarCamera3Section.button("Turn 3D");
 
 	const toolbarCamera4Section = toolbarCameraColumn.section();
 	toolbarCamera4Section.button("Pan 4D");
 	toolbarCamera4Section.button("Turn 4D");
+	toolbarCamera4Section.button("Zoom 4D");
+
+	const toolbarCamera3Section = toolbarCameraColumn.section();
+	toolbarCamera3Section.button("Pan 3D");
+	toolbarCamera3Section.button("Turn 3D");
+	toolbarCamera3Section.button("Zoom 3D");
 
 	toolbar.separator();
 
@@ -339,6 +391,8 @@ export function attachViewportControls(viewport) {
 	toolbarObjectSection.button("Translate");
 	toolbarObjectSection.button("Rotate");
 	toolbarObjectSection.button("Scale");
+
+	ToolModes.SELECTION(viewport);
 }
 
 // Aux function for event handlers
@@ -366,9 +420,6 @@ function localUpAndRight(viewport, object) {
 	const [up, right] = viewport.camera.unprojectVector4(directions);
 	return {up, right};
 }
-
-const maxClickSelectDeviation = 4; // Maximum distance (px) the mouse can move for a click to be interpreted as a mouse select
-const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
 
 // Whether the modifier key is being held
 let altPressed = false;

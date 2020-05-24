@@ -66,8 +66,8 @@ main {
 	height: 100vh;
 	overflow: hidden;
 
-	min-width: 50em;
-	min-height: 40em;
+	min-width: 60em;
+	min-height: 60em;
 
 	font-family: var(--font);
 	font-weight: 400;
@@ -153,13 +153,13 @@ overlays- context-menu {
 }
 
 overlays- context-menu {
-	background: var(--col-green-0_5-df);
+	align-items: center;
 	position: absolute;
 	min-width: 140px;
 
 	border-radius: 1em;
 
-	align-items: center;
+	background: var(--col-green-0_5-df);
 	
 	--error-flash-color: var(--col-red-3-7f);
 }
@@ -430,25 +430,24 @@ overlays- toolbar- {
 
 	display: flex;
 	flex-direction: row-reverse;
-
-	pointer-events: initial;
 }
 
 overlays- toolbar- toolbar-column {
 	display: flex;
 	flex-direction: column;
-	margin: 0 .5em;
 }
 
 overlays- toolbar- toolbar-section {
 	display: flex;
-	margin: .25em .5em;
 	height: 100%;
+	margin: .25em .5em;
 	align-self: flex-end;
 
 	overflow: hidden;
 
 	border-radius: 1em;
+
+	pointer-events: initial;
 
 	background: var(--col-green-0_5-df);
 	box-shadow: var(--overlay-box-shadow);

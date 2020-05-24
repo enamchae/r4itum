@@ -191,6 +191,10 @@ export class Viewport extends HTMLElement {
 	get camera3() {
 		return this.camera3Wrapper.object3;
 	}
+
+	get canvas() {
+		return this.renderer.domElement;
+	}
 }
 
 function createObject(geometry, name) {
