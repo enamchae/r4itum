@@ -28,7 +28,7 @@ for (const tagName of [
 	"menu-bar",
 	"workspace-",
 	"overlays-",
-	"tool-button",
+	"toolbar-button-rack",
 	"separator-",
 ]) {
 	customElements.define(tagName, class extends HTMLElement {});

@@ -33,6 +33,16 @@ export class ToolbarColumn extends HTMLElement {
 }
 
 export class ToolbarSection extends HTMLElement {
+	buttonRack;
+	labelContainer;
+
+	constructor() {
+		super();
+
+		this.buttonRack = createElement("toolbar-button-rack", {parent: this});
+		this.labelContainer = createElement("label", {parent: this});
+	}
+
 	button(content, clickHandler) {
 		return createElement("button", {
 			textContent: content,
@@ -43,7 +53,17 @@ export class ToolbarSection extends HTMLElement {
 				],
 			},
 
-			parent: this,
+			parent: this.buttonRack,
 		});
+	}
+
+	label(text) {
+		this.labelContainer.textContent = text;
+		return this;
+	}
+
+	disable(disabled=true) {
+		this.buttonRack.classList.toggle("disabled", disabled);
+		return this;
 	}
 }

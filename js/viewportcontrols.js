@@ -77,9 +77,26 @@ const ToolModes = {
 			actions.turn,
 			viewport,
 			event => event.button !== 1 || shiftPressed,
-			{
-				mouseupIgnoreCondition: event => event.button !== 1,
-			},
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan,
+			viewport,
+			event => event.button !== 1 || !shiftPressed,
+		));
+	},
+
+	TURN3: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn,
+			viewport,
+			event => (event.button !== 0 && event.button !== 1) || shiftPressed,
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.pan,
+			viewport,
+			event => (event.button !== 0 && event.button !== 1) || !shiftPressed,
 		));
 	},
 };
@@ -103,7 +120,7 @@ const actions = {
 		viewport.raycastSelectFrom(event, viewport.canvas);
 	},
 
-	turn: ({event, viewport, mouseupIgnoreCondition}) => {
+	turn: ({event, viewport}) => {
 		event.currentTarget.requestPointerLock();
 
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
@@ -140,56 +157,22 @@ const actions = {
 
 				const quat = viewport.camera3.quaternion;
 				const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
-				tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, false);
+				tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, {resetting: false});
 			}
 		});
 		
-		handlers.add(event.currentTarget, "mouseup", wrapHandler(
-			actions.turnMouseup,
-			viewport,
-			mouseupIgnoreCondition,
-			{removeMousemove},
-		), {once: true});
+		handlers.add(event.currentTarget, "mouseup", () => {
+			document.exitPointerLock();
+			removeMousemove();
+		}, {once: true});
 	},
 
-	turnMouseup: ({removeMousemove}) => {
-		document.exitPointerLock();
-		removeMousemove();
-	},
-};
-
-export function attachViewportControls(viewport) {
-	const canvas = viewport.canvas;
-
-	// Coords recorder
-	// let x;
-	// let y;
-	// element.addEventListener("mousemove", event => {
-	// 	x = event.clientX;
-	// 	y = event.clientY;
-	// });
-
-	// Click to focus
-
-	viewport.tabIndex = -1; // element must have tabIndex to be focusable
-
-	// SHIFT + scroll-click to pan
-
-	{
-		let holding = false;
-		canvas.addEventListener("mousedown", event => {
-			if (event.button !== 1 || !shiftPressed) return;
-
-			holding = true;
-		});
+	pan: ({event, viewport}) => {
+		event.currentTarget.requestPointerLock();
 
 		const rightVectorX = new Vector4(-1, 0, 0, 0);
 		const rightVectorZ = new Vector4(0, 0, -1, 0);
-		canvas.addEventListener("mousemove", event => {
-			if (!holding) return;
-
-			canvas.requestPointerLock();
-
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			if (altPressed) { // Move 4D camera
 				const right = viewport.camera.localVector(ctrlPressed ? rightVectorZ : rightVectorX); // local right vector
 				const up = viewport.camera.localUp(); // local up vector
@@ -210,17 +193,27 @@ export function attachViewportControls(viewport) {
 
 				tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
 			}
-			viewport.queueRender();
 		});
-
-		canvas.addEventListener("mouseup", event => {
-			if (event.button !== 1 || !holding) return;
-
+		
+		handlers.add(event.currentTarget, "mouseup", () => {
 			document.exitPointerLock();
+			removeMousemove();
+		}, {once: true});
+	},
+};
 
-			holding = false;
-		});
-	}
+export function attachViewportControls(viewport) {
+	const canvas = viewport.canvas;
+
+	// Coords recorder
+	// let x;
+	// let y;
+	// element.addEventListener("mousemove", event => {
+	// 	x = event.clientX;
+	// 	y = event.clientY;
+	// });
+
+	viewport.tabIndex = -1; // element must have tabIndex to be focusable (for keyboard events to fire)
 
 	// Scroll to move forward
 
@@ -228,22 +221,20 @@ export function attachViewportControls(viewport) {
 		if (altPressed) {
 			if (viewport.camera.usingPerspective) {
 				viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
-				tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, false);
+				tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, {resetting: false});
 			} else {
 				tiedActions.setCameraRadius(viewport.camera, viewport.camera.radius * 1.25 ** (event.deltaY / 100));
 			}
 		} else {
 			if (viewport.camera3Wrapper.usingPerspective) {
 				viewport.camera3.translateZ(event.deltaY * .5 * movementSensitivity);
-				tiedActions.setObjectPos(viewport.camera3Wrapper, viewport.camera3.position.toArray(new Vector4()), false);
+				tiedActions.setObjectPos(viewport.camera3Wrapper, viewport.camera3.position.toArray(new Vector4()), {resetting: false});
 
 				// viewport.camera3.updateProjectionMatrix();
 			} else {
 				tiedActions.setCameraRadius(viewport.camera3Wrapper, viewport.camera3Wrapper.radius * 1.25 ** (event.deltaY / 100));
 			}
 		}
-
-		viewport.queueRender();
 		event.preventDefault();
 	});
 
@@ -384,26 +375,26 @@ export function attachViewportControls(viewport) {
 
 	const toolbar = qs("toolbar-", viewport);
 
-	const toolbarSelectionSection = toolbar.section();
+	const toolbarSelectionSection = toolbar.section().label("Selection");
 	toolbarSelectionSection.button("Select", toolbarHandler(viewport, ToolModes.SELECTION));
 
 	toolbar.separator();
 
 	const toolbarCameraColumn = toolbar.column();
 
-	const toolbarCamera4Section = toolbarCameraColumn.section();
+	const toolbarCamera4Section = toolbarCameraColumn.section().label("4D camera controls");
 	toolbarCamera4Section.button("Pan 4D");
 	toolbarCamera4Section.button("Turn 4D");
 	toolbarCamera4Section.button("Zoom 4D");
 
-	const toolbarCamera3Section = toolbarCameraColumn.section();
+	const toolbarCamera3Section = toolbarCameraColumn.section().label("3D camera controls");
 	toolbarCamera3Section.button("Pan 3D");
-	toolbarCamera3Section.button("Turn 3D");
+	toolbarCamera3Section.button("Turn 3D", toolbarHandler(viewport, ToolModes.TURN3));
 	toolbarCamera3Section.button("Zoom 3D");
 
 	toolbar.separator();
 
-	const toolbarObjectSection = toolbar.section();
+	const toolbarObjectSection = toolbar.section().label("Object transforms");
 	toolbarObjectSection.button("Translate");
 	toolbarObjectSection.button("Rotate");
 	toolbarObjectSection.button("Scale");

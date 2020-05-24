@@ -65,7 +65,7 @@ export default {
 		Viewport.queueAllRerender();
 	},
 
-	setObjectPos(object, pos, resetting=true) {
+	setObjectPos(object, pos, {resetting=true, rerendering=true}={}) {
 		if (resetting) {
 			object.setPos(pos);
 		}
@@ -74,10 +74,12 @@ export default {
 				panel.posEditor.refill(pos);
 			}
 		}
-		Viewport.queueAllRerender();
+		if (rerendering) {
+			Viewport.queueAllRerender();
+		}
 	},
 
-	setObjectRot(object, rot, resetting=true) {
+	setObjectRot(object, rot, {resetting=true, rerendering=true}={}) {
 		if (resetting) {
 			object.setRot(rot);
 		}
@@ -86,10 +88,12 @@ export default {
 				panel.rotEditor.refill(rot);
 			}
 		}
-		Viewport.queueAllRerender();
+		if (rerendering) {
+			Viewport.queueAllRerender();
+		}
 	},
 
-	setObjectScl(object, scl, resetting=true) {
+	setObjectScl(object, scl, {resetting=true, rerendering=true}={}) {
 		if (resetting) {
 			object.setScl(scl);
 		}
@@ -98,16 +102,22 @@ export default {
 				panel.sclEditor.refill(scl);
 			}
 		}
-		Viewport.queueAllRerender();
+		if (rerendering) {
+			Viewport.queueAllRerender();
+		}
 	},
 
-	setCameraRadius(camera, radius) {
-		camera.radius = radius;
+	setCameraRadius(camera, radius, {resetting=true, rerendering=true}={}) {
+		if (resetting) {
+			camera.radius = radius;
+		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(camera)) {
 				panel.radiusEditor?.refill(radius);
 			}
 		}
-		Viewport.queueAllRerender();
+		if (rerendering) {
+			Viewport.queueAllRerender();
+		}
 	}
 };

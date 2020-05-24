@@ -438,10 +438,15 @@ overlays- toolbar- toolbar-column {
 }
 
 overlays- toolbar- toolbar-section {
+	align-self: flex-end;
+	display: flex;
+	flex-direction: column-reverse;
+	margin: .5em .5em;
+}
+
+overlays- toolbar- toolbar-section toolbar-button-rack {
 	display: flex;
 	height: 100%;
-	margin: .25em .5em;
-	align-self: flex-end;
 
 	overflow: hidden;
 
@@ -451,6 +456,17 @@ overlays- toolbar- toolbar-section {
 
 	background: var(--col-green-0_5-df);
 	box-shadow: var(--overlay-box-shadow);
+}
+
+overlays- toolbar- toolbar-section label {
+	min-height: 1em;
+	margin-bottom: .25em;
+
+	font-style: italic;
+	font-weight: 800;
+	white-space: break-word;
+
+	color: #0000007f;
 }
 
 overlays- toolbar- button {
