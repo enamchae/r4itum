@@ -10,37 +10,52 @@ import * as Three from "./_libraries/three.module.js";
 
 const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
 
+setInterval(() => console.log(handlers), 5000);
+
 const handlers = {
 	active: new Set(),
 
 	/**
-	 * 
-	 * @param {*} targetElement 
-	 * @param {*} eventType 
-	 * @param {*} handler 
-	 * @param {*} [options] 
-	 * @returns {function} A function that removes the event listener.
+	 * Attaches an event listener to an event target and records it.
+	 * @param {EventTarget} targetElement 
+	 * @param {string} eventType 
+	 * @param {function} handler 
+	 * @param {object} [options] 
+	 * @returns {function} A function that removes the added event listener.
 	 */
-	add(targetElement, eventType, handler, options) {
-		const key = {targetElement, eventType, handler, options};
+	add(targetElement, eventType, handler, options={}) {
+		let callback;
+
+		if (options.once) {
+			// Intercept the event handler to remove `once` listeners
+			callback = event => {
+				if (options.once) {
+					this.active.delete(key);
+				}
+				handler(event);
+			};
+		} else {
+			callback = handler;
+		}
+
+		const key = {targetElement, eventType, callback, options};
 		this.active.add(key);
-		targetElement.addEventListener(eventType, handler, options);
+		targetElement.addEventListener(eventType, callback, options);
 
 		return () => {
-			targetElement.removeEventListener(eventType, handler, options);
-			this.active.remove(key);
+			targetElement.removeEventListener(eventType, callback, options);
+			this.active.delete(key);
 		};
 	},
 
 	clear() {
-		for (const {targetElement, eventType, handler, options} of this.active) {
-			targetElement.removeEventListener(eventType, handler, options);
+		for (const {targetElement, eventType, callback, options} of this.active) {
+			targetElement.removeEventListener(eventType, callback, options);
 		}
 		this.active.clear();
 	},
 
 	setToolMode(viewport, toolMode) {
-		console.log("j");
 		this.clear();
 		toolMode(viewport);
 	},
@@ -55,14 +70,24 @@ const ToolModes = {
 		handlers.add(viewport.canvas, "click", wrapHandler(
 			actions.select,
 			viewport,
-			event => event.button !== 0));
+			event => event.button !== 0
+		));
+		
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.turn,
+			viewport,
+			event => event.button !== 1 || shiftPressed,
+			{
+				mouseupIgnoreCondition: event => event.button !== 1,
+			},
+		));
 	},
 };
 
-function wrapHandler(handler, viewport, ignoreCondition) {
+function wrapHandler(handler, viewport, ignoreCondition, data={}) {
 	return event => {
 		if (ignoreCondition(event, viewport)) return;
-		handler(event, viewport);
+		handler(Object.assign(data, {event, viewport}));
 	};
 }
 
@@ -74,41 +99,14 @@ function toolbarHandler(viewport, toolMode) {
  * Object containing common listeners.
  */
 const actions = {
-	select: (event, viewport) => {
+	select: ({event, viewport}) => {
 		viewport.raycastSelectFrom(event, viewport.canvas);
 	},
-};
 
-export function attachViewportControls(viewport) {
-	const canvas = viewport.canvas;
+	turn: ({event, viewport, mouseupIgnoreCondition}) => {
+		event.currentTarget.requestPointerLock();
 
-	// Coords recorder
-	// let x;
-	// let y;
-	// element.addEventListener("mousemove", event => {
-	// 	x = event.clientX;
-	// 	y = event.clientY;
-	// });
-
-	// Click to focus
-
-	viewport.tabIndex = -1; // element must have tabIndex to be focusable
-
-	// Scroll-click to turn
-
-	{
-		let holding = false;
-		canvas.addEventListener("mousedown", event => {
-			if (event.button !== 1 || shiftPressed) return;
-
-			canvas.requestPointerLock();
-
-			holding = true;
-		});
-
-		canvas.addEventListener("mousemove", event => {
-			if (!holding) return;
-
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
 			const angle = Math.sqrt(event.movementX ** 2 + event.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
 
@@ -144,18 +142,36 @@ export function attachViewportControls(viewport) {
 				const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
 				tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, false);
 			}
-
-			viewport.queueRender();
 		});
+		
+		handlers.add(event.currentTarget, "mouseup", wrapHandler(
+			actions.turnMouseup,
+			viewport,
+			mouseupIgnoreCondition,
+			{removeMousemove},
+		), {once: true});
+	},
 
-		canvas.addEventListener("mouseup", event => {
-			if (event.button !== 1 || !holding) return;
+	turnMouseup: ({removeMousemove}) => {
+		document.exitPointerLock();
+		removeMousemove();
+	},
+};
 
-			document.exitPointerLock();
+export function attachViewportControls(viewport) {
+	const canvas = viewport.canvas;
 
-			holding = false;
-		});
-	}
+	// Coords recorder
+	// let x;
+	// let y;
+	// element.addEventListener("mousemove", event => {
+	// 	x = event.clientX;
+	// 	y = event.clientY;
+	// });
+
+	// Click to focus
+
+	viewport.tabIndex = -1; // element must have tabIndex to be focusable
 
 	// SHIFT + scroll-click to pan
 
