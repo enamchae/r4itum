@@ -271,25 +271,25 @@ function addDefaultCameraControls(viewport) {
 	handlers.add(viewport.canvas, "mousedown", wrapHandler(
 		actions.turn3,
 		viewport,
-		event => event.button === 1 && !shiftPressed && !altPressed,
+		event => event.button === 1 && !shiftPressed && !altPressed && !transforming,
 	));
 	
 	handlers.add(viewport.canvas, "mousedown", wrapHandler(
 		actions.turn4,
 		viewport,
-		event => event.button === 1 && !shiftPressed && altPressed,
+		event => event.button === 1 && !shiftPressed && altPressed && !transforming,
 	));
 	
 	handlers.add(viewport.canvas, "mousedown", wrapHandler(
 		actions.pan3,
 		viewport,
-		event => event.button === 1 && shiftPressed && !altPressed,
+		event => event.button === 1 && shiftPressed && !altPressed && !transforming,
 	));
 	
 	handlers.add(viewport.canvas, "mousedown", wrapHandler(
 		actions.pan4,
 		viewport,
-		event => event.button === 1 && shiftPressed && altPressed,
+		event => event.button === 1 && shiftPressed && altPressed && !transforming,
 	));
 }
 
@@ -435,7 +435,7 @@ const actions = {
 			tiedActions.setObjectPos(object, newPos);
 		});
 
-		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectPos(object, initialPos);
 
@@ -449,7 +449,8 @@ const actions = {
 			document.exitPointerLock();
 			associatedToolButton(actions.translate)?.classList.remove("subhighlighted");
 			removeMousemove();
-		}, {once: true});
+			removeMousedown();
+		});
 	},
 
 	rotate: ({event, viewport}) => {
@@ -477,7 +478,7 @@ const actions = {
 			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
 		});
 
-		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectRot(object, initialRot);
 				// Don't show context menu on right-click
@@ -490,7 +491,8 @@ const actions = {
 			document.exitPointerLock();
 			associatedToolButton(actions.rotate)?.classList.remove("subhighlighted");
 			removeMousemove();
-		}, {once: true});
+			removeMousedown();
+		});
 	},
 
 	scale: ({event}) => {
@@ -509,7 +511,7 @@ const actions = {
 			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
 		});
 
-		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectScl(object, initialScale);
 				// Don't show context menu on right-click
@@ -522,7 +524,8 @@ const actions = {
 			document.exitPointerLock();
 			associatedToolButton(actions.scale)?.classList.remove("subhighlighted");
 			removeMousemove();
-		}, {once: true});
+			removeMousedown();
+		});
 	},
 };
 

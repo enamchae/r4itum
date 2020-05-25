@@ -2,7 +2,7 @@
  * @file Handles storage and operation of 4D mesh geometry.
  */
 
-import {Vector4} from "./vector.js";
+import {Vector4, Bivector4} from "./vector.js";
 
 /**
  * Stores a set of 4D points and how they are connected. Used to define a 4D polygon mesh.
@@ -21,8 +21,7 @@ export class Geometry4 {
 		this.verts = verts;
 
 		this.facets = facets;
-	
-		priv.set(this, {});
+
 		this.resetCache();
 	}
 
@@ -90,6 +89,69 @@ export class Geometry4 {
 		return faces;
 	}
 
+	// similar to `Three.EdgesGeometry` constructor
+	edgesMerged(angleThreshold=0.02) {
+		if (_(this).edgesMergedThreshold === angleThreshold) {
+			return _(this).edgesMergedCache;
+		}
+
+		const edgesToFaces = new Map();
+		const includedEdges = new Map();
+		const permanentIncludedEdges = new Set();
+
+		for (const face of this.faces()) {
+			for (let i = 0; i < face.length; i++) {
+				const edge = [face[i], face[(i + 1) % face.length]];
+				const primitive = vertIndexArrayAsPrimitive(edge);
+
+				if (permanentIncludedEdges.has(primitive)) continue;
+				
+				let faceList = edgesToFaces.get(primitive);
+				if (!faceList) {
+					faceList = [];
+					edgesToFaces.set(primitive, faceList);
+				}
+
+				if (faceList.length === 0) {
+					// Include any edge with less than 2 faces
+					includedEdges.set(primitive, edge);
+
+				// Already a face present
+				} else if (faceList.length === 1) {
+					// Determine if the angle between the faces is under the threshold
+					const bivector0 = bivectorFromFace(this, faceList[0]).normalize();
+					const bivector1 = bivectorFromFace(this, face).normalize();
+					const angle = Math.acos(bivector0.dot(bivector1));
+
+					// Angle under threshold
+					if (angle < angleThreshold || Math.PI - angle < angleThreshold) {
+						includedEdges.delete(primitive);
+					} else {
+						edgesToFaces.delete(primitive);
+						permanentIncludedEdges.add(primitive);
+						continue;
+					}
+
+				// Already 2 faces present
+				} else if (faceList.length === 2) {
+					// Include any edge with more than 2 faces
+					edgesToFaces.delete(primitive);
+					includedEdges.set(primitive, edge);
+					permanentIncludedEdges.add(primitive);
+					continue;
+				}
+
+				faceList.push(face);
+			}
+		}
+
+		const edgesMerged = [...includedEdges.values()];
+
+		_(this).edgesMergedThreshold = angleThreshold;
+		_(this).edgesMergedCache = edgesMerged;
+		return edgesMerged;
+	}
+
 	/**
 	 * @returns {Map<number, Set<number>>}
 	 */
@@ -123,16 +185,71 @@ export class Geometry4 {
 	}
 
 	resetCache() {
-		Object.assign(_(this), {
-			edgesCache: null,
-			facesCache: null,
-		});
+		priv.set(this, {});
+		return this;
 	}
 }
 
 // Alternative to private fields
 const priv = new WeakMap();
 const _ = key => priv.get(key);
+
+/**
+ * 
+ * @param {Geometry4} geometry 
+ * @param {number[]} vertIndexes 
+ * @returns {Bivector4} 
+ */
+function bivectorFromFace(geometry, vertIndexes) {
+	const dir0 = geometry.verts[vertIndexes[1]].subtract(geometry.verts[vertIndexes[0]]);
+	const dir1 = geometry.verts[vertIndexes[2]].subtract(geometry.verts[vertIndexes[0]]);
+
+	return dir0.outer(dir1);
+}
+
+/* export class Edge4 extends Array {
+	constructor(vert0, vert1) {
+		super();
+
+		this.push(vert0, vert1);
+	}
+}
+
+export class Face4 extends Array {
+	constructor(...vertIndexes) {
+		super();
+
+		this.push(...vertIndexes);
+	}
+
+	*edges() {
+		for (let i = 0; i < this.length; i++) {
+			yield new Edge4(i, i % this.length);
+		}
+	}
+
+	*triangles() {
+		for (let i = 2; i < this.length; i++) {
+			yield new Face4(0, i - 1, i);
+		}
+	}
+
+	*triangulatedVertexIndexes() {
+		for (let i = 2; i < this.length; i++) {
+			yield 0;
+			yield i - 1;
+			yield i;
+		}
+	}
+}
+
+class Cell4 extends Array {
+	constructor(...faceIndexes) {
+		super();
+
+		this.push(...faceIndexes);
+	}
+} */
 
 /**
  * Adds a vertex index array to a map, if another index array equivalent to it is not already present.
@@ -161,12 +278,12 @@ function vertIndexArrayAsPrimitive(vertIndexes) {
 	const bitsPerComponent = 32n; // arbitrary; can practically be at most 53n (max safe integer for doubles)
 
 	// Sort the array so that facets with the same vertices, but not in the same direction, are no longer distinguished
-	vertIndexes.sort((a, b) => a - b);
+	const vertIndexesClone = vertIndexes.slice().sort((a, b) => a - b);
 
-	let primitive = BigInt(vertIndexes[0]);
-	for (let i = 1; i < vertIndexes.length; i++) {
+	let primitive = BigInt(vertIndexesClone[0]);
+	for (let i = 1; i < vertIndexesClone.length; i++) {
 		primitive <<= bitsPerComponent;
-		primitive += (BigInt(vertIndexes[i]) + 1n) % bitsPerComponent; // Add 1 so different-length lists are not considered equal
+		primitive += (BigInt(vertIndexesClone[i]) + 1n) % bitsPerComponent; // Add 1 so different-length lists are not considered equal
 	}
 	
 	return primitive;

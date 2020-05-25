@@ -340,6 +340,19 @@ export class Bivector4 extends Polymultivector {
 	opposite() {
 		return new Bivector4(-this[0], -this[1], -this[2], -this[3], -this[4], -this[5]);
 	}
+
+	/**
+	 * 
+	 * @param {Bivector4} bivector 
+	 * @returns {number} 
+	 */
+	dot(bivector) {
+		let cumsum = 0;
+		for (let i = 0; i < this.length; i++) {
+			cumsum += this[i] * bivector[i];
+		}
+		return cumsum;
+	}
 }
 
 /**
@@ -370,10 +383,11 @@ export class Vector4 extends Polymultivector {
 	 * @returns {number} 
 	 */
 	dot(vector) {
-		return this[0] * vector[0]
-				+ this[1] * vector[1]
-				+ this[2] * vector[2]
-				+ this[3] * vector[3];
+		let cumsum = 0;
+		for (let i = 0; i < this.length; i++) {
+			cumsum += this[i] * vector[i];
+		}
+		return cumsum;
 	}
 
 	/**

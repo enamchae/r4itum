@@ -331,7 +331,6 @@ export class RotorEditor extends ValueEditor {
 	}
 
 	onanglechange(event) {
-		console.log(event);
 		const detailOld = event.detail;
 		const detail = { // Repurpose the detail object for this rotor editor
 			currentTarget: this,
@@ -427,7 +426,6 @@ grid-column: ${RotorEditor.gridCols[i - 1]};`;
 	} */
 
 	get value() {
-		console.log(this.lastAcceptedValues[0]);
 		return Rotor4.planeAngle(this.lastAcceptedValues.slice(1), this.lastAcceptedValues[0] * Math.PI / 180);
 	}
 }
