@@ -12,10 +12,10 @@ customElements.define("context-menus", ContextMenuContainer);
 customElements.define("context-menu", ContextMenu);
 
 import {Viewport, ObjectList, ObjectPropertiesControl, CameraPropertiesControl} from "./interface.js";
-customElements.define("viewport-", Viewport);
 customElements.define("object-list", ObjectList);
 customElements.define("object-properties", ObjectPropertiesControl);
 customElements.define("camera-properties", CameraPropertiesControl);
+customElements.define("viewport-", Viewport);
 
 import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 customElements.define("vector-editor", VectorEditor);

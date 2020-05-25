@@ -62,6 +62,10 @@ export default {
 			panel.setTargetObject(userSelection.objectPrimary);
 		}
 
+		for (const viewport of Viewport.members) {
+			viewport.toolbarObjectSection?.disable(!userSelection.objectPrimary);
+		}
+
 		Viewport.queueAllRerender();
 	},
 

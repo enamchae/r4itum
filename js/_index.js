@@ -6,5 +6,3 @@
 
 import "./ce.js";
 import {qs} from "./util.js";
-
-const main = qs("main");

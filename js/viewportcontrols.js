@@ -10,8 +10,6 @@ import * as Three from "./_libraries/three.module.js";
 
 const movementSensitivity = 1 / 64; // Factor by which to multiply turning/panning movements
 
-setInterval(() => console.log(handlers), 5000);
-
 const handlers = {
 	active: new Set(),
 
@@ -70,6 +68,8 @@ function toolbarHandler(toolMode, viewport) {
 	};
 }
 
+let transforming = false;
+
 /**
  * @type ToolMode
  */
@@ -127,32 +127,10 @@ const ToolMode = {
 		handlers.add(viewport.canvas, "click", wrapHandler(
 			actions.select,
 			viewport,
-			event => event.button === 0
+			event => event.button === 0,
 		));
 		
-		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.turn3,
-			viewport,
-			event => event.button === 1 && !shiftPressed && !altPressed,
-		));
-		
-		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.turn4,
-			viewport,
-			event => event.button === 1 && !shiftPressed && altPressed,
-		));
-		
-		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.pan3,
-			viewport,
-			event => event.button === 1 && shiftPressed && !altPressed,
-		));
-		
-		handlers.add(viewport.canvas, "mousedown", wrapHandler(
-			actions.pan4,
-			viewport,
-			event => event.button === 1 && shiftPressed && altPressed,
-		));
+		addDefaultCameraControls(viewport);
 	},
 
 	PAN3: viewport => {
@@ -258,7 +236,62 @@ const ToolMode = {
 			event => (event.button === 0 || event.button === 1) && shiftPressed && altPressed,
 		));
 	},
+
+	TRANSLATE: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.translate,
+			viewport,
+			event => event.button === 0 && !transforming,
+		));
+		
+		addDefaultCameraControls(viewport);
+	},
+
+	ROTATE: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.rotate,
+			viewport,
+			event => event.button === 0 && !transforming,
+		));
+		
+		addDefaultCameraControls(viewport);
+	},
+
+	SCALE: viewport => {
+		handlers.add(viewport.canvas, "mousedown", wrapHandler(
+			actions.scale,
+			viewport,
+			event => event.button === 0 && !transforming,
+		));
+		
+		addDefaultCameraControls(viewport);
+	},
 };
+function addDefaultCameraControls(viewport) {
+	handlers.add(viewport.canvas, "mousedown", wrapHandler(
+		actions.turn3,
+		viewport,
+		event => event.button === 1 && !shiftPressed && !altPressed,
+	));
+	
+	handlers.add(viewport.canvas, "mousedown", wrapHandler(
+		actions.turn4,
+		viewport,
+		event => event.button === 1 && !shiftPressed && altPressed,
+	));
+	
+	handlers.add(viewport.canvas, "mousedown", wrapHandler(
+		actions.pan3,
+		viewport,
+		event => event.button === 1 && shiftPressed && !altPressed,
+	));
+	
+	handlers.add(viewport.canvas, "mousedown", wrapHandler(
+		actions.pan4,
+		viewport,
+		event => event.button === 1 && shiftPressed && altPressed,
+	));
+}
 
 /**
  * Object containing common listeners.
@@ -376,6 +409,121 @@ const actions = {
 			removeMousemove();
 		}, {once: true});
 	},
+
+	// TODO refactor duplicate code
+	translate: ({event, viewport}) => {
+		const object = userSelection.objectPrimary;
+
+		transforming = true;
+		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.translate)?.classList.add("subhighlighted");
+
+		const initialPos = object.pos.clone();
+
+		const {up, right} = localUpAndRight(viewport, object);
+
+		let movementX = 0;
+		let movementY = 0;
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+			movementY += mousemoveEvent.movementY;
+
+			const newPos = initialPos
+					.add(right.multScalar(movementX * movementSensitivity))
+					.add(up.multScalar(-movementY * movementSensitivity));
+
+			tiedActions.setObjectPos(object, newPos);
+		});
+
+		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+			if (mousedownEvent.button === 2) { // If right-click, reset
+				tiedActions.setObjectPos(object, initialPos);
+
+				// Don't show context menu on right-click
+				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			associatedToolButton(actions.translate)?.classList.remove("subhighlighted");
+			removeMousemove();
+		}, {once: true});
+	},
+
+	rotate: ({event, viewport}) => {
+		const object = userSelection.objectPrimary;
+
+		transforming = true;
+		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.rotate)?.classList.add("subhighlighted");
+
+		const initialRot = object.rot.clone();
+
+		// Bivector represents current viewing plane of 3D camera
+		const {up, right} = localUpAndRight(viewport, object);
+		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
+
+		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
+		let movementY = 0;
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+			movementY += mousemoveEvent.movementY;
+
+			const angle = Math.atan2(movementY, movementX);
+
+			// TODO take influence from 4D camera rotation
+			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
+		});
+
+		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+			if (mousedownEvent.button === 2) { // If right-click, reset
+				tiedActions.setObjectRot(object, initialRot);
+				// Don't show context menu on right-click
+				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			associatedToolButton(actions.rotate)?.classList.remove("subhighlighted");
+			removeMousemove();
+		}, {once: true});
+	},
+
+	scale: ({event}) => {
+		const object = userSelection.objectPrimary;
+
+		transforming = true;
+		event.currentTarget.requestPointerLock();
+		associatedToolButton(actions.scale)?.classList.add("subhighlighted");
+
+		const initialScale = object.scl.clone();
+
+		let movementX = 0;
+		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+			movementX += mousemoveEvent.movementX;
+
+			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
+		});
+
+		handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+			if (mousedownEvent.button === 2) { // If right-click, reset
+				tiedActions.setObjectScl(object, initialScale);
+				// Don't show context menu on right-click
+				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
+				return;
+			}
+
+			transforming = false;
+			document.exitPointerLock();
+			associatedToolButton(actions.scale)?.classList.remove("subhighlighted");
+			removeMousemove();
+		}, {once: true});
+	},
 };
 
 function angleFromMovement(mousemoveEvent) {
@@ -391,6 +539,9 @@ const actionAssociations = new Map([
 	[actions.turn3, ToolMode.TURN3],
 	[actions.pan4, ToolMode.PAN4],
 	[actions.turn4, ToolMode.TURN4],
+	[actions.translate, ToolMode.TRANSLATE],
+	[actions.rotate, ToolMode.ROTATE],
+	[actions.scale, ToolMode.SCALE],
 ]);
 function associatedToolButton(action) {
 	return toolModeButtons.get(actionAssociations.get(action));
@@ -441,127 +592,58 @@ export function attachViewportControls(viewport) {
 		tiedActions.replaceSelection();
 	});
 
-	let transforming = false;
 	// G to move the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = userSelection.objectPrimary;
-		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "g" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget
+				|| keydownEvent.repeat
+				|| keydownEvent.key !== "g"
+				|| !userSelection.objectPrimary
+				|| transforming
+		) {
+			return;
+		}
 
-		transforming = true;
-		viewport.requestPointerLock();
-
-		const initialPos = object.pos.clone();
-
-		const {up, right} = localUpAndRight(viewport, object);
-
-		let movementX = 0;
-		let movementY = 0;
-		const mousemove = mousemoveEvent => {
-			movementX += mousemoveEvent.movementX;
-			movementY += mousemoveEvent.movementY;
-
-			const newPos = initialPos
-					.add(right.multScalar(movementX * movementSensitivity))
-					.add(up.multScalar(-movementY * movementSensitivity));
-
-			tiedActions.setObjectPos(object, newPos);
-		};
-		viewport.addEventListener("mousemove", mousemove);
-
-		viewport.addEventListener("mousedown", event => {
-			if (event.button === 2) { // If right-click, reset
-				tiedActions.setObjectPos(object, initialPos);
-			} else if (event.button !== 0) { // If not left-click, ignore
-				return;
-			}
-
-			transforming = false;
-			document.exitPointerLock();
-			viewport.removeEventListener("mousemove", mousemove);
-		}, {once: true});
-
-		// Don't show context menu on right-click
-		viewport.addEventListener("contextmenu", preventDefault, {once: true});
+		actions.translate({
+			event: keydownEvent,
+			viewport,
+		});
 	});
 
 	// R to rotate the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = userSelection.objectPrimary;
-		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "r" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget
+				|| keydownEvent.repeat
+				|| keydownEvent.key !== "r"
+				|| !userSelection.objectPrimary
+				|| transforming
+		) {
+			return;
+		}
 
-		transforming = true;
-		viewport.requestPointerLock();
-
-		const initialRot = object.rot.clone();
-
-		// Bivector represents current viewing plane of 3D camera
-		const {up, right} = localUpAndRight(viewport, object);
-		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
-
-		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
-		let movementY = 0;
-		const mousemove = mousemoveEvent => {
-			movementX += mousemoveEvent.movementX;
-			movementY += mousemoveEvent.movementY;
-
-			const angle = Math.atan2(movementY, movementX);
-
-			// TODO take influence from 4D camera rotation
-			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
-		};
-		viewport.addEventListener("mousemove", mousemove);
-
-		viewport.addEventListener("mousedown", event => {
-			if (event.button === 2) { // If right-click, reset
-				tiedActions.setObjectRot(object, initialRot);
-			} else if (event.button !== 0) { // If not left-click, ignore
-				return;
-			}
-
-			transforming = false;
-			document.exitPointerLock();
-			viewport.removeEventListener("mousemove", mousemove);
-		}, {once: true});
-
-		// Don't show context menu on right-click
-		viewport.addEventListener("contextmenu", preventDefault, {once: true});
+		actions.rotate({
+			event: keydownEvent,
+			viewport,
+		});
 	});
 
 	// S to scale the selected object
 
 	viewport.addEventListener("keydown", keydownEvent => {
-		const object = userSelection.objectPrimary;
-		if (keydownEvent.target !== event.currentTarget || keydownEvent.repeat || keydownEvent.key !== "s" || !object || transforming) return;
+		if (keydownEvent.target !== event.currentTarget
+				|| keydownEvent.repeat
+				|| keydownEvent.key !== "s"
+				|| !userSelection.objectPrimary
+				|| transforming
+		) {
+			return;
+		}
 
-		transforming = true;
-		viewport.requestPointerLock();
-
-		const initialScale = object.scl.clone();
-
-		let movementX = 0;
-		const mousemove = mousemoveEvent => {
-			movementX += mousemoveEvent.movementX;
-
-			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
-		};
-		viewport.addEventListener("mousemove", mousemove);
-
-		viewport.addEventListener("mousedown", event => {
-			if (event.button === 2) { // If right-click, reset
-				tiedActions.setObjectScl(object, initialScale);
-			} else if (event.button !== 0) { // If not left-click, ignore
-				return;
-			}
-
-			transforming = false;
-			document.exitPointerLock();
-			viewport.removeEventListener("mousemove", mousemove);
-		}, {once: true});
-
-		// Don't show context menu on right-click
-		viewport.addEventListener("contextmenu", preventDefault, {once: true});
+		actions.scale({
+			event: keydownEvent,
+			viewport,
+		});
 	});
 	
 
@@ -589,9 +671,10 @@ export function attachViewportControls(viewport) {
 	toolbar.separator();
 
 	const toolbarObjectSection = toolbar.section().label("Object transforms");
-	toolbarObjectSection.button("Translate");
-	toolbarObjectSection.button("Rotate");
-	toolbarObjectSection.button("Scale");
+	linkToolModeButton(toolbarObjectSection.button("Translate"), ToolMode.TRANSLATE, viewport);
+	linkToolModeButton(toolbarObjectSection.button("Rotate"), ToolMode.ROTATE, viewport);
+	linkToolModeButton(toolbarObjectSection.button("Scale"), ToolMode.SCALE, viewport);
+	viewport.toolbarObjectSection = toolbarObjectSection;
 
 	handlers.setToolMode(ToolMode.SELECTION, viewport);
 }

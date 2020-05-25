@@ -8,8 +8,10 @@ import construct from "./4d/construction.js";
 import {SceneConverter, Camera3Wrapper4} from "./sceneconverter.js";
 import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
+import {Toolbar, ToolbarSection} from "./toolbar.js";
 import {qs, declade, createElement} from "./util.js";
 import tiedActions from "./interfaceties.js";
+import userSelection from "./userselection.js";
 import * as Three from "./_libraries/three.module.js";
 
 export const scene = new Scene4();
@@ -66,6 +68,17 @@ export class Viewport extends HTMLElement {
 	
 	renderer = new Three.WebGLRenderer({alpha: true, antialias: true});
 
+	overlaysContainer = null;
+	/**
+	 * @type Toolbar
+	 */
+	toolbar = null;
+	/**
+	 * @type ToolbarSection
+	 */
+	toolbarObjectSection = null;
+	panelsContainer = null;
+
 	constructor() {
 		super();
 
@@ -86,14 +99,42 @@ export class Viewport extends HTMLElement {
 	}
 
 	connectedCallback() {
+		declade(this);
+
 		// Connect renderer canvas, then attach events
 
 		this.refreshSize();
 
 		this.prepend(this.renderer.domElement);
+
+		this.overlaysContainer = createElement("overlays-", {
+			parent: this,
+			
+			children: [
+				(this.toolbar = new Toolbar()),
+				(this.panelsContainer = createElement("panels-", {
+					parent: this,
+		
+					children: [
+						createElement(ObjectList, {
+							classes: ["panel"]
+						}).initializeElements(),
+						createElement(ObjectPropertiesControl, {
+							classes: ["panel"]
+						}).initializeElements(),
+						createElement(CameraPropertiesControl, {
+							classes: ["panel"]
+						}).initializeElements(),
+					],
+				})),
+			],
+		});
+
 		this.queueRender();
 
 		this.attachControls();
+
+		this.toolbarObjectSection.disable(!userSelection.objectPrimary);
 
 		Viewport.members.add(this);
 	}
@@ -220,7 +261,7 @@ export class ObjectList extends HTMLElement {
 	textContainer;
 	list;
 
-	connectedCallback() {
+	initializeElements() {
 		createElement("h2", {
 			textContent: "Object list",
 			parent: this,
@@ -233,6 +274,8 @@ export class ObjectList extends HTMLElement {
 		this.createInputs();
 
 		ObjectList.members.add(this);
+
+		return this;
 	}
 
 	createInputs() {
@@ -420,7 +463,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 		this.classList.add("inactive");
 	}
 
-	connectedCallback() {
+	initializeElements() {
 		createElement("h2", {
 			textContent: "Object properties",
 			parent: this,
@@ -432,6 +475,8 @@ export class ObjectPropertiesControl extends HTMLElement {
 		});
 
 		ObjectPropertiesControl.members.add(this);
+
+		return this;
 	}
 
 	hasAsTargetObject(object) {
@@ -733,7 +778,7 @@ The plane must not be all zeros in order for the angle to have an effect`),
 export class CameraPropertiesControl extends HTMLElement {
 	static members = new Set();
 
-	connectedCallback() {
+	initializeElements() {
 		createElement("h2", {
 			textContent: "Camera",
 			parent: this,
@@ -789,6 +834,8 @@ export class CameraPropertiesControl extends HTMLElement {
 		});
 
 		CameraPropertiesControl.members.add(this);
+
+		return this;
 	}
 }
 
