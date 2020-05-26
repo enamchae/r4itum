@@ -120,16 +120,22 @@ class GeometryProjected {
 		this.geometry = geometry;
 	}
 
+	// TODO repeated code, `position4` does not line up with `position3`, etc.
+
 	/**
-	 * 
-	 * @param {boolean} [fromProjection] Determines whether the vertex positions come from the original points or the projected points.
-	 * @param {boolean} [fromFaces] Determines whether vertices should be duplicated for each face that includes them.
-	 * @param {boolean} [allowingBehindCamera] Determines whether to include vertices with a nonpositive W coordinate (distance from the
-	 * camera space for projected vertices). Meant to be used when `fromProjection` is `true`. If `fromFaces` is true, then faces will be
+	 * @param {object} [settings] 
+	 * @param {boolean} [settings.fromProjection] Determines whether the vertex positions come from the original points or the projected points.
+	 * @param {boolean} [settings.fromFaces] Determines whether vertices should be duplicated for each face that includes them.
+	 * @param {boolean} [settings.allowingBehindCamera] Determines whether to include vertices with a nonpositive W coordinate (distance from the
+	 * camera space for projected vertices). Meant to be set to `true` when `fromProjection` is `true`. If `fromFaces` is true, then faces will be
 	 * excluded if any of their vertices contain such vertices.
 	 * @returns {Three.Float32BufferAttribute} 
 	 */
-	positionsAttribute(fromProjection=true, fromFaces=true, allowingBehindCamera=true) {
+	positionAttribute({
+		fromProjection=true,
+		fromFaces=true,
+		allowingBehindCamera=true,
+	}={}) {
 		const verts = fromProjection ? this.verts : this.geometry.verts;
 
 		// Copy all vertices
@@ -177,12 +183,42 @@ class GeometryProjected {
 
 		return new Three.Float32BufferAttribute(new Float32Array(positions), 4, false);
 	}
+
+	normalAttribute({
+		allowingBehindCamera=true,
+	}={}) {
+		const verts = this.verts;
+
+		const normals = [];
+
+		facesLoop:
+		for (const face of this.geometry.faces()) {
+			if (allowingBehindCamera) {
+				for (const index of face) {
+					if (verts[index][3] <= 0) {
+						continue facesLoop;
+					}
+				}
+			}
+
+			const dir0 = new Three.Vector3(...verts[face[1]].subtract(verts[face[0]]));
+			const dir1 = new Three.Vector3(...verts[face[2]].subtract(verts[face[0]]));
+
+			const normal = new Three.Vector3().crossVectors(dir0, dir1).normalize().toArray();
+			normals.push(...normal, ...normal, ...normal); // Same value for each vertex
+		}
+
+		return new Three.Float32BufferAttribute(new Float32Array(normals), 3, false);
+	}
 }
 
 class Mesh4Rep {
 	object;
 	converter;
 
+	/**
+	 * @type GeometryProjected
+	 */
 	geometryProjected;
 
 	mesh3;
@@ -200,34 +236,43 @@ class Mesh4Rep {
 
 	get faceColor() {
 		if ([SceneConverter.ViewportState.SELECTED, SceneConverter.ViewportState.SELECTED_PRIMARY].includes(this.viewportState)) {
-			return "1, 1, .875";
+			return "vec3(1, 1, .875)";
 		} else {
 			const tint = this.object.tint;
 			// Convert integer color into vector components
-			return `${(0xFF & tint >>> 16) / 0xFF}, ${(0xFF & tint >>> 8) / 0xFF}, ${(0xFF & tint) / 0xFF}`;
+			return `vec3(${(0xFF & tint >>> 16) / 0xFF}, ${(0xFF & tint >>> 8) / 0xFF}, ${(0xFF & tint) / 0xFF})`;
 		}
 	}
 
 	faceMat() {
 		return new Three.RawShaderMaterial({
 			vertexShader: `
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+uniform mediump mat4 modelViewMatrix;
+uniform mediump mat4 projectionMatrix;
+// uniform mediump mat4 viewMatrix;
 
 attribute mediump vec4 position;
+attribute mediump vec3 normal;
 
-varying float faceShouldBeClipped;
-// varying vec4 vPosition;
+varying mediump float faceShouldBeClipped;
+// varying mediump vec4 vPosition;
+// varying mediump float cosineFactor;
 
 void main() {
 	faceShouldBeClipped = position.w <= 0. ? 1. : 0.;
 	// vPosition = position;
+
+	// mediump vec3 direction = (normalMatrix * vec4(0, 0, -1, 0)).xyz;
+
+	// mediump float cosine = abs(dot(direction, normal)); // \`abs\` removes distinction between facing firectly torward/away from camera
+	// cosineFactor = cosine; // Deintensify effect of factor
 
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1);
 }`,
 			fragmentShader: `
 varying lowp float faceShouldBeClipped;
 // varying mediump vec4 vPosition;
+// varying mediump float cosineFactor;
 
 void main() {
 	// \`faceShouldBeClipped\` is interpolated for the triangle; as long as one vertex is clipped, this will be true
@@ -356,11 +401,22 @@ void main() {
 		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 
 		this.mesh3.geometry = new Three.BufferGeometry();
-		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionAttribute({
+			fromProjection: true,
+			fromFaces: true,
+			allowingBehindCamera: false,
+		}));
+		// this.mesh3.geometry.setAttribute("normal", this.geometryProjected.normalAttribute({
+		// 	allowingBehindCamera: false,
+		// }));
 		this.mesh3.updateMatrixWorld(); // Matrix must be updated for the mesh to be found during raycast selection
 
 		this.locus.geometry = new Three.BufferGeometry();
-		this.locus.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
+		this.locus.geometry.setAttribute("position", this.geometryProjected.positionAttribute({
+			fromProjection: true,
+			fromFaces: false,
+			allowingBehindCamera: false,
+		}));
 		
 		return this;
 	}
@@ -553,8 +609,15 @@ void main() {
 	updateProjection(camera) {
 		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 		this.mesh3.geometry = new Three.BufferGeometry();
-		this.mesh3.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, true));
-		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, true, false));
+		this.mesh3.geometry.setAttribute("position4", this.geometryProjected.positionAttribute({
+			fromProjection: false,
+			fromFaces: true,
+		}));
+		this.mesh3.geometry.setAttribute("position", this.geometryProjected.positionAttribute({
+			fromProjection: true,
+			fromFaces: true,
+			allowingBehindCamera: false,
+		}));
 		
 		return this;
 	}
@@ -564,6 +627,9 @@ class Axis4Rep {
 	object;
 	converter;
 
+	/**
+	 * @type GeometryProjected
+	 */
 	geometryProjected;
 
 	line;
@@ -617,8 +683,15 @@ class Axis4Rep {
 
 		this.geometryProjected.verts = camera.projectVector4(this.object.transformedVerts());
 		this.line.geometry = new Three.BufferGeometry();
-		this.line.geometry.setAttribute("position4", this.geometryProjected.positionsAttribute(false, false));
-		this.line.geometry.setAttribute("position", this.geometryProjected.positionsAttribute(true, false, false));
+		this.line.geometry.setAttribute("position4", this.geometryProjected.positionAttribute({
+			fromProjection: false,
+			fromFaces: false,
+		}));
+		this.line.geometry.setAttribute("position", this.geometryProjected.positionAttribute({
+			fromProjection: true,
+			fromFaces: false,
+			allowingBehindCamera: false,
+		}));
 		
 		return this;
 	}

@@ -243,7 +243,7 @@ export class Face4 extends Array {
 	}
 }
 
-class Cell4 extends Array {
+export class Cell4 extends Array {
 	constructor(...faceIndexes) {
 		super();
 
