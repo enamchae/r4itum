@@ -145,7 +145,7 @@ export class Geometry4 {
 			}
 		}
 
-		const edgesMerged = [...includedEdges.values()];
+		const edgesMerged = [...includedEdges.values()].concat(this.edges());
 
 		_(this).edgesMergedThreshold = angleThreshold;
 		_(this).edgesMergedCache = edgesMerged;

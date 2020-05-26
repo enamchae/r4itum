@@ -299,88 +299,88 @@ export class ObjectList extends HTMLElement {
 						const menu = contextMenus.addMenu();
 						menu.positionFromEvent(event);
 
-						menu.buttonSubmenu("Construct", menu => {
-							menu.button("Point", () => {
-								createObject(construct.point(), "Point");
-							});
+						// menu.buttonSubmenu("Construct", menu => {
+						// menu.button("Point", () => {
+						// 	createObject(construct.point(), "Point");
+						// });
 
-							menu.button("Segment", () => {
-								createObject(construct.segment(), "Segment");
-							});
+						menu.button("Segment", () => {
+							createObject(construct.segment(), "Segment");
+						});
 
-							menu.buttonSubmenu("2D", menu => {
-								menu.label("Regular polygon");
-								
-								const editor = new PositiveNumberEditor(6).override({
-									inputStepValue() {
-										return 1;
-									},
+						menu.buttonSubmenu("2D", menu => {
+							menu.label("Regular polygon");
 							
-									isValidValue(value) {
-										return value > 0 && value % 1 === 0;
-									},
-								});
-								menu.element(editor);
-
-								menu.button("n-gon", () => {
-									createObject(construct.polygon(editor.value), "Polygon");
-								});
+							const editor = new PositiveNumberEditor(6).override({
+								inputStepValue() {
+									return 1;
+								},
+						
+								isValidValue(value) {
+									return value > 0 && value % 1 === 0;
+								},
 							});
+							menu.element(editor);
 
-							menu.buttonSubmenu("3D", menu => {
-								menu.label("Regular polyhedron");
-								menu.button("Tetrahedron", () => {
-									createObject(construct.tetrahedron(), "Tetrahedron");
-								});
-								menu.button("Cube", () => {
-									createObject(construct.hexahedron(), "Cube");
-								});
-								menu.button("Octahedron", () => {
-									createObject(construct.octahedron(), "Octahedron");
-								});
-								menu.button("Dodecahedron", () => {
-									createObject(construct.dodecahedron(), "Dodecahedron");
-								});
-								menu.button("Icosahedron", () => {
-									createObject(construct.icosahedron(), "Icosahedron");
-								});
-								menu.separator();
-								menu.button("Möbius strip", () => {
-									createObject(construct.mobiusStrip(), "Möbius strip");
-								});
-								menu.button("Lat-long sphere", () => {
-									createObject(construct.latlongsphere(), "Sphere");
-								});
-							});
-
-							menu.buttonSubmenu("4D", menu => {
-								menu.label("Regular polychoron");
-								menu.button("5-cell", () => {
-									createObject(construct.pentachoron(), "5-cell");
-								});
-								menu.button("Tesseract", () => {
-									createObject(construct.octachoron(), "Tesseract");
-								});
-								menu.button("16-cell", () => {
-									createObject(construct.hexadecachoron(), "16-cell");
-								});
-								menu.button("24-cell", () => {
-									createObject(construct.icositetrachoron(), "24-cell");
-								});
-								menu.button("120-cell", () => {
-									createObject(construct.hecatonicosachoron(), "120-cell");
-								});
-								menu.button("600-cell", () => {
-									createObject(construct.hexacosichoron(), "600-cell");
-								});
-								menu.separator();
-								menu.button("Klein bottle", () => {
-									createObject(construct.kleinBottle(), "Klein bottle");
-								});
+							menu.button("n-gon", () => {
+								createObject(construct.polygon(editor.value), "Polygon");
 							});
 						});
 
-						menu.buttonSubmenu("Import");
+						menu.buttonSubmenu("3D", menu => {
+							menu.label("Regular polyhedron");
+							menu.button("Tetrahedron", () => {
+								createObject(construct.tetrahedron(), "Tetrahedron");
+							});
+							menu.button("Cube", () => {
+								createObject(construct.hexahedron(), "Cube");
+							});
+							menu.button("Octahedron", () => {
+								createObject(construct.octahedron(), "Octahedron");
+							});
+							menu.button("Dodecahedron", () => {
+								createObject(construct.dodecahedron(), "Dodecahedron");
+							});
+							menu.button("Icosahedron", () => {
+								createObject(construct.icosahedron(), "Icosahedron");
+							});
+							menu.separator();
+							menu.button("Möbius strip", () => {
+								createObject(construct.mobiusStrip(), "Möbius strip");
+							});
+							menu.button("Lat-long sphere", () => {
+								createObject(construct.latlongsphere(), "Sphere");
+							});
+						});
+
+						menu.buttonSubmenu("4D", menu => {
+							menu.label("Regular polychoron");
+							menu.button("5-cell", () => {
+								createObject(construct.pentachoron(), "5-cell");
+							});
+							menu.button("Tesseract", () => {
+								createObject(construct.octachoron(), "Tesseract");
+							});
+							menu.button("16-cell", () => {
+								createObject(construct.hexadecachoron(), "16-cell");
+							});
+							menu.button("24-cell", () => {
+								createObject(construct.icositetrachoron(), "24-cell");
+							});
+							menu.button("120-cell", () => {
+								createObject(construct.hecatonicosachoron(), "120-cell");
+							});
+							menu.button("600-cell", () => {
+								createObject(construct.hexacosichoron(), "600-cell");
+							});
+							menu.separator();
+							menu.button("Klein bottle", () => {
+								createObject(construct.kleinBottle(), "Klein bottle");
+							});
+						});
+						// });
+
+						// menu.buttonSubmenu("Import");
 					}],
 				],
 			},

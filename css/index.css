@@ -611,10 +611,13 @@ overlays- .panel > .panel-content .panel-content {
 }
 
 overlays- .panel ul.bars {
-	margin: 8px 0;
 	max-height: 200px;
 
 	border-radius: var(--input-border-radius);
+}
+
+overlays- .panel button {
+	margin: .5em 0;
 }
 
 main > menu-bar {

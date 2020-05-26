@@ -305,6 +305,8 @@ const actions = {
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.turn3)?.classList.add("subhighlighted");
 
+		// const initialRoll = new Three.Euler().setFromQuaternion(viewport.camera3.quaternion, "YXZ").z;
+
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
 			const angle = angleFromMovement(event);
@@ -316,10 +318,10 @@ const actions = {
 
 			viewport.camera3.quaternion.multiply(new Three.Quaternion(plane[0], plane[1], plane[2], Math.cos(angle / 2)));
 			
-			// Reset any residual XY rotation
-			// temp disabled because it does not have the intended effect when not looking from the front
-			// viewport.camera3.quaternion.z = 0;
-			// viewport.camera3.quaternion.normalize();
+			// Reset any residual roll
+			// const euler = new Three.Euler().setFromQuaternion(viewport.camera3.quaternion, "YXZ");
+			// euler.z = initialRoll;
+			// viewport.camera3.quaternion.setFromEuler(euler);
 
 			const quat = viewport.camera3.quaternion;
 			const rotNew = new Rotor4(quat.w, quat.z, -quat.y, 0, quat.x, 0, 0, 0);
@@ -464,7 +466,7 @@ const actions = {
 
 		// Bivector represents current viewing plane of 3D camera
 		const {up, right} = localUpAndRight(viewport, object);
-		const bivector = new Vector4(up.x, up.y, up.z).outer(new Vector4(right.x, right.y, right.z));
+		const bivector = up.outer(right);
 
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
 		let movementY = 0;
@@ -705,6 +707,7 @@ function localUpAndRight(viewport, object) {
 	directions[1][3] = distance4;
 
 	const [up, right] = viewport.camera.unprojectVector4(directions);
+	console.log(up, right);
 	return {up, right};
 }
 

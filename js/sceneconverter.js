@@ -430,7 +430,8 @@ void main() {
 		// Ignore if there are no facets to be drawn
 		if (this.object.geometry.facets.length === 0) return this;
 
-		const edges = this.object.geometry.edgesMerged();
+		// const edges = this.object.geometry.edgesMerged();
+		const edges = this.object.geometry.edges();
 		const verts = this.geometryProjected.verts;
 
 		this.wire.geometry = new ThreeMeshLine.MeshLine();
