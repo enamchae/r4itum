@@ -96,6 +96,8 @@ export class Object4 {
 	 */
 	hidden = false;
 
+	defaultTransforms;
+
 	constructor(pos=new Vector4(), rot=new Rotor4(), scl=new Vector4(1, 1, 1, 1)) {
 		priv.set(this, {
 			pos,
@@ -156,6 +158,16 @@ export class Object4 {
 
 	setScl(scl) {
 		this.scl.copy(scl);
+		return this;
+	}
+
+	saveDefaultTransforms() {
+		this.defaultTransforms = {
+			pos: this.pos.clone(),
+			rot: this.rot.clone(),
+			rot2: this.rot2.clone(),
+			scl: this.scl.clone(),
+		};
 		return this;
 	}
     

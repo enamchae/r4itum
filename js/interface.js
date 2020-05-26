@@ -86,11 +86,12 @@ export class Viewport extends HTMLElement {
 		this.camera = new Camera4(
 			new Vector4(0, 0, 0, 3),
 			new Rotor4(1, 0, 0, 0, 0, 0, 0, 0).normalize(),
-		).setName("4D-to-3D camera");
+		).setName("4D-to-3D camera").saveDefaultTransforms();
 
 		this.camera3Wrapper = new Camera3Wrapper4().setName("3D-to-viewport camera");
 		this.camera3.position.set(0, 0, 3);
 		this.camera3.lookAt(0, 0, 0);
+		this.camera3Wrapper.saveDefaultTransforms();
 
 		this.camera.nameEditable = false;
 		this.camera3Wrapper.nameEditable = false;
@@ -239,7 +240,7 @@ export class Viewport extends HTMLElement {
 }
 
 function createObject(geometry, name) {
-	const object = new Mesh4(geometry).setName(name);
+	const object = new Mesh4(geometry).setName(name).saveDefaultTransforms();
 	tiedActions.addObject(object);
 	tiedActions.replaceSelection(object);
 	contextMenus.clear();
@@ -731,11 +732,31 @@ Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
 		const transformsChildren = [
 			this.appendHeading("Position", null),
 			this.posEditor,
+			createElement("button", {
+				textContent: "Reset",
+				listeners: {
+					click: [
+						[() => {
+							tiedActions.setObjectPos(object, object.defaultTransforms.pos);
+						}],
+					],
+				},
+			}),
 
 			this.appendHeading("Simple rotation", null, `Orientations of an object may be represented as a plane of rotation paired with an angle
 A plane can be represented as a collection of coefficients which determine how much influence each basis plane has on the plane of rotation
 The plane must not be all zeros in order for the angle to have an effect`),
 			this.rotEditor,
+			createElement("button", {
+				textContent: "Reset",
+				listeners: {
+					click: [
+						[() => {
+							tiedActions.setObjectRot(object, object.defaultTransforms.rot);
+						}],
+					],
+				},
+			}),
 		];
 
 		if (object instanceof Mesh4) { // Cameras are not affected by scale
@@ -753,6 +774,16 @@ The plane must not be all zeros in order for the angle to have an effect`),
 			transformsChildren.push(
 				this.appendHeading("Scale", null),
 				this.sclEditor,
+				createElement("button", {
+					textContent: "Reset",
+					listeners: {
+						click: [
+							[() => {
+								tiedActions.setObjectScl(object, object.defaultTransforms.scl);
+							}],
+						],
+					},
+				}),
 			);
 		}
 

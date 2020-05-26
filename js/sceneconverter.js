@@ -513,7 +513,6 @@ class PlaneRef4Rep {
 	// Trapezoid texturing technique from https://stackoverflow.com/a/56919100
 	faceMat() {
 		return new Three.RawShaderMaterial({
-
 			vertexShader: `
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
