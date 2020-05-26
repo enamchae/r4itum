@@ -73,10 +73,6 @@ export class Viewport extends HTMLElement {
 	 * @type Toolbar
 	 */
 	toolbar = null;
-	/**
-	 * @type ToolbarSection
-	 */
-	toolbarObjectSection = null;
 	panelsContainer = null;
 
 	constructor() {
@@ -236,6 +232,10 @@ export class Viewport extends HTMLElement {
 
 	get canvas() {
 		return this.renderer.domElement;
+	}
+
+	get toolbarObjectSection() {
+		return qs(`toolbar-section[name="object-transforms"]`);
 	}
 }
 

@@ -664,12 +664,12 @@ export function attachViewportControls(viewport) {
 	const toolbarCamera4Section = toolbarCameraColumn.section().label("4D camera controls");
 	linkToolModeButton(toolbarCamera4Section.button("Pan 4D"), ToolMode.PAN4, viewport);
 	linkToolModeButton(toolbarCamera4Section.button("Turn 4D"), ToolMode.TURN4, viewport);
-	toolbarCamera4Section.button("Zoom 4D");
+	// toolbarCamera4Section.button("Zoom 4D");
 
 	const toolbarCamera3Section = toolbarCameraColumn.section().label("3D camera controls");
 	linkToolModeButton(toolbarCamera3Section.button("Pan 3D"), ToolMode.PAN3, viewport);
 	linkToolModeButton(toolbarCamera3Section.button("Turn 3D"), ToolMode.TURN3, viewport);
-	toolbarCamera3Section.button("Zoom 3D");
+	// toolbarCamera3Section.button("Zoom 3D");
 
 	toolbar.separator();
 
@@ -677,7 +677,7 @@ export function attachViewportControls(viewport) {
 	linkToolModeButton(toolbarObjectSection.button("Translate"), ToolMode.TRANSLATE, viewport);
 	linkToolModeButton(toolbarObjectSection.button("Rotate"), ToolMode.ROTATE, viewport);
 	linkToolModeButton(toolbarObjectSection.button("Scale"), ToolMode.SCALE, viewport);
-	viewport.toolbarObjectSection = toolbarObjectSection;
+	toolbarObjectSection.setAttribute("name", "object-transforms");
 
 	handlers.setToolMode(ToolMode.SELECTION, viewport);
 }
