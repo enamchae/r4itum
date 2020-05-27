@@ -75,7 +75,7 @@ export default {
 		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
-				panel.posEditor.refill(pos);
+				panel.posEditor?.refill(pos);
 			}
 		}
 		if (rerendering) {
@@ -89,7 +89,7 @@ export default {
 		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
-				panel.rotEditor.refill(rot);
+				panel.rotEditor?.refill(rot);
 			}
 		}
 		if (rerendering) {
@@ -103,7 +103,7 @@ export default {
 		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(object)) {
-				panel.sclEditor.refill(scl);
+				panel.sclEditor?.refill(scl);
 			}
 		}
 		if (rerendering) {

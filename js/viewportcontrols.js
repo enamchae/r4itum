@@ -714,9 +714,14 @@ function preventDefault(event) {
 
 function localUpAndRight(viewport, object) {
 	// `distance3` allows zoom to affect movement speed
-	let distance3 = viewport.camera3Wrapper.viewboxDistanceFrom(object.pos);
-	if (viewport.camera3Wrapper.usingPerspective) {
-		distance3 /= 4; // Arbitrary correction constant
+	let distance3;
+	if (object === viewport.camera3Wrapper || object === viewport.camera) {
+		distance3 = 1;
+	} else {
+		distance3 = viewport.camera3Wrapper.viewboxDistanceFrom(object.pos);
+		if (viewport.camera3Wrapper.usingPerspective) {
+			distance3 /= 4; // Arbitrary correction constant
+		}
 	}
 	
 	const directions = [
@@ -724,8 +729,20 @@ function localUpAndRight(viewport, object) {
 		new Three.Vector3(distance3, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
 	];
 
+	console.log(directions);
+
+	if (object === viewport.camera3Wrapper) {
+		const [up, right] = directions;
+		return {up, right};
+	} else if (object === viewport.camera) {
+		const up = directions[0].multRotor(object.rot);
+		const right = directions[1].multRotor(object.rot);
+		return {up, right};
+	}
+
 	// `distance4` allows unprojection to work correctly
 	const distance4 = viewport.camera.viewboxDistanceFrom(object.pos);
+
 	directions[0][3] = distance4;
 	directions[1][3] = distance4;
 

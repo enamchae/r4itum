@@ -744,7 +744,7 @@ export class Camera3Wrapper4 extends Object4 {
 	}
 
 	setScl(scl) {
-		this.object3.scale.set(...scl);
+		// this.object3.scale.set(...scl);
 		return this;
 	}
 
