@@ -252,12 +252,14 @@ export class Camera4 extends Object4 {
 
 	constructor(pos, rot, {
 		usingPerspective=true,
+		fovAngle=Math.PI / 2,
 		focalLength=1,
 	}={}) {
 		super(pos, rot);
 
 		Object.assign(this, {
 			usingPerspective,
+			fovAngle,
 			focalLength,
 		});
 	}
@@ -276,7 +278,7 @@ export class Camera4 extends Object4 {
 	}
 
 	get fovAngle() {
-		return 2 * Math.atan(this.focalLength);
+		return _(this).fovAngle;
 	}
 
 	set fovAngle(angle) {
@@ -290,7 +292,7 @@ export class Camera4 extends Object4 {
 			throw new RangeError(`${angle} out of FOV range`);
 		}
 
-		this.focalLength = Math.tan(angle / 2);
+		_(this).fovAngle = angle;
 		return this;
 	}
 
@@ -325,7 +327,9 @@ export class Camera4 extends Object4 {
 		const projectionMatrix = this.projectionMatrix();
 	
 		// Factor used to determine distortion due to focal length
-		const distortionFac = 1 / this.focalLength;
+		const distortionFac = this.usingPerspective
+				? 1 / Math.tan(this.fovAngle / 2)
+				: 1 / this.focalLength;
 		
 		for (let i = 0; i < points.length; i++) {
 			const point = points[i].subtract(this.pos);
@@ -368,7 +372,9 @@ export class Camera4 extends Object4 {
 		const unprojectionMatrix = this.projectionMatrix().inverse();
 	
 		// Factor used to determine distortion due to focal length
-		const distortionFac = 1 / this.focalLength;
+		const distortionFac = this.usingPerspective
+				? 1 / Math.tan(this.fovAngle / 2)
+				: 1 / this.focalLength;
 		
 		for (let i = 0; i < points.length; i++) {
 			const point = points[i];
@@ -429,6 +435,7 @@ export class Camera4 extends Object4 {
 		return this.pos.eq(camera.pos)
 				&& this.rot.eq(camera.rot)
 				&& this.usingPerspective === camera.usingPerspective
+				&& this.fovAngle === camera.fovAngle
 				&& this.focalLength === camera.focalLength
 	}
 }

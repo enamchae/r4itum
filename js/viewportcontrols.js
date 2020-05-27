@@ -94,6 +94,14 @@ function wrapHandler(handler, viewport, prerequisite, data={}) {
 	};
 }
 
+// Same as `handlers.add` but does not record it
+function removableListener(targetElement, eventType, handler, options={}) {
+	targetElement.addEventListener(eventType, handler, options);
+	return () => {
+		targetElement.removeEventListener(eventType, handler, options);
+	};
+}
+
 // /**
 //  * 
 //  * @param {function} mousemoveHandler 
@@ -315,7 +323,7 @@ const actions = {
 
 		// const initialRoll = new Three.Euler().setFromQuaternion(viewport.camera3.quaternion, "YXZ").z;
 
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
 			const angle = angleFromMovement(event);
 
@@ -336,7 +344,7 @@ const actions = {
 			tiedActions.setObjectRot(viewport.camera3Wrapper, rotNew, {resetting: false});
 		});
 		
-		handlers.add(event.currentTarget, "mouseup", () => {
+		event.currentTarget.addEventListener("mouseup", () => {
 			document.exitPointerLock();
 			associatedToolButton(actions.turn3)?.classList.remove("subhighlighted");
 			removeMousemove();
@@ -347,7 +355,7 @@ const actions = {
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.turn4)?.classList.add("subhighlighted");
 
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", event => {
 			// Angle by which to turn the camera, in terms of mouse movement distance
 			const angle = angleFromMovement(event);
 
@@ -366,7 +374,7 @@ const actions = {
 			tiedActions.setObjectRot(viewport.camera, rotNew);
 		});
 		
-		handlers.add(event.currentTarget, "mouseup", () => {
+		event.currentTarget.addEventListener("mouseup", () => {
 			document.exitPointerLock();
 			associatedToolButton(actions.turn4)?.classList.remove("subhighlighted");
 			removeMousemove();
@@ -377,7 +385,7 @@ const actions = {
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.pan3)?.classList.add("subhighlighted");
 
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", event => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", event => {
 			const right = new Three.Vector3(-1, 0, 0).applyQuaternion(viewport.camera3.quaternion); // local right vector
 			const up = new Three.Vector3(0, 1, 0).applyQuaternion(viewport.camera3.quaternion); // local up vector
 
@@ -389,7 +397,7 @@ const actions = {
 			tiedActions.setObjectPos(viewport.camera3Wrapper, posNew);
 		});
 		
-		handlers.add(event.currentTarget, "mouseup", () => {
+		event.currentTarget.addEventListener("mouseup", () => {
 			document.exitPointerLock();
 			associatedToolButton(actions.pan3)?.classList.remove("subhighlighted");
 			removeMousemove();
@@ -413,7 +421,7 @@ const actions = {
 			tiedActions.setObjectPos(viewport.camera, posNew);
 		});
 		
-		handlers.add(event.currentTarget, "mouseup", () => {
+		event.currentTarget.addEventListener("mouseup", () => {
 			document.exitPointerLock();
 			associatedToolButton(actions.pan4)?.classList.remove("subhighlighted");
 			removeMousemove();
@@ -434,7 +442,7 @@ const actions = {
 
 		let movementX = 0;
 		let movementY = 0;
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
 
@@ -445,12 +453,12 @@ const actions = {
 			tiedActions.setObjectPos(object, newPos);
 		});
 
-		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectPos(object, initialPos);
 
 				// Don't show context menu on right-click
-				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+				mousedownEvent.currentTarget.addEventListener("contextmenu", preventDefault, {once: true});
 			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
 				return;
 			}
@@ -480,7 +488,7 @@ const actions = {
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
 		let movementY = 0;
 		viewport.transformWidget.setCursorPosition(movementX, movementY);
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
 			viewport.transformWidget.setCursorPosition(movementX, movementY);
@@ -490,11 +498,11 @@ const actions = {
 			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
 		});
 
-		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectRot(object, initialRot);
 				// Don't show context menu on right-click
-				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+				mousedownEvent.currentTarget.addEventListener("contextmenu", preventDefault, {once: true});
 			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
 				return;
 			}
@@ -520,18 +528,18 @@ const actions = {
 
 		let movementX = 0;
 		viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
-		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
+		const removeMousemove = removableListener(event.currentTarget, "mousemove", mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 			viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
 
 			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
 		});
 
-		const removeMousedown = handlers.add(event.currentTarget, "mousedown", mousedownEvent => {
+		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
 				tiedActions.setObjectScl(object, initialScale);
 				// Don't show context menu on right-click
-				handlers.add(mousedownEvent.currentTarget, "contextmenu", preventDefault, {once: true});
+				mousedownEvent.currentTarget.addEventListener("contextmenu", preventDefault, {once: true});
 			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
 				return;
 			}

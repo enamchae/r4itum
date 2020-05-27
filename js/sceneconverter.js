@@ -711,6 +711,7 @@ export class Camera3Wrapper4 extends Object4 {
 
 		this.object3 = camera;
 		priv.set(this, {
+			fovAngle: camera?.fov * Math.PI / 180 ?? Math.PI / 2,
 			focalLength: 1,
 		});
 	}
@@ -747,14 +748,19 @@ export class Camera3Wrapper4 extends Object4 {
 		return this;
 	}
 
-	// `focalLength` is stored privately since they cannot be saved on the camera when switching
+	// `radius` and `fovAngle` are stored privately since they cannot be saved on the camera when switching
 
 	get fovAngle() {
-		return 2 * Math.atan(this.focalLength);
+		return _(this).fovAngle;
 	}
 
-	set fovAngle(angle) {
-		this.focalLength = Math.tan(angle / 2);
+	set fovAngle(fovAngle) {
+		_(this).fovAngle = fovAngle;
+
+		const fov = fovAngle * 180 / Math.PI;
+
+		this.object3.fov = fov;
+		this.object3.updateProjectionMatrix();
 	}
 
 	get focalLength() {
@@ -764,12 +770,7 @@ export class Camera3Wrapper4 extends Object4 {
 	set focalLength(focalLength) {
 		_(this).focalLength = focalLength;
 
-		if (this.usingPerspective) {
-			const fov = this.fovAngle * 180 / Math.PI;
-			this.object3.fov = fov;
-		} else {
-			this.object3.zoom = 1 / focalLength;
-		}
+		this.object3.zoom = 1 / focalLength;
 		this.object3.updateProjectionMatrix();
 	}
 
@@ -789,7 +790,7 @@ export class Camera3Wrapper4 extends Object4 {
 		if (value) {
 			camera = new Three.PerspectiveCamera(this.fovAngle * 180 / Math.PI, aspectRatio, .01, 1000);
 		} else {
-			const size = 8;
+			const size = 4;
 			camera = new Three.OrthographicCamera(-size, size, size / aspectRatio, -size / aspectRatio, -100, 1000);
 			camera.zoom = 1 / this.focalLength;
 			camera.updateProjectionMatrix();
