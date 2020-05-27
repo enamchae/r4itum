@@ -116,7 +116,7 @@ export class Viewport extends HTMLElement {
 					],
 
 					children: [
-						(this.transformWidget = new TransformWidget().setMode(TransformWidget.WidgetMode.ROTATE)),
+						(this.transformWidget = new TransformWidget()),
 						(this.toolbar = new Toolbar()),
 					],
 				}),

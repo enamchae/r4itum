@@ -543,6 +543,13 @@ overlays- toolbar- separator- {
 	background: #0000003f;
 }
 
+/* Transform widget */
+
+overlays- transform-widget {
+	display: flex;
+	justify-content: center;
+}
+
 /* Vector editor */
 
 overlays- vector-editor > form {
@@ -647,4 +654,8 @@ main > menu-bar {
 	height: 3em;
 
 	background: #668b8f;
+}
+
+svg.defs {
+	display: none;
 }

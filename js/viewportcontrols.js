@@ -3,6 +3,7 @@
  */
 
 import {Vector4, Rotor4} from "./4d/vector.js";
+import {TransformWidget} from "./transformwidget.js";
 import userSelection from "./userselection.js";
 import tiedActions from "./interfaceties.js";
 import {qs} from "./util.js";
@@ -468,6 +469,7 @@ const actions = {
 		transforming = true;
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.rotate)?.classList.add("subhighlighted");
+		viewport.transformWidget.setMode(TransformWidget.WidgetMode.ROTATE);
 
 		const initialRot = object.rot.clone();
 
@@ -482,6 +484,7 @@ const actions = {
 			movementY += mousemoveEvent.movementY;
 
 			const angle = Math.atan2(movementY, movementX);
+			viewport.transformWidget.setCursorPosition(movementX, movementY);
 
 			// TODO take influence from 4D camera rotation
 			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
@@ -499,6 +502,7 @@ const actions = {
 			transforming = false;
 			document.exitPointerLock();
 			associatedToolButton(actions.rotate)?.classList.remove("subhighlighted");
+			viewport.transformWidget.setMode(TransformWidget.WidgetMode.NONE);
 			removeMousemove();
 			removeMousedown();
 		});
