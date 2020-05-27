@@ -548,6 +548,15 @@ overlays- toolbar- separator- {
 overlays- transform-widget {
 	display: flex;
 	justify-content: center;
+
+	background: #ffffff7f;
+	border-radius: 1em;
+
+	transition: opacity .2s ease;
+}
+
+overlays- transform-widget.unused {
+	opacity: 0;
 }
 
 /* Vector editor */

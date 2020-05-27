@@ -479,13 +479,13 @@ const actions = {
 
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
 		let movementY = 0;
+		viewport.transformWidget.setCursorPosition(movementX, movementY);
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
-
-			const angle = Math.atan2(movementY, movementX);
 			viewport.transformWidget.setCursorPosition(movementX, movementY);
 
+			const angle = Math.atan2(movementY, movementX);
 			// TODO take influence from 4D camera rotation
 			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
 		});
@@ -502,24 +502,27 @@ const actions = {
 			transforming = false;
 			document.exitPointerLock();
 			associatedToolButton(actions.rotate)?.classList.remove("subhighlighted");
-			viewport.transformWidget.setMode(TransformWidget.WidgetMode.NONE);
+			viewport.transformWidget.clearMode();
 			removeMousemove();
 			removeMousedown();
 		});
 	},
 
-	scale: ({event}) => {
+	scale: ({event, viewport}) => {
 		const object = userSelection.objectPrimary;
 
 		transforming = true;
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.scale)?.classList.add("subhighlighted");
+		viewport.transformWidget.setMode(TransformWidget.WidgetMode.SCALE);
 
 		const initialScale = object.scl.clone();
 
 		let movementX = 0;
+		viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
 		const removeMousemove = handlers.add(event.currentTarget, "mousemove", mousemoveEvent => {
 			movementX += mousemoveEvent.movementX;
+			viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
 
 			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
 		});
@@ -536,6 +539,7 @@ const actions = {
 			transforming = false;
 			document.exitPointerLock();
 			associatedToolButton(actions.scale)?.classList.remove("subhighlighted");
+			viewport.transformWidget.clearMode();
 			removeMousemove();
 			removeMousedown();
 		});
