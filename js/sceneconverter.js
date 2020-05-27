@@ -711,8 +711,7 @@ export class Camera3Wrapper4 extends Object4 {
 
 		this.object3 = camera;
 		priv.set(this, {
-			fovAngle: camera?.fov * Math.PI / 180 ?? Math.PI / 2,
-			radius: 1 / 3,
+			focalLength: 1,
 		});
 	}
 
@@ -748,29 +747,29 @@ export class Camera3Wrapper4 extends Object4 {
 		return this;
 	}
 
-	// `radius` and `fovAngle` are stored privately since they cannot be saved on the camera when switching
+	// `focalLength` is stored privately since they cannot be saved on the camera when switching
 
 	get fovAngle() {
-		return _(this).fovAngle;
+		return 2 * Math.atan(this.focalLength);
 	}
 
-	set fovAngle(fovAngle) {
-		_(this).fovAngle = fovAngle;
-
-		const fov = fovAngle * 180 / Math.PI;
-
-		this.object3.fov = fov;
-		this.object3.updateProjectionMatrix();
+	set fovAngle(angle) {
+		this.focalLength = Math.tan(angle / 2);
 	}
 
-	get radius() {
-		return _(this).radius;
+	get focalLength() {
+		return _(this).focalLength;
 	}
 
-	set radius(radius) {
-		_(this).radius = radius;
+	set focalLength(focalLength) {
+		_(this).focalLength = focalLength;
 
-		this.object3.zoom = 1 / radius;
+		if (this.usingPerspective) {
+			const fov = this.fovAngle * 180 / Math.PI;
+			this.object3.fov = fov;
+		} else {
+			this.object3.zoom = 1 / focalLength;
+		}
 		this.object3.updateProjectionMatrix();
 	}
 
@@ -784,10 +783,7 @@ export class Camera3Wrapper4 extends Object4 {
 	 * @param {number} aspectRatio 
 	 */
 	setUsingPerspective(value, aspectRatio) {
-		if (value === true && this.object3 instanceof Three.PerspectiveCamera
-				|| value === false && !(this.object3 instanceof Three.PerspectiveCamera)) {
-			return;
-		}
+		if (value === this.usingPerspective) return;
 
 		let camera;
 		if (value) {
@@ -795,7 +791,7 @@ export class Camera3Wrapper4 extends Object4 {
 		} else {
 			const size = 8;
 			camera = new Three.OrthographicCamera(-size, size, size / aspectRatio, -size / aspectRatio, -100, 1000);
-			camera.zoom = 1 / this.radius;
+			camera.zoom = 1 / this.focalLength;
 			camera.updateProjectionMatrix();
 		}
 
@@ -815,7 +811,7 @@ export class Camera3Wrapper4 extends Object4 {
 	viewboxDistanceFrom(vector) {
 		return this.usingPerspective
 				? this.localForward().dot(vector.subtract(this.pos))
-				: this.radius;
+				: this.focalLength;
 	}
 }
 

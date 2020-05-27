@@ -119,13 +119,13 @@ export default {
 		Viewport.queueAllRerender();
 	},
 
-	setCameraRadius(camera, radius, {resetting=true, rerendering=true}={}) {
+	setCameraFocalLength(camera, focalLength, {resetting=true, rerendering=true}={}) {
 		if (resetting) {
-			camera.radius = radius;
+			camera.focalLength = focalLength;
 		}
 		for (const panel of ObjectPropertiesControl.members) {
 			if (panel.hasAsTargetObject(camera)) {
-				panel.radiusEditor?.refill(radius);
+				panel.focalLengthEditor?.refill(focalLength);
 			}
 		}
 		if (rerendering) {

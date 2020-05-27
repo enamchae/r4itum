@@ -252,15 +252,13 @@ export class Camera4 extends Object4 {
 
 	constructor(pos, rot, {
 		usingPerspective=true,
-		fovAngle=Math.PI / 2,
-		radius=1,
+		focalLength=1,
 	}={}) {
 		super(pos, rot);
 
 		Object.assign(this, {
 			usingPerspective,
-			fovAngle,
-			radius,
+			focalLength,
 		});
 	}
 
@@ -278,7 +276,7 @@ export class Camera4 extends Object4 {
 	}
 
 	get fovAngle() {
-		return _(this).fovAngle;
+		return 2 * Math.atan(this.focalLength);
 	}
 
 	set fovAngle(angle) {
@@ -292,26 +290,26 @@ export class Camera4 extends Object4 {
 			throw new RangeError(`${angle} out of FOV range`);
 		}
 
-		_(this).fovAngle = angle;
+		this.focalLength = Math.tan(angle / 2);
 		return this;
 	}
 
-	get radius() {
-		return _(this).radius;
+	get focalLength() {
+		return _(this).focalLength;
 	}
 
-	set radius(radius) {
-		this.setRadius(radius);
+	set focalLength(focalLength) {
+		this.setFocalLength(focalLength);
 	}
 
-	setRadius(radius) {
-		if (isNaN(radius)) {
-			throw new TypeError(`${radius} not a number`);
-		} else if (radius <= 0) {
-			throw new RangeError(`${radius} not positive`);
+	setFocalLength(focalLength) {
+		if (isNaN(focalLength)) {
+			throw new TypeError(`${focalLength} not a number`);
+		} else if (focalLength <= 0) {
+			throw new RangeError(`${focalLength} not positive`);
 		}
 
-		_(this).radius = radius;
+		_(this).focalLength = focalLength;
 		return this;
 	}
 	
@@ -327,14 +325,12 @@ export class Camera4 extends Object4 {
 		const projectionMatrix = this.projectionMatrix();
 	
 		// Factor used to determine distortion due to focal length
-		const distortionFac = this.usingPerspective
-				? 1 / Math.tan(this.fovAngle / 2)
-				: 1 / this.radius;
+		const distortionFac = 1 / this.focalLength;
 		
 		for (let i = 0; i < points.length; i++) {
 			const point = points[i].subtract(this.pos);
 	
-			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.radius;
+			const distance = this.usingPerspective ? projectionMatrix.dot4WithColumn(point, 3) : this.focalLength;
 	
 			// Now accounts for distance as well
 			// Shrink the transformed point depending on its distance from the camera 
@@ -372,9 +368,7 @@ export class Camera4 extends Object4 {
 		const unprojectionMatrix = this.projectionMatrix().inverse();
 	
 		// Factor used to determine distortion due to focal length
-		const distortionFac = this.usingPerspective
-				? 1 / Math.tan(this.fovAngle / 2)
-				: 1 / this.radius;
+		const distortionFac = 1 / this.focalLength;
 		
 		for (let i = 0; i < points.length; i++) {
 			const point = points[i];
@@ -396,7 +390,7 @@ export class Camera4 extends Object4 {
 				unprojectionMatrix.dot4WithColumn(pointUndistorted, 1) + this.pos[1],
 				unprojectionMatrix.dot4WithColumn(pointUndistorted, 2) + this.pos[2],
 				// Cannot accurately derive point distance in parllel projection
-				this.usingPerspective ? unprojectionMatrix.dot4WithColumn(pointUndistorted, 3) + this.pos[3] : this.radius,
+				this.usingPerspective ? unprojectionMatrix.dot4WithColumn(pointUndistorted, 3) + this.pos[3] : this.focalLength,
 			);
 	
 			// Reassign coordinates
@@ -420,7 +414,7 @@ export class Camera4 extends Object4 {
 	viewboxDistanceFrom(vector) {
 		return this.usingPerspective
 				? this.localForward().dot(vector.subtract(this.pos))
-				: this.radius;
+				: this.focalLength;
 	}
 
 	clone() {
@@ -435,8 +429,7 @@ export class Camera4 extends Object4 {
 		return this.pos.eq(camera.pos)
 				&& this.rot.eq(camera.rot)
 				&& this.usingPerspective === camera.usingPerspective
-				&& this.fovAngle === camera.fovAngle
-				&& this.radius === camera.radius
+				&& this.focalLength === camera.focalLength
 	}
 }
 

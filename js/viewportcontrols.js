@@ -588,7 +588,7 @@ export function attachViewportControls(viewport) {
 				viewport.camera.translateForward(event.deltaY * -.5 * movementSensitivity);
 				tiedActions.setObjectPos(viewport.camera, viewport.camera.pos, {resetting: false});
 			} else {
-				tiedActions.setCameraRadius(viewport.camera, viewport.camera.radius * 1.25 ** (event.deltaY / 100));
+				tiedActions.setCameraFocalLength(viewport.camera, viewport.camera.focalLength * 1.25 ** (event.deltaY / 100));
 			}
 		} else {
 			if (viewport.camera3Wrapper.usingPerspective) {
@@ -597,7 +597,7 @@ export function attachViewportControls(viewport) {
 
 				// viewport.camera3.updateProjectionMatrix();
 			} else {
-				tiedActions.setCameraRadius(viewport.camera3Wrapper, viewport.camera3Wrapper.radius * 1.25 ** (event.deltaY / 100));
+				tiedActions.setCameraFocalLength(viewport.camera3Wrapper, viewport.camera3Wrapper.focalLength * 1.25 ** (event.deltaY / 100));
 			}
 		}
 		event.preventDefault();

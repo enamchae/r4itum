@@ -464,7 +464,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 	posEditor = null;
 	rotEditor = null;
 	sclEditor = null;
-	radiusEditor = null;
+	focalLengthEditor = null;
 
 	targetObject = null;
 
@@ -501,7 +501,7 @@ export class ObjectPropertiesControl extends HTMLElement {
 			this.posEditor = null;
 			this.rotEditor = null;
 			this.sclEditor = null;
-			this.radiusEditor = null;
+			this.focalLengthEditor = null;
 			this.targetObject = null;
 			this.classList.add("inactive");
 			return;
@@ -684,11 +684,11 @@ Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 1
 						],
 					});
 
-			this.radiusEditor = createElement(new PositiveNumberEditor(object.radius), {
+			this.focalLengthEditor = createElement(new PositiveNumberEditor(object.focalLength), {
 				listeners: {
 					update: [
 						[({detail}) => {
-							object.radius = detail.valueUsed;
+							object.focalLength = detail.valueUsed;
 							Viewport.queueAllRerender();
 						}],
 					],
@@ -700,9 +700,9 @@ Equivalent to zoom for perspective cameras [closer to 0° is larger, closer to 1
 				parent: this.textContainer,
 
 				children: [
-					this.appendHeading("Distance", null , `Apparent distance of all points
+					this.appendHeading("Focal length", null , `Apparent distance of all points
 Equivalent to zoom for parallel cameras [closer to 0 is larger]`),
-					this.radiusEditor,
+					this.focalLengthEditor,
 				],
 			});
 
