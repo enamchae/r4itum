@@ -5,6 +5,7 @@
 import {createElement} from "./util.js";
 
 export class Toolbar extends HTMLElement {
+
 	element(element) {
 		this.append(element);
 		return element;
@@ -19,9 +20,7 @@ export class Toolbar extends HTMLElement {
 	}
 
 	separator() {
-		return createElement("separator-", {
-			parent: this,
-		});
+		return this.element(createElement("separator-"));
 	}
 }
 

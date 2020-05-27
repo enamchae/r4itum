@@ -8,7 +8,8 @@ import construct from "./4d/construction.js";
 import {SceneConverter, Camera3Wrapper4} from "./sceneconverter.js";
 import {VectorEditor, RotorEditor, AngleEditor, PositiveNumberEditor} from "./vectoredit.js";
 import {attachViewportControls} from "./viewportcontrols.js";
-import {Toolbar, ToolbarSection} from "./toolbar.js";
+import {Toolbar} from "./toolbar.js";
+import {TransformWidget} from "./transformwidget.js";
 import {qs, declade, createElement} from "./util.js";
 import tiedActions from "./interfaceties.js";
 import userSelection from "./userselection.js";
@@ -73,6 +74,7 @@ export class Viewport extends HTMLElement {
 	 * @type Toolbar
 	 */
 	toolbar = null;
+	transformWidget = null;
 	panelsContainer = null;
 
 	constructor() {
@@ -108,10 +110,18 @@ export class Viewport extends HTMLElement {
 			parent: this,
 			
 			children: [
-				(this.toolbar = new Toolbar()),
+				createElement("div", {
+					attributes: [
+						["name", "bottom-row"],
+					],
+
+					children: [
+						(this.transformWidget = new TransformWidget().setMode(TransformWidget.WidgetMode.ROTATE)),
+						(this.toolbar = new Toolbar()),
+					],
+				}),
+
 				(this.panelsContainer = createElement("panels-", {
-					parent: this,
-		
 					children: [
 						createElement(ObjectList, {
 							classes: ["panel"]

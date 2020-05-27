@@ -124,10 +124,9 @@ class ValueEditor extends HTMLElement {
 			detail.inputTarget.classList.remove("erroneous");
 
 			// Briefly flash red
+			detail.inputTarget.classList.remove("error-flash");
+			void detail.inputTarget.offsetHeight; // Force reflow
 			detail.inputTarget.classList.add("error-flash");
-			detail.inputTarget.addEventListener("animationend", () => {
-				detail.inputTarget.classList.remove("error-flash");
-			}, {once: true});
 
 			// Only trigger an update event if there was a change
 			const customEvent = new CustomEvent("update", {detail});

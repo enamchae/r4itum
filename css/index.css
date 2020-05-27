@@ -66,7 +66,7 @@ main {
 	height: 100vh;
 	overflow: hidden;
 
-	min-width: 60em;
+	min-width: 70em;
 	min-height: 60em;
 
 	font-family: var(--font);
@@ -115,6 +115,14 @@ overlays- {
 	position: relative;
 
 	color: #ffffffdf;
+}
+
+overlays- [name="bottom-row"] {
+	bottom: 0;
+
+	width: 100%;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
 }
 
 overlays- > * {
@@ -432,11 +440,11 @@ overlays- ul.bars > li:nth-child(n + 2):before {
 /* Toolbar */
 
 overlays- toolbar- {
-	bottom: 0;
-	right: 0;
-
+	height: min-content;
+	margin-top: auto;
 	display: flex;
 	flex-direction: row-reverse;
+	align-items: flex-end;
 }
 
 overlays- toolbar- toolbar-column {
@@ -445,7 +453,6 @@ overlays- toolbar- toolbar-column {
 }
 
 overlays- toolbar- toolbar-section {
-	align-self: flex-end;
 	display: flex;
 	flex-direction: column-reverse;
 	margin: .5em .5em;
@@ -486,16 +493,31 @@ overlays- toolbar- button {
 	padding: .5em;
 }
 
+overlays- toolbar- button.highlighted,
+overlays- toolbar- button.highlighted:hover,
+overlays- toolbar- button.highlighted:active {
+	background: var(--col-green-0-af);
+}
+
 overlays- toolbar- button.subhighlighted,
 overlays- toolbar- button.subhighlighted:hover,
 overlays- toolbar- button.subhighlighted:active {
 	background: var(--col-green-2-7f);
 }
 
-overlays- toolbar- button.highlighted,
-overlays- toolbar- button.highlighted:hover,
-overlays- toolbar- button.highlighted:active {
-	background: var(--col-green-0-af);
+overlays- toolbar- button.subhighlighted-pulse {
+	animation: subhighlighted-pulse .5s linear;
+}
+
+
+@keyframes subhighlighted-pulse {
+	0% {
+		background: var(--col-green-2-7f);
+	}
+
+	50% {
+		background: var(--col-green-2-7f);
+	}
 }
 
 overlays- toolbar- button + button:before {
@@ -513,7 +535,8 @@ overlays- toolbar- button + button:before {
 }
 
 overlays- toolbar- separator- {
-	width: var(--separator-height);
+	align-self: stretch;
+	padding-right: var(--separator-height); /* `width` will not work when the parent has `overflow: auto` */
 
 	margin: 0 1em;
 

@@ -298,6 +298,13 @@ function addDefaultCameraControls(viewport) {
  */
 const actions = {
 	select: ({event, viewport}) => {
+		const button = associatedToolButton(actions.select);
+		if (button) {
+			button.classList.remove("subhighlighted-pulse");
+			void button.offsetHeight; // Force reflow
+			button.classList.add("subhighlighted-pulse");
+		}
+
 		viewport.raycastSelectFrom(event, viewport.canvas);
 	},
 
@@ -664,13 +671,13 @@ export function attachViewportControls(viewport) {
 	const toolbarCameraColumn = toolbar.column();
 
 	const toolbarCamera4Section = toolbarCameraColumn.section().label("4D camera controls");
-	linkToolModeButton(toolbarCamera4Section.button("Pan 4D"), ToolMode.PAN4, viewport);
 	linkToolModeButton(toolbarCamera4Section.button("Turn 4D"), ToolMode.TURN4, viewport);
+	linkToolModeButton(toolbarCamera4Section.button("Pan 4D"), ToolMode.PAN4, viewport);
 	// toolbarCamera4Section.button("Zoom 4D");
 
 	const toolbarCamera3Section = toolbarCameraColumn.section().label("3D camera controls");
-	linkToolModeButton(toolbarCamera3Section.button("Pan 3D"), ToolMode.PAN3, viewport);
 	linkToolModeButton(toolbarCamera3Section.button("Turn 3D"), ToolMode.TURN3, viewport);
+	linkToolModeButton(toolbarCamera3Section.button("Pan 3D"), ToolMode.PAN3, viewport);
 	// toolbarCamera3Section.button("Zoom 3D");
 
 	toolbar.separator();
@@ -707,7 +714,6 @@ function localUpAndRight(viewport, object) {
 	directions[1][3] = distance4;
 
 	const [up, right] = viewport.camera.unprojectVector4(directions);
-	console.log(up, right);
 	return {up, right};
 }
 

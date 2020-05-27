@@ -191,6 +191,7 @@ export class Object4 {
 	 * Intended for cameras.
 	 * @returns Matrix5
 	 */
+	// Currently just a matrix that undoes rotation. Should be renamed or generalized to work for any basis forward vector
 	projectionMatrix() {
 		// The camera is facing from `this.pos` to `this.localForward()`
 		const cameraForward = this.localForward();
