@@ -379,10 +379,10 @@ export class ObjectList extends HTMLElement {
 							});
 							menu.button("120-cell", () => {
 								createObject(construct.hecatonicosachoron(), "120-cell");
-							});
+							}, true);
 							menu.button("600-cell", () => {
 								createObject(construct.hexacosichoron(), "600-cell");
-							});
+							}, true);
 							menu.separator();
 							menu.button("Klein bottle", () => {
 								createObject(construct.kleinBottle(), "Klein bottle");

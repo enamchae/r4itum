@@ -76,12 +76,12 @@ main {
 
 	color: #333;
 
-	display: flex;
-	flex-direction: column;
+	display: grid;
 }
 
 main > workspace- {
-	flex-grow: 1;
+	grid-row: 1;
+	grid-column: 1;
 
 	display: grid;
 }
@@ -207,13 +207,25 @@ overlays- context-menu separator- {
 	background: #fff;
 }
 
-overlays- context-menu .submenu-switch:after {
-	content: "⋯";
-
+overlays- context-menu .submenu-switch:after,
+overlays- context-menu .sad:after {
 	font-size: 2em;
 	line-height: 1;
 
 	opacity: .6;
+}
+
+overlays- context-menu .submenu-switch:after {
+	content: "⋯";
+}
+
+overlays- context-menu .sad:after {
+	content: ":(";
+}
+
+overlays- context-menu .sad {
+	opacity: .5;
+	pointer-events: none;
 }
 
 overlays- h2,

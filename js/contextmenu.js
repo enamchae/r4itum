@@ -85,7 +85,7 @@ top: ${y}px;`;
 	 * @param {string} label 
 	 * @param {function} clickHandler 
 	 */
-	button(label, clickHandler) {
+	button(label, clickHandler, sad=false) {
 		return this.element(createElement("button", {
 			listeners: {
 				click: [
@@ -93,7 +93,9 @@ top: ${y}px;`;
 				],
 			},
 
-			classes: ["row-item"],
+			classes: sad
+					? ["row-item", "sad"]
+					: ["row-item"],
 
 			children: [
 				createElement("div", {

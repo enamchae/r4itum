@@ -5,7 +5,6 @@
 import {createElement} from "./util.js";
 
 export class Toolbar extends HTMLElement {
-
 	element(element) {
 		this.append(element);
 		return element;
