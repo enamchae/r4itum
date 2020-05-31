@@ -33,6 +33,10 @@ for (const tagName of [
 	"overlays-",
 	"toolbar-button-rack",
 	"separator-",
+	"loading-screen",
+	"logo-",
+	"loading-spinner",
+	"loading-square",
 ]) {
 	customElements.define(tagName, class extends HTMLElement {});
 }

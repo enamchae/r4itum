@@ -6,3 +6,20 @@
 
 import "./ce.js";
 import {qs} from "./util.js";
+
+const loadingScreen = qs("loading-screen");
+qs("loading-spinner").classList.remove("transparent");
+
+addEventListener("load", () => {
+	loadingScreen.addEventListener("transitionend", event => {
+		if (event.target !== event.currentTarget) return; // No bubble
+		loadingScreen.classList.remove("transparent");
+		loadingScreen.classList.add("hidden");
+	}, {once: true});
+
+	loadingScreen.classList.add("transparent");
+}, {once: true});
+
+addEventListener("beforeunload", () => {
+	return true;
+});

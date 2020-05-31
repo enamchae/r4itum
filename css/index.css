@@ -20,6 +20,7 @@
 	--col-green-2-af: #2a6a52af;
 	--col-green-2-7f: #2a6a527f;
 	--col-green-3-7f: #54ad8c7f;
+	--col-green-3-af: #54ad8caf;
 
 	--panel-section-padding-horizontal: 1em;
 	--panel-section-padding: .5em var(--panel-section-padding-horizontal);
@@ -57,6 +58,10 @@ button {
 	display: none;
 }
 
+.transparent {
+	opacity: 0;
+}
+
 ::selection {
 	background: #ffffff3f;
 }
@@ -86,7 +91,7 @@ main > workspace- {
 	display: grid;
 	padding: 1em;
 
-	background: linear-gradient(105deg, var(--col-green-3-7f), var(--col-green-2-af));
+	background: linear-gradient(105deg, var(--col-green-3-7f), var(--col-green-3-af), var(--col-green-3-7f));
 }
 
 main > workspace- > * {
@@ -96,9 +101,96 @@ main > workspace- > * {
 
 main > workspace- > .section {
 	margin: 1em;
-
-	border-radius: 2em;
 	overflow: hidden;
+
+	box-shadow: var(--overlay-box-shadow);
+	border-radius: 2em;
+}
+
+loading-screen {
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	background: #fff;
+
+	transition: opacity 1s ease;
+}
+
+loading-screen logo- {
+	width: 60%;
+	min-width: 600px;
+	margin: 6em 0;
+	display: flex;
+	justify-content: center;
+}
+
+loading-screen logo- img {
+	width: 100%;
+}
+
+loading-screen loading-spinner {
+	display: grid;
+
+	transition: opacity .2s ease;
+}
+
+loading-screen loading-spinner > * {
+	grid-column: 1;
+	grid-row: 1;
+
+	margin: auto;
+}
+
+loading-screen loading-spinner loading-square.large {
+	width: 8em;
+	height: 8em;
+
+	border: 1em solid var(--col-green-3-7f);
+
+	animation: spin-cw 3s infinite linear;
+}
+
+loading-screen loading-spinner loading-square.small {
+	width: 6em;
+	height: 6em;
+
+	border: 1.5em solid var(--col-green-3-af);
+
+	animation: spin-ccw 6s infinite linear;
+}
+
+loading-screen noscript {
+	font-size: 4em;
+	font-weight: 800;
+	color: var(--col-green-2-af);
+}
+
+loading-screen ::selection {
+	background: var(--col-green-2-7f);
+	color: #fff;
+}
+
+@keyframes spin-cw {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes spin-ccw {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(-360deg);
+	}
 }
 
 viewport- {

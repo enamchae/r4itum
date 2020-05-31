@@ -2,17 +2,30 @@
 
 <html lang="en">
 	<head>
+		<title>ℝ⁴itum</title>
 		<meta charset="UTF-8" />
 		<script src="./js/_index.js" type="module"></script>
 
 		<link href="./css/index.css" rel="stylesheet" />
-		<!-- <link href="https://overpass-30e2.kxcdn.com/overpass.css" rel="stylesheet" /> -->
+		<link href="https://overpass-30e2.kxcdn.com/overpass.css" rel="stylesheet" />
 	</head>
 
 	<body>
 		<main>
 			<workspace->
 				<viewport- class="section"></viewport->
+				<loading-screen class="section">
+					<logo->
+						<img src="./asset/logo.svg" alt="Logo" />
+					</logo->
+
+					<loading-spinner class="transparent"> <!-- `transparent` class removed by JS -->
+						<loading-square class="large"></loading-square>
+						<loading-square class="small"></loading-square>
+					</loading-spinner>
+
+					<noscript>This app requires JavaScript to be enabled.</noscript>
+				</loading-screen>
 
 				<overlays->
 					<context-menus></context-menus>

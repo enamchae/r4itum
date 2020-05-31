@@ -137,11 +137,17 @@ export class Viewport extends HTMLElement {
 			],
 		});
 
-		this.queueRender();
-
 		this.attachControls();
 
 		this.toolbarObjectSection.disable(!userSelection.objectPrimary);
+
+		if (loaded) {
+			this.queueRender();
+		} else {
+			addEventListener("load", () => {
+				this.queueRender();
+			}, {once: true});
+		}
 
 		Viewport.members.add(this);
 	}
@@ -884,6 +890,11 @@ function focusLastViewport(event) {
 	event.preventDefault();
 	lastSelectedViewport.focus();
 }
+
+let loaded = false;
+addEventListener("load", () => {
+	loaded = true;
+}, {once: true});
 
 
 // Other
