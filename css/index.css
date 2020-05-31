@@ -84,11 +84,21 @@ main > workspace- {
 	grid-column: 1;
 
 	display: grid;
+	padding: 1em;
+
+	background: linear-gradient(105deg, var(--col-green-3-7f), var(--col-green-2-af));
 }
 
 main > workspace- > * {
 	grid-row: 1;
 	grid-column: 1;
+}
+
+main > workspace- > .section {
+	margin: 1em;
+
+	border-radius: 2em;
+	overflow: hidden;
 }
 
 viewport- {
@@ -97,6 +107,8 @@ viewport- {
 	display: grid;
 
 	overflow: hidden;
+
+	background: #fff;
 }
 
 viewport- > * {
