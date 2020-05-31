@@ -16,21 +16,9 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="shortcuticon.svg">
+   sodipodi:docname="icon.svg">
   <defs
      id="defs2">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient1531">
-      <stop
-         style="stop-color:#ffffff;stop-opacity:1;"
-         offset="0"
-         id="stop1527" />
-      <stop
-         style="stop-color:#ffffff;stop-opacity:0;"
-         offset="1"
-         id="stop1529" />
-    </linearGradient>
     <linearGradient
        inkscape:collect="always"
        id="linearGradient1476">
@@ -75,17 +63,6 @@
        x2="17.948174"
        y2="32.165936"
        gradientUnits="userSpaceOnUse" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient1531"
-       id="radialGradient1535"
-       cx="1.3229166"
-       cy="1.3229166"
-       fx="1.3229166"
-       fy="1.3229166"
-       r="15.610416"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(2,2.1506763e-7,-2.1506765e-7,2,-1.3229163,-1.3229168)" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -94,12 +71,12 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="-269.56413"
-     inkscape:cy="-202.14397"
+     inkscape:zoom="5.6"
+     inkscape:cx="12.30766"
+     inkscape:cy="36.368688"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer5"
-     showgrid="false"
+     inkscape:current-layer="layer1"
+     showgrid="true"
      units="px"
      gridtolerance="10"
      objecttolerance="20"
@@ -107,7 +84,9 @@
      inkscape:window-height="1027"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
-     inkscape:window-maximized="1">
+     inkscape:window-maximized="1"
+     inkscape:pagecheckerboard="true"
+     showguides="false">
     <inkscape:grid
        type="xygrid"
        id="grid1442" />
@@ -139,16 +118,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer5"
-     inkscape:label="bg">
-    <rect
-       style="opacity:0.75;fill:url(#radialGradient1535);fill-opacity:1;stroke:none;stroke-width:2.11666656;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.74901961"
-       id="rect1525"
-       width="31.220833"
-       height="31.220833"
-       x="1.3229166"
-       y="1.3229166"
-       ry="2.1047471" />
-  </g>
+     inkscape:label="bg" />
   <g
      inkscape:groupmode="layer"
      id="layer2"
@@ -179,15 +149,15 @@
      style="display:inline">
     <path
        id="path1448"
-       style="fill:url(#radialGradient1464);fill-opacity:1;stroke:#449b6c;stroke-width:1.05833328;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:url(#radialGradient1464);fill-opacity:1;stroke:#449b6c;stroke-width:1.058;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 1.3229166,295.67707 V 264.45624 H 32.54375 v 8.73125 L 19.168236,286.76022 15.875,283.77082 27.252083,271.86457 v -2.64583 H 15.875 v 14.55208 l 13.229167,11.90625"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccccccccc" />
     <rect
        style="display:inline;opacity:0.75;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.09397733;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect1480"
-       width="4.2094951"
-       height="31.270535"
+       width="4.3401065"
+       height="29.552109"
        x="2.5390604"
        y="265.59579"
        ry="1.5826814" />
