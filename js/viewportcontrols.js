@@ -888,8 +888,14 @@ function correctedDistance3(viewport, object) {
 	return distance3;
 }
 
+function correctedDistance4(viewport, object) {
+	return object === viewport.camera
+			? 1
+			: viewport.camera.viewboxDistanceFrom(object.pos);
+}
+
 function correctedDistance(viewport, object) {
-	return correctedDistance3(viewport, object) * viewport.camera.viewboxDistanceFrom(object.pos);
+	return correctedDistance3(viewport, object) * correctedDistance4(viewport, object);
 }
 
 // Whether the modifier key is being held
