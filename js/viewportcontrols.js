@@ -437,6 +437,7 @@ const actions = {
 		transforming = true;
 		event.currentTarget.requestPointerLock();
 		associatedToolButton(actions.translate)?.classList.add("subhighlighted");
+		viewport.transformWidget.setMode(TransformWidget.WidgetMode.TRANSLATE);
 
 		const initialPos = object.pos.clone();
 
@@ -494,6 +495,7 @@ const actions = {
 			transforming = false;
 			document.exitPointerLock();
 			associatedToolButton(actions.translate)?.classList.remove("subhighlighted");
+			viewport.transformWidget.clearMode();
 			removeSnapping();
 			removeMousemove();
 			removeMousedown();
@@ -683,6 +685,7 @@ function axisInputListener({
 		if (!altered) return;
 
 		alteredCallback?.(keyOrder);
+		viewport.transformWidget.highlightAxes(keyOrder.map(key => axisKeys.get(key)));
 	});
 }
 

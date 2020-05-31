@@ -673,8 +673,10 @@ overlays- toolbar- separator- {
 /* Transform widget */
 
 overlays- transform-widget {
+	padding: .5em;
 	display: flex;
-	justify-content: center;
+	flex-direction: column;
+	align-items: center;
 
 	background: #ffffff7f;
 	border-radius: 1em;
@@ -682,8 +684,53 @@ overlays- transform-widget {
 	transition: opacity .2s ease;
 }
 
+overlays- transform-widget > * + * {
+	margin-top: 1em;
+}
+
 overlays- transform-widget.unused {
 	opacity: 0;
+}
+
+overlays- axis-highlighter {
+	display: flex;
+	justify-content: space-evenly;
+
+	font-size: 3em;
+	font-weight: 500;
+	/* font-style: italic; */
+	text-align: center;
+}
+
+overlays- axis-highlighter [name] {
+	width: 2em;
+
+	color: #777;
+	opacity: .3;
+
+	transition: all .3s ease;
+}
+
+overlays- axis-highlighter [name].highlighted {
+	font-weight: 900;
+	/* font-style: initial; */
+	opacity: 1;
+}
+
+overlays- axis-highlighter [name="X"].highlighted {
+	color: #ff4d4d;
+}
+
+overlays- axis-highlighter [name="Y"].highlighted {
+	color: #8dd941;
+}
+
+overlays- axis-highlighter [name="Z"].highlighted {
+	color: #2bd9d9;
+}
+
+overlays- axis-highlighter [name="W"].highlighted {
+	color: #a767e6;
 }
 
 /* Vector editor */

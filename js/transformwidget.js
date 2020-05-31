@@ -21,6 +21,8 @@ export class TransformWidget extends HTMLElement {
 
 	mode = TransformWidget.WidgetMode.NONE;
 
+	axisHighlighter = null;
+
 	/**
 	 * @type SVGSVGElement
 	 */
@@ -35,6 +37,10 @@ export class TransformWidget extends HTMLElement {
 
 		this.classList.add("unused");
 		
+		this.axisHighlighter = createElement(AxisHighlighter, {
+			parent: this,
+		});
+
 		this.svg = createElement("svg", {
 			namespace: svgns,
 			attributes: [
@@ -60,6 +66,11 @@ export class TransformWidget extends HTMLElement {
 
 		switch (mode) {
 			case TransformWidget.WidgetMode.NONE:
+				break;
+
+			case TransformWidget.WidgetMode.TRANSLATE:
+				this.classList.remove("unused");
+				// TODO
 				break;
 
 			case TransformWidget.WidgetMode.ROTATE:
@@ -158,12 +169,17 @@ export class TransformWidget extends HTMLElement {
 
 	clearMode() {
 		this.classList.add("unused");
+		this.highlightAxes([]); // Unhighlight all axes
 		return this;
 	}
 
 	setCursorPosition(x=0, y=0) {
 		switch (this.mode) {
 			case TransformWidget.WidgetMode.NONE:
+				break;
+
+			case TransformWidget.WidgetMode.TRANSLATE:
+				// TODO
 				break;
 
 			case TransformWidget.WidgetMode.ROTATE:
@@ -190,5 +206,39 @@ export class TransformWidget extends HTMLElement {
 				throw new RangeError("Unsupported mode");
 		}
 		return this;
+	}
+
+	highlightAxes(indexes=[]) {
+		for (const axisElement of this.axisHighlighter.axisElements) {
+			axisElement.className = "";
+		}
+		for (const i of indexes) {
+			this.axisHighlighter.addClasses(i, ["highlighted"]);
+		}
+	}
+}
+
+const axisSymbols = ["X", "Y", "Z", "W"];
+export class AxisHighlighter extends HTMLElement {
+	axisElements = [];
+
+	constructor() {
+		super();
+
+		for (const symbol of axisSymbols) {
+			this.axisElements.push(createElement("div", {
+				textContent: symbol,
+				attributes: [
+					["name", symbol],
+				],
+				parent: this,
+			}));
+		}
+	}
+
+	addClasses(i, classes) {
+		for (const className of classes) {
+			this.axisElements[i].classList.add(className);
+		}
 	}
 }

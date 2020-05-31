@@ -2,8 +2,9 @@
  * @file Handles definition and handling of custom elements.
  */
 
-import {TransformWidget} from "./transformwidget.js";
+import {TransformWidget, AxisHighlighter} from "./transformwidget.js";
 customElements.define("transform-widget", TransformWidget);
+customElements.define("axis-highlighter", AxisHighlighter);
 
 import {Toolbar, ToolbarSection, ToolbarColumn} from "./toolbar.js";
 customElements.define("toolbar-", Toolbar);
