@@ -302,6 +302,7 @@ function addDefaultCameraControls(viewport) {
 	));
 }
 
+
 /**
  * Object containing common listeners.
  */
@@ -429,6 +430,7 @@ const actions = {
 	},
 
 	// TODO refactor duplicate code
+	// TODO `right` and `up` not affected if user zooms
 	translate: ({event, viewport}) => {
 		const object = userSelection.objectPrimary;
 
@@ -438,7 +440,37 @@ const actions = {
 
 		const initialPos = object.pos.clone();
 
-		const {up, right} = localUpAndRight(viewport, object);
+		const localDirections = localUpAndRight(viewport, object);
+
+		let {right, up} = localDirections;
+
+		// Restricting axes
+		const removeSnapping = axisInputListener({
+			viewport,
+			nMaxItems: 2,
+			alteredCallback: keyOrder => {
+				const distance = correctedDistance(viewport, object); // Allows object to be moved depending on distance from camera
+
+				switch (keyOrder.length) {
+					case 0:
+						({right, up} = localDirections);
+						break;
+	
+					case 1:
+						right = new Vector4();
+						right[axisKeys.get(keyOrder[0])] = distance;
+	
+						up = new Vector4();
+						break;
+					
+					case 2: // `up` and `right` already defined
+						up[axisKeys.get(keyOrder[1])] = distance;
+						break;
+				}
+	
+				tiedActions.setObjectPos(object, newTranslatePos(initialPos, right, up, movementX, movementY));
+			},
+		});
 
 		let movementX = 0;
 		let movementY = 0;
@@ -446,11 +478,7 @@ const actions = {
 			movementX += mousemoveEvent.movementX;
 			movementY += mousemoveEvent.movementY;
 
-			const newPos = initialPos
-					.add(right.multScalar(movementX * movementSensitivity))
-					.add(up.multScalar(-movementY * movementSensitivity));
-
-			tiedActions.setObjectPos(object, newPos);
+			tiedActions.setObjectPos(object, newTranslatePos(initialPos, right, up, movementX, movementY));
 		});
 
 		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
@@ -466,6 +494,7 @@ const actions = {
 			transforming = false;
 			document.exitPointerLock();
 			associatedToolButton(actions.translate)?.classList.remove("subhighlighted");
+			removeSnapping();
 			removeMousemove();
 			removeMousedown();
 		});
@@ -482,8 +511,34 @@ const actions = {
 		const initialRot = object.rot.clone();
 
 		// Bivector represents current viewing plane of 3D camera
-		const {up, right} = localUpAndRight(viewport, object);
-		const bivector = up.outer(right);
+		const localDirections = localUpAndRight(viewport, object);
+		let {right, up} = localDirections;
+		let bivector = up.outer(right);
+
+		// Restricting axes
+		const removeSnapping = axisInputListener({
+			viewport,
+			nMaxItems: 2,
+			alteredCallback: keyOrder => {
+				switch (keyOrder.length) {
+					case 0:
+					case 1:
+						({right, up} = localDirections);
+						break;
+					
+					case 2: // `up` and `right` already defined
+						right = new Vector4();
+						right[axisKeys.get(keyOrder[0])] = 1;
+	
+						up = new Vector4();
+						up[axisKeys.get(keyOrder[1])] = 1;
+						break;
+				}
+	
+				bivector = up.outer(right);
+				tiedActions.setObjectRot(object, newRotateRot(initialRot, bivector, movementX, movementY));
+			},
+		});
 
 		let movementX = 32; // Arbitrary offset so that user starts at 0° and does not rotate wildly at start
 		let movementY = 0;
@@ -493,9 +548,7 @@ const actions = {
 			movementY += mousemoveEvent.movementY;
 			viewport.transformWidget.setCursorPosition(movementX, movementY);
 
-			const angle = Math.atan2(movementY, movementX);
-			// TODO take influence from 4D camera rotation
-			tiedActions.setObjectRot(object, initialRot.mult(Rotor4.planeAngle(bivector, angle)));
+			tiedActions.setObjectRot(object, newRotateRot(initialRot, bivector, movementX, movementY));
 		});
 
 		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
@@ -511,6 +564,7 @@ const actions = {
 			document.exitPointerLock();
 			associatedToolButton(actions.rotate)?.classList.remove("subhighlighted");
 			viewport.transformWidget.clearMode();
+			removeSnapping();
 			removeMousemove();
 			removeMousedown();
 		});
@@ -524,7 +578,31 @@ const actions = {
 		associatedToolButton(actions.scale)?.classList.add("subhighlighted");
 		viewport.transformWidget.setMode(TransformWidget.WidgetMode.SCALE);
 
-		const initialScale = object.scl.clone();
+		const initialScl = object.scl.clone();
+
+		const distance = correctedDistance(viewport, object);
+		let scalingVector = new Vector4(distance, distance, distance, distance); // Scale in all directions by default
+
+		// Restricting axes
+		const removeSnapping = axisInputListener({
+			viewport,
+			nMaxItems: 4,
+			alteredCallback: keyOrder => {
+				const distance = correctedDistance(viewport, object); // Allows object to be moved depending on distance from camera
+
+				if (keyOrder.length > 0) {
+					// Set each selected axis to 1, leaving the others at 0
+					scalingVector = new Vector4();
+					for (const axis of keyOrder) {
+						const i = axisKeys.get(axis);
+						scalingVector[i] = distance;
+					}
+				} else {
+					scalingVector = new Vector4(distance, distance, distance, distance);
+				}
+				tiedActions.setObjectScl(object, newScaleScl(initialScl, scalingVector, movementX));
+			},
+		});
 
 		let movementX = 0;
 		viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
@@ -532,12 +610,12 @@ const actions = {
 			movementX += mousemoveEvent.movementX;
 			viewport.transformWidget.setCursorPosition(movementX * movementSensitivity);
 
-			tiedActions.setObjectScl(object, initialScale.multScalar(movementX * movementSensitivity + 1));
+			tiedActions.setObjectScl(object, newScaleScl(initialScl, scalingVector, movementX));
 		});
 
 		const removeMousedown = removableListener(event.currentTarget, "mousedown", mousedownEvent => {
 			if (mousedownEvent.button === 2) { // If right-click, reset
-				tiedActions.setObjectScl(object, initialScale);
+				tiedActions.setObjectScl(object, initialScl);
 				// Don't show context menu on right-click
 				mousedownEvent.currentTarget.addEventListener("contextmenu", preventDefault, {once: true});
 			} else if (mousedownEvent.button !== 0) { // If not left-click, ignore
@@ -548,15 +626,66 @@ const actions = {
 			document.exitPointerLock();
 			associatedToolButton(actions.scale)?.classList.remove("subhighlighted");
 			viewport.transformWidget.clearMode();
+			removeSnapping();
 			removeMousemove();
 			removeMousedown();
 		});
 	},
 };
 
+function newTranslatePos(initialPos, right, up, movementX, movementY) {
+	return initialPos
+			.add(right.multScalar(movementX * movementSensitivity))
+			.add(up.multScalar(-movementY * movementSensitivity));
+}
+
+function newRotateRot(initialRot, bivector, movementX, movementY) {
+	const angle = Math.atan2(movementY, movementX);
+	return initialRot.mult(Rotor4.planeAngle(bivector, angle));
+}
+
+function newScaleScl(initialScl, scalingVector, movementX) {
+	const scalar = movementX * movementSensitivity + 1;
+	const diff = scalingVector.multScalar(scalar).multComponents(initialScl);
+	return initialScl.add(diff);
+}
+
 function angleFromMovement(mousemoveEvent) {
 	return Math.sqrt(mousemoveEvent.movementX ** 2 + mousemoveEvent.movementY ** 2) / (2 * Math.PI) * movementSensitivity;
 }
+
+const axisKeys = new Map(["x", "y", "z", "w"].map((key, i) => [key, i]));
+
+/**
+ * Allows the user to press keys that correspond to axes to perform an action (usually to add axis restrictions for transform controls).
+ * @param {object} options 
+ * @returns {function} A function that removes the keydown listener.
+ */
+function axisInputListener({
+	viewport,
+	nMaxItems=2,
+	alteredCallback,
+}={}) {
+	const keyOrder = [];
+	
+	return removableListener(viewport, "keydown", keydownEvent => {
+		const key = keydownEvent.key;
+
+		let altered = false;
+		if (axisKeys.has(key) && keyOrder.length < nMaxItems && keyOrder.indexOf(key) === -1) {
+			keyOrder.push(key);
+			altered = true;				
+		} else if (key === "Backspace" && keyOrder.length > 0) {
+			keyOrder.pop();
+			altered = true;
+		}
+
+		if (!altered) return;
+
+		alteredCallback?.(keyOrder);
+	});
+}
+
 /**
  * Semantically, which actions are "associated" with which tool modes.
  * @type Map<Function, ToolMode>
@@ -714,30 +843,20 @@ function preventDefault(event) {
 
 function localUpAndRight(viewport, object) {
 	// `distance3` allows zoom to affect movement speed
-	let distance3;
-	if (object === viewport.camera3Wrapper || object === viewport.camera) {
-		distance3 = 1;
-	} else {
-		distance3 = viewport.camera3Wrapper.viewboxDistanceFrom(object.pos);
-		if (viewport.camera3Wrapper.usingPerspective) {
-			distance3 /= 4; // Arbitrary correction constant
-		}
-	}
+	const distance3 = correctedDistance3(viewport, object);
 	
 	const directions = [
-		new Three.Vector3(0, distance3, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
 		new Three.Vector3(distance3, 0, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
+		new Three.Vector3(0, distance3, 0).applyQuaternion(viewport.camera3.quaternion).toArray(new Vector4()),
 	];
 
-	console.log(directions);
-
 	if (object === viewport.camera3Wrapper) {
-		const [up, right] = directions;
-		return {up, right};
+		const [right, up] = directions;
+		return {right, up};
 	} else if (object === viewport.camera) {
-		const up = directions[0].multRotor(object.rot);
-		const right = directions[1].multRotor(object.rot);
-		return {up, right};
+		const right = directions[0].multRotor(object.rot);
+		const up = directions[1].multRotor(object.rot);
+		return {right, up};
 	}
 
 	// `distance4` allows unprojection to work correctly
@@ -746,8 +865,28 @@ function localUpAndRight(viewport, object) {
 	directions[0][3] = distance4;
 	directions[1][3] = distance4;
 
-	const [up, right] = viewport.camera.unprojectVector4(directions);
-	return {up, right};
+	const [right, up] = viewport.camera.unprojectVector4(directions);
+	return {right, up};
+}
+
+function correctedDistance3(viewport, object) {
+	if (object === viewport.camera3Wrapper || object === viewport.camera) {
+		return 1;
+	}
+
+	const objectPos = viewport.camera.projectVector4([object.pos])[0];
+	objectPos[3] = 0;
+
+	let distance3 = viewport.camera3Wrapper.viewboxDistanceFrom(objectPos);
+	if (viewport.camera3Wrapper.usingPerspective) {
+		distance3 /= 4; // Arbitrary correction constant
+	}
+
+	return distance3;
+}
+
+function correctedDistance(viewport, object) {
+	return correctedDistance3(viewport, object) * viewport.camera.viewboxDistanceFrom(object.pos);
 }
 
 // Whether the modifier key is being held
